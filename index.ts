@@ -120,14 +120,9 @@ class ValueRep {
 }
 
 class Field {
-    tokenIndex: TokenIndex
-    valueRep: ValueRep
-    constructor(reader: Reader) {
-        reader.offset += 4
-        this.tokenIndex = reader.getUint32()
-        this.valueRep = new ValueRep(reader)
-
-        // console.log(this)
+    tokenIndex!: TokenIndex
+    valueRep!: ValueRep
+    constructor() {
     }
 }
 
@@ -225,11 +220,15 @@ export class CrateFile {
         }
         reader.offset = section.start
         const numFields = reader.getUint64()
-        console.log(`numFields = ${numFields}`)
+        // console.log(`numFields = ${numFields}`)
         // this.fields = new Array(numFields)
-        readCompressedInts(reader, numFields)
+        const indices = readCompressedInts(reader, numFields)
+
+        const reps_size = reader.getUint64()
+        console.log(reps_size)
+
         // for (let i = 0; i < numFields; ++i) {
-        //     // this.fields[i] = new Field(reader)
+        //     this.fields[i] = new Field()
         // }
         // if (section.start + section.size !== reader.offset) {
         //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
@@ -238,20 +237,98 @@ export class CrateFile {
 }
 
 // src/integerCoding.cpp: _DecompressIntegers(...)
-function readCompressedInts(reader: Reader, numInts: number) {
+export function readCompressedInts(reader: Reader, numInts: number) {
     const compressedSize = reader.getUint64()
     console.log(`readCompressedInts(): n=${numInts}, compressedSize=${compressedSize}`)
 
-    const uncompressed = Buffer.alloc(4096)
-    const b = reader._dataview.buffer.slice(reader.offset, reader.offset + compressedSize - 1)
+    const uncompressed = Buffer.alloc(numInts * 4)
+    const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
+    reader.offset += compressedSize
 
-    hexdump(new Uint8Array(Buffer.from(b)))
+    const decompSz = decompressFromBuffer(compressed, uncompressed)
 
-    // const decompSz = decodeBlock(Buffer.from(b), uncompressed)
-    // console.log(`decompSz = ${decompSz}`)
+    return decodeIntegers(new DataView(uncompressed.buffer), numInts)
+}
 
-    // LZ4 decompression
-    // _DecodeIntegers(...)
+interface ARG {
+    src: DataView
+    result: number[]
+    output: number
+    codesIn: number
+    vintsIn: number
+    commonValue: number
+    prevVal: number
+}
+
+function decodeNHelper(N: number, arg: ARG) {
+    enum Code { Common, Small, Medium, Large };
+    const codeByte = arg.src.getUint8(arg.codesIn++)
+    // console.log(`decodeNHelper(N=${N}): codeByte=${codeByte}`)
+    for (let i = 0; i != N; ++i) {
+        const x = (codeByte & (3 << (2 * i))) >> (2 * i)
+        switch (x) {
+            default:
+            case Code.Common:
+                arg.prevVal += arg.commonValue
+                break
+            case Code.Small:
+                arg.prevVal += arg.src.getInt8(arg.vintsIn)
+                arg.vintsIn += 1
+                break
+            case Code.Medium:
+                arg.prevVal += arg.src.getInt16(arg.vintsIn)
+                arg.vintsIn += 2
+                break
+            case Code.Large:
+                arg.prevVal += arg.src.getInt32(arg.vintsIn)
+                arg.vintsIn += 4
+                break
+        }
+        // console.log(`  i=${i}, x=${x}, prevVal=${arg.prevVal} []`)
+        arg.result[arg.output++] = arg.prevVal
+    }
+}
+
+export function decodeIntegers(src: DataView, numInts: number) {
+    // console.log("decodeIntegers() >>>>>>>>>>>>>>>>>>>>>>>>>>")
+
+    // const src = new DataView(uncompressed)
+    const commonValue = src.getUint32(0, true)
+    // console.log(`commonValue = ${commonValue}`)
+
+    const numCodesBytes = (numInts * 2 + 7) / 8
+    let prevVal = 0
+    let intsLeft = numInts
+
+    const arg: ARG = {
+        src,
+        result: new Array(numInts),
+        output: 0,
+        codesIn: 4,
+        vintsIn: 4 + numCodesBytes,
+        commonValue,
+        prevVal
+    }
+    while (intsLeft >= 4) {
+        decodeNHelper(4, arg)
+        intsLeft -= 4
+    }
+    switch (intsLeft) {
+        case 1:
+        case 2:
+        case 3:
+            decodeNHelper(intsLeft, arg)
+            break
+        case 0:
+        default:
+            break
+    };
+    // hexdump(new Uint8Array(arg.result.buffer))
+    // console.log("decodeIntegers() <<<<<<<<<<<<<<<<<<<<<<<<<<")
+    // for (let i = 0; i < arg.result.length; ++i) {
+    //     console.log(`[${i}] = ${arg.result[i]}`)
+    // }
+    return arg.result
 }
 
 // // readfields 
