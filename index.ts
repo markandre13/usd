@@ -1,7 +1,6 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { readFileSync } from "fs"
-import { decompress, decompressBlock, decompressFrame } from "lz4js"
+import { decompressBlock } from "lz4js"
 import { hexdump } from "./hexdump.ts"
 
 type Index = number
@@ -112,17 +111,34 @@ class Section {
 // inline, the 6 data bytes are the offset from the start of the file to the
 // value's location.
 class ValueRep {
+    private _buffer: Uint8Array
     private _offset: number
-    constructor(reader: Reader) {
-        this._offset = reader.offset
-        reader.offset += 8
+    constructor(buffer: Uint8Array, offset: number) {
+        this._buffer = buffer
+        this._offset = offset
+    }
+    getType() { return this._buffer.at(this._offset + 6) }
+    isArray() { return (this._buffer.at(this._offset + 7)! & 128) !== 0 }
+    isInlined() { return (this._buffer.at(this._offset + 7)! & 64) !== 0 }
+    isCompressed() { return (this._buffer.at(this._offset + 7)! & 32) !== 0 }
+    getPayload() {
+        const d = new DataView(this._buffer.buffer)
+        return d.getBigUint64(this._offset, true) & 0xffffffffffffn
+    }
+    toString() {
+        return `ty: ${this.getType()}(xxx), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
     }
 }
 
 class Field {
-    tokenIndex!: TokenIndex
-    valueRep!: ValueRep
-    constructor() {
+    tokenIndex: TokenIndex
+    valueRep: ValueRep
+    constructor(tokenIndex: number, valueRep: ValueRep) {
+        this.tokenIndex = tokenIndex
+        this.valueRep = valueRep
+    }
+    toString(tokens?: string[]) {
+        return `{ token_index = ${this.tokenIndex} ${tokens ? ` (${tokens[this.tokenIndex]})` : ''}}, value_rep=${this.valueRep} }`
     }
 }
 
@@ -144,13 +160,7 @@ export class CrateFile {
         this.readTokens(reader)
         this.readStrings(reader)
         this.readFields(reader)
-
-        // if (this.tokens && this.fields) {
-        //     for(const field of this.fields) {
-        //         console.log(field.tokenIndex)
-        //         // console.log(this.tokens[field.tokenIndex])
-        //     }
-        // }
+        this.readFieldSets(reader)
     }
 
     readTokens(reader: Reader) {
@@ -213,26 +223,45 @@ export class CrateFile {
     }
 
     readFields(reader: Reader) {
-        // content is compressed!!!
         const section = this.toc.sections.get(SectionName.FIELDS)
         if (section === undefined) {
             return
         }
         reader.offset = section.start
         const numFields = reader.getUint64()
-        // console.log(`numFields = ${numFields}`)
-        // this.fields = new Array(numFields)
+
         const indices = readCompressedInts(reader, numFields)
 
         const reps_size = reader.getUint64()
-        console.log(reps_size)
+        const uncompressedSize = numFields * 8
+        const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, reps_size)
+        const uncompressed = new Uint8Array(uncompressedSize)
+        if (uncompressedSize !== decompressFromBuffer(compressed, uncompressed)) {
+            throw Error("Failed to read Fields ValueRep data.")
+        }
 
-        // for (let i = 0; i < numFields; ++i) {
-        //     this.fields[i] = new Field()
-        // }
+        this.fields = new Array(numFields)
+        for (let i = 0; i < numFields; ++i) {
+            this.fields[i] = new Field(indices[i], new ValueRep(uncompressed, i * 8))
+        }
+
+        for (let i = 0; i < numFields; ++i) {
+            console.log(`fields[${i}] = ${this.fields[i].toString(this.tokens)}`)
+        }
+
         // if (section.start + section.size !== reader.offset) {
         //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
         // }
+    }
+
+    readFieldSets(reader: Reader) {
+        const section = this.toc.sections.get(SectionName.FIELDSETS)
+        if (section === undefined) {
+            return
+        }
+        reader.offset = section.start
+        const numFieldSets = reader.getUint64()
+        // ...
     }
 }
 
@@ -350,42 +379,3 @@ export function decompressFromBuffer(src: Uint8Array, dst: Uint8Array) {
         throw Error("yikes")
     }
 }
-
-// https://github.com/lighttransport/tinyusdz
-// mkdir build
-// cd build
-// cmake ..
-// make -j12
-// ./tusdcat /Users/mark/js/usd/cube.usdc
-
-function main() {
-    // const data = "hello world. hello world. hello world. hello world. hello world."
-    // var input = Buffer.from(data)
-    // // Initialize the output buffer to its maximum length based on the input data
-    // var output = Buffer.alloc(encodeBound(input.length))
-
-    // // block compression (no archive format)
-    // var compressedSize = encodeBlock(input, output)
-    // // remove unnecessary bytes
-    // output = output.slice(0, compressedSize)
-    // console.log(`compressedSize=${compressedSize}`)
-
-    // var uncompressed = Buffer.alloc(input.length)
-    // var uncompressedSize = decodeBlock(output, uncompressed)
-    // uncompressed = uncompressed.slice(0, uncompressedSize)
-    // console.log(`uncompressedSize=${uncompressedSize}`)
-
-    const buffer = readFileSync("cube.usdc")
-    const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
-    const reader = new Reader(data)
-
-    new CrateFile(reader)
-
-
-}
-
-// main()
-
-
-
-// main()

@@ -1,8 +1,14 @@
-import { decompress, decompressBlock, decompressFrame } from "lz4js"
 import { hexdump, parseHexDump } from "../hexdump.ts"
 import { expect } from "chai"
 import { CrateFile, decodeIntegers, decompressFromBuffer, readCompressedInts, Reader } from "../index.js"
 import { readFileSync } from "fs"
+
+// https://github.com/lighttransport/tinyusdz
+// mkdir build
+// cd build
+// cmake ..
+// make -j12
+// ./tusdcat /Users/mark/js/usd/cube.usdc
 
 // readfields -> readcompressedint -> de
 
