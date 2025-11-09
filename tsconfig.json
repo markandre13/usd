@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+     "noEmit": true, // Optional - see note below
+     "target": "esnext",
+     "module": "nodenext",
+     "rewriteRelativeImportExtensions": true,
+     "erasableSyntaxOnly": true,
+     "verbatimModuleSyntax": true,
+
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "experimentalDecorators": true,
+    "noImplicitOverride": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "allowJs": false,
+    "noImplicitAny": true,
+    "sourceMap": true
+  }
+} 
