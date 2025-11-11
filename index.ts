@@ -1,6 +1,6 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { decompressBlock } from "lz4js"
+import { compressBound, decompressBlock } from "lz4js"
 import { hexdump } from "./hexdump.ts"
 
 type Index = number
@@ -149,7 +149,7 @@ export class CrateFile {
     tokens?: string[]
     strings?: StringIndex[]
     fields?: Field[]
-    // fieldsets
+    fieldset_indices?: number[]
     // paths
     // specs
 
@@ -161,6 +161,7 @@ export class CrateFile {
         this.readStrings(reader)
         this.readFields(reader)
         this.readFieldSets(reader)
+        this.readPaths(reader)
     }
 
     readTokens(reader: Reader) {
@@ -245,9 +246,9 @@ export class CrateFile {
             this.fields[i] = new Field(indices[i], new ValueRep(uncompressed, i * 8))
         }
 
-        for (let i = 0; i < numFields; ++i) {
-            console.log(`fields[${i}] = ${this.fields[i].toString(this.tokens)}`)
-        }
+        // for (let i = 0; i < numFields; ++i) {
+        //     console.log(`fields[${i}] = ${this.fields[i].toString(this.tokens)}`)
+        // }
 
         // if (section.start + section.size !== reader.offset) {
         //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
@@ -259,11 +260,42 @@ export class CrateFile {
         if (section === undefined) {
             return
         }
+
         reader.offset = section.start
         const numFieldSets = reader.getUint64()
-        // ...
+        const fsets_size = reader.getUint64()
+        console.log(`numFieldSets = ${numFieldSets}, fsets_size = ${fsets_size}`)
+
+        // const indices = readCompressedInts(reader, numFieldSets)
+        
+        // _GetEncodedBufferSize()
+        const comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, fsets_size)
+        hexdump(comp_buffer)
+
+        const workingSpaceSize = 4 + Math.floor((numFieldSets * 2 + 7 ) / 8) + numFieldSets * 4
+        console.log(`workingSpaceSize = ${workingSpaceSize}`)
+
+        const workingSpace = new Uint8Array(workingSpaceSize)
+
+        const decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+        hexdump(workingSpace, 0, decompSz)
+
+        this.fieldset_indices = decodeIntegers(new DataView(workingSpace.buffer), numFieldSets)
+        this.fieldset_indices.forEach((v, i) => {
+            console.log(`fieldset_index[${i}] = ${v}`)
+        })
+
+        // Usd_IntegerCompression_DecompressFromBuffer(comp_buffer)
+
+        // const uncompressed = new Uint8Array(uncompressedSize)
+        // decompressFromBuffer()
+    }
+
+    readPaths(reader: Reader) {
+
     }
 }
+
 
 // src/integerCoding.cpp: _DecompressIntegers(...)
 export function readCompressedInts(reader: Reader, numInts: number) {
