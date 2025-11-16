@@ -7,6 +7,156 @@ type Index = number
 type StringIndex = Index
 type TokenIndex = Index
 
+enum PathType {
+    Prim,
+    PrimProperty,
+    RelationalAttribute,
+    MapperArg,
+    Target,
+    Mapper,
+    PrimVariantSelection,
+    Expression,
+    Root,
+};
+
+// in OpenUSD this is called SdfPath
+export class Path {
+    private _prim_part: string = ""     // e.g. /Model/MyMesh, MySphere
+    private _prop_part: string = ""     // e.g. visibility (`.` is not included)
+    private _variant_part: string = ""  // e.g. `variantColor` for {variantColor=green}
+    private _variant_selection_part: string = ""  // e.g. `green` for {variantColor=green}
+    // . Could be empty({variantColor=}).
+    private _variant_part_str: string = ""  // str buffer for variant_part()
+    _element: string = ""           // Element name
+    private _path_type?: PathType  // Currently optional.
+    private _valid: boolean = false
+
+    constructor()
+    constructor(prim: string, prop: string)
+    constructor(prim?: string, prop?: string) {
+        if (prim === undefined || prop === undefined) {
+            this._valid = false
+            return
+        }
+        this._update(prim, prop)
+    }
+    static makeRootPath() { return new Path("/", "") }
+
+    isValid() { return this._valid }
+    prim_part() { return this._prim_part }
+    prop_part() { return this._prop_part }
+
+    private _update(p: string, prop: string) {
+        if (p.length === 0 && prop.length === 0) {
+            this._valid = false
+            return
+        }
+
+        if (prop.length !== 0) {
+            if (prop.indexOf("/") >= 0) {
+                this._valid = false
+                return
+            }
+            if (prop.at(0) === '.') {
+                this._valid = false
+                return
+            }
+        }
+
+        // count the dots
+        let ndots = 0
+        for (let c of p) {
+            if (c === '.') {
+                ++ndots
+            }
+        }
+        if (ndots > 1) {
+            this._valid = false
+            return
+        }
+
+        const prims = p.split('/')
+        if (p[0] === '/') {
+            // absolute path
+            if (ndots === 0) {
+                // absolute prim
+                this._prim_part = p
+                if (prop.length) {
+                    this._prop_part = prop
+                    this._element = prop
+                } else {
+                    if (prims.length) {
+                        this._element = prims[prims.length - 1]
+                    } else {
+                        this._element = p
+                    }
+                }
+                this._valid = true
+            } else {
+                // prim_part contains property name.
+                if (prop.length) {
+                    // prop must be empty.
+                    this._valid = false
+                    return
+                }
+                if (p.length < 3) {
+                    // "/."
+                    this._valid = false
+                    return
+                }
+                const loc = p.indexOf(".")
+                this._prop_part = p.substring(loc + 1)
+                this._prim_part = p.substring(0, loc)
+                this._element = this._prop_part
+                this._valid = true
+            }
+        } else if (p[0] === '.') {
+            this._prim_part = p
+            if (prop.length) {
+                this._prop_part = prop
+                this._element = prop
+            } else {
+                if (prims.length) {
+                    this._element = prims.at(prims.length - 1)!
+                } else {
+                    this._element = p
+                }
+            }
+            this._valid = true
+        } else {
+            this._valid = false
+            if (ndots === 0) {
+                this._prim_part = p
+                if (prop.length) {
+                    this._prop_part = prop
+                }
+                this._valid = true
+            } else {
+                const loc = p.indexOf(".")
+                const prop_name = p.substring(loc + 1)
+                // TODO: check if not / in prop_name
+                if (prop_name.indexOf('/') >= 0) {
+                    this._valid = false
+                    return
+                }
+                this._prim_part = p.substring(0, loc)
+                this._prop_part = prop_name
+                this._valid = true
+            }
+        }
+    }
+}
+
+export interface BuildDecompressedPathsArg {
+    pathIndexes: number[]
+    elementTokenIndexes: number[]
+    jumps: number[]
+    visit_table: boolean[]
+    startIndex: number // usually 0
+    endIndex: number // inclusive. usually pathIndexes.size() - 1
+    parentPath: Path
+}
+
 export class Reader {
     _dataview: DataView
 
@@ -260,47 +410,106 @@ export class CrateFile {
         if (section === undefined) {
             return
         }
-
         reader.offset = section.start
+
         const numFieldSets = reader.getUint64()
         const fsets_size = reader.getUint64()
-        console.log(`numFieldSets = ${numFieldSets}, fsets_size = ${fsets_size}`)
+        // console.log(`numFieldSets = ${numFieldSets}, fsets_size = ${fsets_size}`)
 
         // const indices = readCompressedInts(reader, numFieldSets)
-        
+
         // _GetEncodedBufferSize()
         const comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, fsets_size)
-        hexdump(comp_buffer)
+        // hexdump(comp_buffer)
 
-        const workingSpaceSize = 4 + Math.floor((numFieldSets * 2 + 7 ) / 8) + numFieldSets * 4
-        console.log(`workingSpaceSize = ${workingSpaceSize}`)
+        const workingSpaceSize = 4 + Math.floor((numFieldSets * 2 + 7) / 8) + numFieldSets * 4
+        // console.log(`workingSpaceSize = ${workingSpaceSize}`)
 
         const workingSpace = new Uint8Array(workingSpaceSize)
 
         const decompSz = decompressFromBuffer(comp_buffer, workingSpace)
-        hexdump(workingSpace, 0, decompSz)
+        // hexdump(workingSpace, 0, decompSz)
 
         this.fieldset_indices = decodeIntegers(new DataView(workingSpace.buffer), numFieldSets)
-        this.fieldset_indices.forEach((v, i) => {
-            console.log(`fieldset_index[${i}] = ${v}`)
-        })
-
-        // Usd_IntegerCompression_DecompressFromBuffer(comp_buffer)
-
-        // const uncompressed = new Uint8Array(uncompressedSize)
-        // decompressFromBuffer()
+        // this.fieldset_indices.forEach((v, i) => {
+        //     console.log(`fieldset_index[${i}] = ${v}`)
+        // })
     }
 
     readPaths(reader: Reader) {
+        const section = this.toc.sections.get(SectionName.PATHS)
+        if (section === undefined) {
+            return
+        }
+        reader.offset = section.start
 
+        const maxNumPaths = reader.getUint64()
+        const numEncodedPaths = reader.getUint64()
+
+        // pathIndexes
+        const compPathIndexesSize = reader.getUint64()
+
+        // console.log(`maxNumPaths = ${maxNumPaths}, numEncodedPaths=${numEncodedPaths}, compPathIndexesSize=${compPathIndexesSize}`)
+
+        let comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, compPathIndexesSize)
+        reader.offset += compPathIndexesSize
+        // hexdump(comp_buffer)
+
+        const workspaceBufferSize = 4 + Math.floor((numEncodedPaths * 2 + 7) / 8) + numEncodedPaths * 4
+        // console.log(`workspaceBufferSize = ${workspaceBufferSize}`)
+
+        const workingSpace = new Uint8Array(workspaceBufferSize)
+
+        const decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+        const pathIndexes = decodeIntegers(new DataView(workingSpace.buffer), numEncodedPaths)
+
+        // elementTokenIndexes
+        const compElementTokenIndexesSize = reader.getUint64()
+        comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, compElementTokenIndexesSize)
+        reader.offset += compElementTokenIndexesSize
+
+        const n = decompressFromBuffer(comp_buffer, workingSpace)
+        const elementTokenIndexes = decodeIntegers(new DataView(workingSpace.buffer), numEncodedPaths)
+
+        // jumps
+        const compJumpsSize = reader.getUint64()
+        console.log(`compJumpsSize = ${compJumpsSize}`)
+
+        comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, compJumpsSize)
+        reader.offset += compJumpsSize
+
+        decompressFromBuffer(comp_buffer, workingSpace)
+        const jumps = decodeIntegers(new DataView(workingSpace.buffer), numEncodedPaths)
+        console.log(jumps)
+
+        const visit_table = new Array()
+
+        const arg: BuildDecompressedPathsArg = {
+            pathIndexes,
+            elementTokenIndexes,
+            jumps,
+            visit_table,
+            startIndex: 0,
+            endIndex: numEncodedPaths - 1,
+            parentPath: new Path()
+        }
+        if (!BuildDecompressedPathsImpl(arg)) {
+            return false
+        }
+
+        // Ensure decoded numEncodedPaths.
+        // // Now build node hierarchy.
     }
 }
 
+function BuildDecompressedPathsImpl(arg: BuildDecompressedPathsArg): boolean {
+    return true
+}
 
 // src/integerCoding.cpp: _DecompressIntegers(...)
 export function readCompressedInts(reader: Reader, numInts: number) {
     const compressedSize = reader.getUint64()
-    console.log(`readCompressedInts(): n=${numInts}, compressedSize=${compressedSize}`)
+    // console.log(`readCompressedInts(): n=${numInts}, compressedSize=${compressedSize}`)
 
     const uncompressed = Buffer.alloc(numInts * 4)
     const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
@@ -345,6 +554,7 @@ function decodeNHelper(N: number, arg: ARG) {
                 arg.vintsIn += 4
                 break
         }
+        arg.prevVal &= 0xffffffff
         // console.log(`  i=${i}, x=${x}, prevVal=${arg.prevVal} []`)
         arg.result[arg.output++] = arg.prevVal
     }
