@@ -1,7 +1,10 @@
-import { hexdump, parseHexDump } from "../hexdump.ts"
+import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
-import { CrateFile, decodeIntegers, decompressFromBuffer, Path, readCompressedInts, Reader, type BuildDecompressedPathsArg } from "../index.js"
+import { decodeIntegers, decompressFromBuffer, readCompressedInts, type BuildDecompressedPathsArg } from "../src/index.ts"
+import { Path } from "../src/path/Path.ts"
 import { readFileSync } from "fs"
+import { Reader } from "../src/crate/Reader.ts"
+import { CrateFile } from "../src/crate/CrateFile.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
