@@ -9,19 +9,7 @@ type Index = number
 export type StringIndex = Index
 export type TokenIndex = Index
 
-export interface BuildDecompressedPathsArg {
-    pathIndexes: number[]
-    elementTokenIndexes: number[]
-    jumps: number[]
-    visit_table: boolean[]
-    startIndex: number // usually 0
-    endIndex: number // inclusive. usually pathIndexes.size() - 1
-    parentPath: Path
-}
 
-export function BuildDecompressedPathsImpl(arg: BuildDecompressedPathsArg): boolean {
-    return true
-}
 
 // src/integerCoding.cpp: _DecompressIntegers(...)
 export function readCompressedInts(reader: Reader, numInts: number) {

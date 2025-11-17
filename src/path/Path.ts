@@ -1,7 +1,19 @@
 import type { PathType } from "./PathType.ts"
 
-// in OpenUSD this is called SdfPath
+export class Node {
+    private parent = 0
+    private _children = new Array<number>()
+    private _primChildren = new Set<string>
+    private _path = new Path()
+    private _elemPath = new Path()
+}
 
+function is_variantElementName(name: string) {
+    return name[0] === '{'
+}
+
+// * in OpenUSD this is called SdfPath: pxr/usd/sdf/path.h
+// 
 export class Path {
     private _prim_part: string = ""; // e.g. /Model/MyMesh, MySphere
     private _prop_part: string = ""; // e.g. visibility (`.` is not included)
@@ -23,9 +35,88 @@ export class Path {
         }
         this._update(prim, prop)
     }
+
+    clone() { return new Path(this._prim_part, this._prop_part) }
+
+    // this is SdfPath::AbsoluteRootPath() in OpenUSD
     static makeRootPath() { return new Path("/", "") }
 
+    // Append prim or variantSelection path(change internal state)
+    append_property(elem: string): Path {
+        if (elem.length === 0) {
+            this._valid = false
+            return this
+        }
+        if (elem[0] === '{') {
+            throw Error("TBD: variant chars are not supported yet.")
+        }
+        if (elem[0] === '[') {
+            throw Error("TBD: relational attribute paths are not supported yet.")
+        }
+        if (elem[0] === '.') {
+            throw Error("TBD: relative attribute paths are not supported yet.")
+        }
+        this._prop_part = elem
+        this._element = elem
+        return this
+    }
+    append_element(elem: string): Path {
+
+        if (elem.length === 0) {
+            this._valid = false
+            return this
+        }
+        if (elem[0] === '{') {
+            throw Error("TBD: variant chars are not supported yet.")
+        }
+        if (elem[0] === '[') {
+            throw Error("TBD: relational attribute paths are not supported yet.")
+        }
+        if (elem[0] === '.') {
+            throw Error("TBD: relative attribute paths are not supported yet.")
+        }
+
+        if ((this._prim_part.length == 1) && (this._prim_part[0] == '/')) {
+            this._prim_part += elem
+        } else {
+            // TODO: Validate element name.
+            this._prim_part += '/' + elem
+        }
+
+        this._element = elem
+        return this
+
+    }
+    append_prim(elem: string): Path { return this.append_element(elem) } // for legacy
+
+    // Const version. Does not change internal state.
+    // clone path and append property
+    AppendProperty(elem: string): Path {
+        return this.clone().append_property(elem)
+    }
+    AppendPrim(elem: string): Path {
+        return this.clone().append_prim(elem)
+    }
+    AppendElement(elem: string): Path {
+        return this.clone().append_element(elem)
+    }
+
     isValid() { return this._valid }
+    // TODO: add test
+    isEmpty() { return (this._prim_part.length === 0 && this._variant_part.length === 0 && this._prop_part.length === 0) }
+    // TODO: add test
+    getFullPathName() {
+        let s = ""
+        if (!this._valid) {
+            s += "#INVALID#"
+        }
+        s += this._prim_part
+        if (this._prop_part.length === 0) {
+            return s
+        }
+        s = `${s}.${this._prop_part}`
+        return s
+    }
     prim_part() { return this._prim_part }
     prop_part() { return this._prop_part }
 
