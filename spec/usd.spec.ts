@@ -16,16 +16,16 @@ import { CrateFile } from "../src/crate/CrateFile.ts"
 // readfields -> readcompressedint -> de
 
 describe("USD", function () {
-    it.only("all", function () {
+    it("all", function () {
         const buffer = readFileSync("cube.usdc")
         const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
         const reader = new Reader(data)
 
         const crate = new CrateFile(reader)
-        for (let i = 0; i < crate._paths!.length; ++i) {
-            const p = crate._paths![i]
-            console.log(`path[${i}] = ${p ? p.getFullPathName() : "undefined"}`)
-        }
+        // for (let i = 0; i < crate._paths!.length; ++i) {
+        //     const p = crate._paths![i]
+        //     console.log(`path[${i}] = ${p ? p.getFullPathName() : "undefined"}`)
+        // }
         expect(crate._paths).to.not.be.undefined
         expect(crate._paths).to.have.lengthOf(35)
         expect(crate._paths![0].getFullPathName()).to.equal("/")

@@ -17,6 +17,31 @@ interface BuildDecompressedPathsArg {
     // parentPath?: Path
 }
 
+// SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
+// is stored in Crate directly)
+enum SpecType {
+    Unknown,
+    Attribute,
+    Connection,
+    Expression,
+    Mapper,
+    MapperArg,
+    Prim,
+    PseudoRoot,
+    Relationship,
+    RelationshipTarget,
+    Variant,
+    VariantSet,
+    Invalid,  // or NumSpecTypes
+};
+
+// Spec describes the relation of a path(i.e. node) and field(e.g. vertex data)
+interface Spec {
+    path_index: number
+    fieldset_index: number
+    spec_type: SpecType
+}
+
 export class CrateFile {
     bootstrap: BootStrap
     toc: TableOfContents
@@ -29,8 +54,8 @@ export class CrateFile {
     _paths?: Path[]
     // _elemPaths?: Path[]
     // _nodes?: Node[]
+    _specs?: Spec[]
 
-    // specs
     constructor(reader: Reader) {
         this.bootstrap = new BootStrap(reader)
         reader.offset = this.bootstrap.tocOffset
@@ -40,6 +65,7 @@ export class CrateFile {
         this.readFields(reader)
         this.readFieldSets(reader)
         this.readPaths(reader)
+        this.readSpecs(reader)
     }
 
     readTokens(reader: Reader) {
@@ -158,52 +184,6 @@ export class CrateFile {
         // })
     }
 
-    // bool CrateReader::ReadPaths()
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    // num_paths	: read uint64_t
-
-    // _paths		: Path[num_paths]
-    // _elemPaths	: Path[num_paths]
-    // _nodes		: Node[num_paths]
-    // call:
-
-    // bool CrateReader::ReadCompressedPaths(const uint64_t maxNumPaths = num_paths)
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // type index = uint64_t
-    // numEncodedPaths    := read uint64_t
-    // pathIndexes         := read index[numEncodedPaths] ;; index in _paths
-    // elementTokenIndexes := read index[numEncodedPaths] ;; index in _tokens, when < 0, value is a prim property path
-    // jumps               := index[numEncodedPaths]
-    // visit_table	: bool[maxNumPaths]
-    // call:
-
-    // bool CrateReader::BuildDecompressedPathsImpl(BuildDecompressedPathsArg *arg)
-    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // hasChild = hasSibling = true
-    // while(hasChild || hasSibling)
-    //   for(thisIndex in startIndex..endIndex)
-    //     idx = pathIndexes[thisIndex];
-    //     jump = jumps[thisIndex]
-
-    //     if (!parentPath)
-    //       _paths[idx] = parentPath = rootPath = Path::make_root_path()
-    //     else
-    //       tokenIndex = elementTokenIndexes[thisIndex];
-    //       isPrimPropertyPath = false
-    //       if (tokenIndex<0) {
-    //       	tokenIndex = -tokenIndex
-    //       	isPrimPropertyPath = true
-    //       }
-    //       elemToken = _tokens[tokenIndex];
-    //       _paths[idx] =
-    //             isPrimPropertyPath ? parentPath.AppendProperty(elemToken)
-    //                                : parentPath.AppendElement(elemToken)
-    //       _elemPaths[idx] = Path(elemToken, "");
-
-    //       bool hasChild = jump > 0 || jump == -1
-    //       bool hasSibling = jump >= 0
-
     readPaths(reader: Reader) {
         //
         // bool CrateReader::ReadPaths()
@@ -274,7 +254,63 @@ export class CrateFile {
 
         // TODO:
         // Ensure decoded numEncodedPaths.
-        // // Now build node hierarchy.
+        // Now build node hierarchy. (really?)
+    }
+
+    readSpecs(reader: Reader) {
+        const section = this.toc.sections.get(SectionName.SPECS)
+        if (section === undefined) {
+            return
+        }
+        reader.offset = section.start
+
+        const num_specs = reader.getUint64()
+
+        this._specs = new Array(num_specs)
+
+        const workBufferSize = 4 + Math.floor((num_specs * 2 + 7) / 8) + num_specs * 4
+        const workingSpace = new Uint8Array(workBufferSize)
+
+        const path_indexes_size = reader.getUint64()
+        let comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, path_indexes_size)
+        reader.offset += path_indexes_size
+
+        let decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+        const pathIndexes = decodeIntegers(new DataView(workingSpace.buffer), num_specs)
+
+        // for(let i = 0; i < num_specs; ++i) {
+        //     console.log(`spec[${i}].path_index = ${pathIndexes[i]}`)
+        // }
+
+        const fieldset_indexes_size = reader.getUint64()
+        comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, fieldset_indexes_size)
+        reader.offset += fieldset_indexes_size
+
+        decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+        const fieldsetIndexes = decodeIntegers(new DataView(workingSpace.buffer), num_specs)
+
+        // for(let i = 0; i < num_specs; ++i) {
+        //     console.log(`spec[${i}].fieldset_index = ${fieldsetIndexes[i]}`)
+        // }
+
+        const spectype_size = reader.getUint64()
+        comp_buffer = new Uint8Array(reader._dataview.buffer, reader.offset, spectype_size)
+        reader.offset += spectype_size
+
+        decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+        const specTypeIndexes = decodeIntegers(new DataView(workingSpace.buffer), num_specs)
+
+        // for (let i = 0; i < num_specs; ++i) {
+        //     console.log(`spec[${i}].spec_type = ${specTypeIndexes[i]}`)
+        // }
+
+        for (let i = 0; i < num_specs; ++i) {
+            this._specs[i] = {
+                path_index: pathIndexes[i],
+                fieldset_index: fieldsetIndexes[i],
+                spec_type: specTypeIndexes[i] as SpecType
+            }
+        }
     }
 
     private BuildDecompressedPathsImpl(arg: BuildDecompressedPathsArg, parentPath: Path | undefined = undefined, curIndex: number = 0) {
@@ -284,10 +320,10 @@ export class CrateFile {
             const idx = arg.pathIndexes[thisIndex]
             const jump = arg.jumps[thisIndex]
 
-            console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
+            // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
             if (parentPath === undefined) {
                 parentPath = Path.makeRootPath()
-                console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
+                // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
@@ -304,7 +340,7 @@ export class CrateFile {
                 } else {
                     isPrimPropertyPath = false
                 }
-                console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
+                // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
 
                 if (tokenIndex >= this.tokens!.length) {
                     throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
