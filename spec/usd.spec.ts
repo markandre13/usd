@@ -16,7 +16,7 @@ import { CrateFile } from "../src/crate/CrateFile.ts"
 // readfields -> readcompressedint -> de
 
 describe("USD", function () {
-    it("all", function () {
+    it.only("all", function () {
         const buffer = readFileSync("cube.usdc")
         const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
         const reader = new Reader(data)
@@ -30,6 +30,8 @@ describe("USD", function () {
         expect(crate._paths).to.have.lengthOf(35)
         expect(crate._paths![0].getFullPathName()).to.equal("/")
         expect(crate._paths![1].getFullPathName()).to.equal("/root")
+       
+        // ( ... ) : field set
 
         // #usda 1.0
         // ( doc = "Blender v4.5.2 LTS", metersPerUnit = 1, upAxis = "Z", defaultPrim = "root" )

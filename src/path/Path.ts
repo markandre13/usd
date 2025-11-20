@@ -1,5 +1,7 @@
 import type { PathType } from "./PathType.ts"
 
+// OpenUSD has SdfPath and Sdf_PathNode
+
 export class Node {
     private parent = 0
     private _children = new Array<number>()
@@ -12,8 +14,6 @@ function is_variantElementName(name: string) {
     return name[0] === '{'
 }
 
-// * in OpenUSD this is called SdfPath: pxr/usd/sdf/path.h
-// 
 export class Path {
     private _prim_part: string = ""; // e.g. /Model/MyMesh, MySphere
     private _prop_part: string = ""; // e.g. visibility (`.` is not included)
@@ -61,7 +61,6 @@ export class Path {
         return this
     }
     append_element(elem: string): Path {
-
         if (elem.length === 0) {
             this._valid = false
             return this

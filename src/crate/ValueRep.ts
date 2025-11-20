@@ -5,6 +5,9 @@
 // data, such as ints, floats, enums, and special-case values of other types
 // (zero vectors, identity matrices, etc).  For values that aren't stored
 // inline, the 6 data bytes are the offset from the start of the file to the
+
+import { CrateDataType } from "./CrateDataType.ts"
+
 // value's location.
 export class ValueRep {
     private _buffer: Uint8Array
@@ -17,11 +20,23 @@ export class ValueRep {
     isArray() { return (this._buffer.at(this._offset + 7)! & 128) !== 0 }
     isInlined() { return (this._buffer.at(this._offset + 7)! & 64) !== 0 }
     isCompressed() { return (this._buffer.at(this._offset + 7)! & 32) !== 0 }
-    getPayload() {
+    getPayload(): bigint {
         const d = new DataView(this._buffer.buffer)
         return d.getBigUint64(this._offset, true) & 0xffffffffffffn
     }
-    toString() {
-        return `ty: ${this.getType()}(xxx), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
+    getDouble(): number {
+        const d = new DataView(this._buffer.buffer)
+        return d.getFloat32(this._offset, true)
     }
+    getIndex(): number {
+        return new Number(this.getPayload()).valueOf()
+    }
+
+    toString(): string {
+        return `ty: ${GetCrateDataType(this.getType()!)} ${this.getType()}(xxx), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
+    }
+}
+
+function GetCrateDataType(type_id: number) {
+    return CrateDataType[type_id]
 }

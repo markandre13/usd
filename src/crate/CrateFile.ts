@@ -6,6 +6,7 @@ import type { Reader } from "./Reader.ts"
 import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { ValueRep } from "./ValueRep.ts"
+import { CrateDataType } from "./CrateDataType.ts"
 
 interface BuildDecompressedPathsArg {
     pathIndexes: number[]
@@ -15,6 +16,32 @@ interface BuildDecompressedPathsArg {
     // startIndex: number // usually 0
     // endIndex: number // inclusive. usually pathIndexes.size() - 1
     // parentPath?: Path
+}
+
+class MyNode {
+    parent?: MyNode
+    children: MyNode[] = []
+
+    name: string
+    /** true mean this entry has a value */
+    prim: boolean
+
+    type!: SpecType
+
+    constructor(parent?: MyNode, name: string = "/", prim: boolean = false) {
+        this.parent = parent
+        if (parent !== undefined) {
+            parent.children.push(this)
+        }
+        this.name = name
+        this.prim = prim
+    }
+    print(indent: number = 0) {
+        console.log(`${"  ".repeat(indent)} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.type]}`)
+        for (const child of this.children) {
+            child.print(indent + 1)
+        }
+    }
 }
 
 // SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
@@ -46,15 +73,16 @@ export class CrateFile {
     bootstrap: BootStrap
     toc: TableOfContents
 
-    tokens?: string[]
-    strings?: StringIndex[]
-    fields?: Field[]
-    fieldset_indices?: number[]
+    tokens!: string[]
+    strings!: StringIndex[]
+    fields!: Field[]
+    fieldset_indices!: number[]
     // paths is the 3 following data structures?
-    _paths?: Path[]
+    _paths!: Path[]
     // _elemPaths?: Path[]
     // _nodes?: Node[]
-    _specs?: Spec[]
+    _mynodes!: MyNode[]
+    _specs!: Spec[]
 
     constructor(reader: Reader) {
         this.bootstrap = new BootStrap(reader)
@@ -66,6 +94,84 @@ export class CrateFile {
         this.readFieldSets(reader)
         this.readPaths(reader)
         this.readSpecs(reader)
+
+        this.BuildLiveFieldSets()
+
+
+        /// bool USDCReader::Impl::ReconstructStage(Stage *stage) {
+
+        const path_index_to_spec_index_map = new Map<number, number>()
+        for (let i = 0; i < this._specs!.length; i++) {
+            // console.log(`path index[${i}] -> spec index [${this._specs[i].path_index}]`)
+            path_index_to_spec_index_map.set(this._specs[i].path_index, i)
+        }
+
+        this.ReconstructPrimRecursively(-1, 0, undefined, 0, path_index_to_spec_index_map)
+        // stage->compute_absolute_prim_path_and_assign_prim_id();
+
+
+        // this._mynodes![0].print()
+
+        // for(let i=0; i<this.fields!.length; ++i) {
+        //     const f = this.fields![i]!
+        //     console.log(`fields[${i}] (${this.tokens![f.tokenIndex]}) = ${f.toString()}`)
+        // }
+    }
+
+    private ReconstructPrimRecursively(
+        parent: number,
+        current: number,
+        parentPrim: object | undefined,
+        level: number,
+        psmap: Map<number, number>
+    ) {
+        // const is_parent_variant = this._variantPrims.count(parent)
+        const is_parent_variant = false
+
+        this.ReconstructPrimNode(parent, current, level, is_parent_variant, psmap)
+    }
+
+    private ReconstructPrimNode(
+        parent: number,
+        current: number,
+        level: number,
+        is_parent_variant: boolean,
+        psmap: Map<number, number>
+    ) {
+        const spec_index = psmap.get(current)!
+        const spec = this._specs[spec_index]
+        if (spec.spec_type === SpecType.Attribute || spec.spec_type === SpecType.Relationship) {
+            // if (this._)
+            throw Error('yikes')
+        }
+        // console.log(`get ${spec.fieldset_index}`)
+        if (current === 0) {
+            if (spec.spec_type !== SpecType.PseudoRoot) {
+                throw Error("SpecType.PseudoRoot expected for root layer(Stage) element.")
+            }
+            this.ReconstrcutStageMeta(spec.fieldset_index)
+        }
+    }
+
+    private ReconstrcutStageMeta(fieldset_index: number) {
+        for(;this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
+            const idx = this.fieldset_indices[fieldset_index]
+            const field = this.fields[idx]
+            const token = this.tokens[field.tokenIndex]
+            switch(field.valueRep.getType()) {
+                case CrateDataType.Double:
+                    console.log(`${idx} ${token} = ${field.valueRep.getDouble()}`)
+                    break
+                case CrateDataType.Token:
+                    console.log(`${idx} ${token} = ${this.tokens[new Number(field.valueRep.getPayload()).valueOf()]}`)
+                    break
+                case CrateDataType.String:
+                    console.log(`${idx} ${token} = "${this.tokens[this.strings[field.valueRep.getIndex()]]}"`)
+                    break
+                default:
+                    console.log(`${idx} ${token} ${field}`)
+            }
+        }
     }
 
     readTokens(reader: Reader) {
@@ -200,6 +306,7 @@ export class CrateFile {
         this._paths = new Array<Path>(num_paths)
         const _elemPaths = new Array<Path>(num_paths)
         const _nodes = new Array<Node>(num_paths)
+        this._mynodes = new Array<MyNode>(num_paths)
 
         //
         // bool CrateReader::ReadCompressedPaths(const uint64_t maxNumPaths)
@@ -248,7 +355,9 @@ export class CrateFile {
             elementTokenIndexes,
             jumps
         }
-        this.BuildDecompressedPathsImpl(arg)
+
+        const node = this.BuildDecompressedPathsImpl(arg)
+        // node?.print()
 
         // print paths
 
@@ -310,11 +419,41 @@ export class CrateFile {
                 fieldset_index: fieldsetIndexes[i],
                 spec_type: specTypeIndexes[i] as SpecType
             }
+
+            // this._mynodes![pathIndexes[i]].type = specTypeIndexes[i] as SpecType
+            // this._mynodes[pathIndexes[i]].type = this.fieldset_indices[fieldsetIndexes]
         }
     }
 
-    private BuildDecompressedPathsImpl(arg: BuildDecompressedPathsArg, parentPath: Path | undefined = undefined, curIndex: number = 0) {
+    BuildLiveFieldSets() {
+        // ...
+
+        // for (const a of this.fieldset_indices!) {
+        //     if (a >= 0) {
+        //         console.log(`${a}\t${this.tokens[this.fields[a].tokenIndex]}`)
+        //     } else {
+        //         console.log("--------------")
+        //     }
+        //     console.log(``)
+        // }
+        // let sum = 0
+        // for(const item of this._live_fieldsets) {
+        //     console.log(`livefieldsets[${item.first.value}].count = ${item.second.length}`)
+        //     sum += item.second.length
+        //     for(const x of item.second) {
+
+        //     }
+        // }
+    }
+
+    private BuildDecompressedPathsImpl(
+        arg: BuildDecompressedPathsArg,
+        parentPath: Path | undefined = undefined,
+        parentNode: MyNode | undefined = undefined,
+        curIndex: number = 0
+    ) {
         let hasChild = true, hasSibling = true
+        let root: MyNode | undefined
         while (hasChild || hasSibling) {
             const thisIndex = curIndex++
             const idx = arg.pathIndexes[thisIndex]
@@ -323,11 +462,15 @@ export class CrateFile {
             // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
             if (parentPath === undefined) {
                 parentPath = Path.makeRootPath()
+                root = parentNode = new MyNode()
                 // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
+                this._mynodes![idx] = parentNode
                 this._paths![idx] = parentPath
+                // console.log(`path[${idx}] = /`)
+                // console.log('make root node /')
             } else {
                 if (thisIndex >= arg.elementTokenIndexes.length) {
                     throw Error(`Index exceeds elementTokenIndexes.length`)
@@ -346,6 +489,13 @@ export class CrateFile {
                     throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
                 }
                 const elemToken = this.tokens![tokenIndex]
+                // console.log(`path[${idx}] = ${parentPath._element} -> ${elemToken} (${parentNode?.name} -> ${elemToken})`)
+                // const node = new MyNode(thisNode, elemToken)
+                // console.log(`node ${parentNode?.name} add ${thisNode.name}`)
+                if (this._mynodes![idx] !== undefined) {
+                    throw Error("yikes")
+                }
+                this._mynodes![idx] = new MyNode(parentNode, elemToken, isPrimPropertyPath)
                 this._paths![idx] = isPrimPropertyPath ?
                     parentPath.AppendProperty(elemToken)
                     : parentPath.AppendElement(elemToken) // prim, variantSelection, etc.
@@ -358,11 +508,13 @@ export class CrateFile {
             if (hasChild) {
                 if (hasSibling) {
                     const siblingIndex = thisIndex + jump
-                    this.BuildDecompressedPathsImpl(arg, parentPath, siblingIndex)
+                    this.BuildDecompressedPathsImpl(arg, parentPath, parentNode, siblingIndex)
                 }
                 parentPath = this._paths![idx] // reset parent path
+                parentNode = this._mynodes![idx] // reset parent path
             }
         }
+        return root
     }
 }
 
