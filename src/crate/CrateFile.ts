@@ -22,17 +22,18 @@ class MyNode {
     parent?: MyNode
     children: MyNode[] = []
 
+    index: number
     name: string
     /** true mean this entry has a value */
     prim: boolean
-
     type!: SpecType
 
-    constructor(parent?: MyNode, name: string = "/", prim: boolean = false) {
+    constructor(parent?: MyNode, index: number = 0, name: string = "/", prim: boolean = false) {
         this.parent = parent
         if (parent !== undefined) {
             parent.children.push(this)
         }
+        this.index = index
         this.name = name
         this.prim = prim
     }
@@ -43,6 +44,13 @@ class MyNode {
         }
     }
 }
+
+enum Specifier {
+  Def,  // 0
+  Over,
+  Class,
+  Invalid
+};
 
 // SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
 // is stored in Crate directly)
@@ -110,7 +118,7 @@ export class CrateFile {
         // stage->compute_absolute_prim_path_and_assign_prim_id();
 
 
-        // this._mynodes![0].print()
+        this._mynodes![0].print()
 
         // for(let i=0; i<this.fields!.length; ++i) {
         //     const f = this.fields![i]!
@@ -129,6 +137,12 @@ export class CrateFile {
         const is_parent_variant = false
 
         this.ReconstructPrimNode(parent, current, level, is_parent_variant, psmap)
+
+        // traverse children
+        for(const child of this._mynodes[current].children) {
+            // console.log(`traverse child ${child.name}`)
+            this.ReconstructPrimRecursively(current, child.index, undefined, level+1, psmap)
+        }
     }
 
     private ReconstructPrimNode(
@@ -142,23 +156,48 @@ export class CrateFile {
         const spec = this._specs[spec_index]
         if (spec.spec_type === SpecType.Attribute || spec.spec_type === SpecType.Relationship) {
             // if (this._)
-            throw Error('yikes')
+            // This node is a Properties node. These are processed in
+            // ReconstructPrim(), so nothing to do here.
+            // console.log(`TODO: may have found a property node ${this._mynodes[current].name}`)
+            console.log(`---------- PROP ${this._mynodes[current].name}`)
+            this.ReconstructStageMeta(spec.fieldset_index)
+            return
         }
         // console.log(`get ${spec.fieldset_index}`)
         if (current === 0) {
             if (spec.spec_type !== SpecType.PseudoRoot) {
                 throw Error("SpecType.PseudoRoot expected for root layer(Stage) element.")
             }
-            this.ReconstrcutStageMeta(spec.fieldset_index)
+            this.ReconstructStageMeta(spec.fieldset_index)
+            return
+        }
+
+        switch (spec.spec_type) {
+            case SpecType.PseudoRoot:
+                throw Error("SpecType.PseudoRoot in a child node is not supported(yet)")
+            case SpecType.Prim: {
+                console.log(`---------- PRIM ${this._mynodes[current].name}`)
+                this.ParsePrimSpec()
+                this.ReconstructStageMeta(spec.fieldset_index)
+            } break
+            default:
+                throw Error('yikes')
         }
     }
 
-    private ReconstrcutStageMeta(fieldset_index: number) {
-        for(;this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
+    ParsePrimSpec() {
+
+    }
+
+    private ReconstructStageMeta(fieldset_index: number) {
+        for (; this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
             const idx = this.fieldset_indices[fieldset_index]
             const field = this.fields[idx]
             const token = this.tokens[field.tokenIndex]
-            switch(field.valueRep.getType()) {
+            switch (field.valueRep.getType()) {
+                case CrateDataType.Bool:
+                    console.log(`${idx} ${token} = ${field.valueRep.getBool()}`)
+                    break
                 case CrateDataType.Double:
                     console.log(`${idx} ${token} = ${field.valueRep.getDouble()}`)
                     break
@@ -167,6 +206,9 @@ export class CrateFile {
                     break
                 case CrateDataType.String:
                     console.log(`${idx} ${token} = "${this.tokens[this.strings[field.valueRep.getIndex()]]}"`)
+                    break
+                case CrateDataType.Specifier:
+                    console.log(`${idx} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
                     break
                 default:
                     console.log(`${idx} ${token} ${field}`)
@@ -462,7 +504,7 @@ export class CrateFile {
             // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
             if (parentPath === undefined) {
                 parentPath = Path.makeRootPath()
-                root = parentNode = new MyNode()
+                root = parentNode = new MyNode(undefined, idx)
                 // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
@@ -495,7 +537,7 @@ export class CrateFile {
                 if (this._mynodes![idx] !== undefined) {
                     throw Error("yikes")
                 }
-                this._mynodes![idx] = new MyNode(parentNode, elemToken, isPrimPropertyPath)
+                this._mynodes![idx] = new MyNode(parentNode, idx, elemToken, isPrimPropertyPath)
                 this._paths![idx] = isPrimPropertyPath ?
                     parentPath.AppendProperty(elemToken)
                     : parentPath.AppendElement(elemToken) // prim, variantSelection, etc.

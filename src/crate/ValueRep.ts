@@ -24,6 +24,9 @@ export class ValueRep {
         const d = new DataView(this._buffer.buffer)
         return d.getBigUint64(this._offset, true) & 0xffffffffffffn
     }
+    getBool(): boolean {
+        return this._buffer.at(this._offset) !== 0
+    }
     getDouble(): number {
         const d = new DataView(this._buffer.buffer)
         return d.getFloat32(this._offset, true)
