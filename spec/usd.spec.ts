@@ -31,6 +31,45 @@ describe("USD", function () {
         expect(crate._paths![0].getFullPathName()).to.equal("/")
         expect(crate._paths![1].getFullPathName()).to.equal("/root")
        
+        /*
+            openusd: /pxr/usd/bin/usdcat/usdcat.cpp
+            // stage = UsdStage::Open(input);
+            // layer = SdfLayer::FindOrOpen(input);
+
+            stage is the top. might be one file, or that one file might included other files
+
+            stage (file)
+              layer (file)
+                prims
+
+            stage presents the scenegraph, which is a tree of prims
+            stage
+              root
+                usd files
+                  prims
+
+            there's the python api!
+
+            # Create a new, empty USD stage where 3D scenes are assembled
+            Usd.Stage.CreateNew()
+            
+            # Open an existing USD file as a stage
+            Usd.Stage.Open()
+            
+            # Saves all layers in a USD stage
+            Usd.Stage.Save()
+
+            https://docs.nvidia.com/learn-openusd/latest/stage-setting/usd-modules.html
+
+            * The USD code repository is made up of four core packages: base, usd, imaging, and usdImaging.
+            * to read/write usd data, the packages base and usd are needed
+            * When authoring or querying USD data, you will almost always use a few common USD modules such as Usd, Sdf, and Gf along with some schema modules.
+            * Schemas are grouped into schema domains and each domain has its own module. The schema modules you use will depend on the type of scene description you’re working with. For example, UsdGeom for geometry data, UsdShade for materials and shaders, and UsdPhysics for physics scene description.
+
+
+
+         */
+
         // ( ... ) : field set
 
         // #usda 1.0
@@ -43,7 +82,11 @@ describe("USD", function () {
         //             normal3f[] normals = [(0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, -1, 0), (0, -1, 0), (0, -1, 0), (0, -1, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (-1, 0, 0), (0, 0, -1), (0, 0, -1), (0, 0, -1), (0, 0, -1), (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 0), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)](
         //                 interpolation = "faceVarying"
         //             )
-        //             int[] faceVertexIndices = [6, 2, 8, 9, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1, 10, 11, 9, 8, 4, 6, 9, 11, 2, 0, 10, 8, 0, 4, 11, 10]
+        //             int[] faceVertexIndices = [
+        //                 6, 2, 8, 9, 3,    2, 6, 7, 7, 6, 
+        //                 4, 5, 5, 1, 3,    7, 1, 0, 2, 3,
+        //                 5, 4, 0, 1, 10,  11, 9, 8, 4, 6,
+        //                 9, 11, 2, 0, 10,  8, 0, 4, 11, 10]
         //             int[] faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
         //             uniform token subdivisonScheme = "none"
         //             uniform bool doubleSided = 1

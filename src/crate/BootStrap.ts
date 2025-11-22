@@ -13,7 +13,6 @@ export class BootStrap {
         if (this.indent !== "PXR-USDC") {
             throw Error("Not a Pixar Universal Screen Description Crate (USDC) file")
         }
-
         this.version = {
             major: reader.getUint8(),
             minor: reader.getUint8(),
@@ -22,5 +21,7 @@ export class BootStrap {
         reader.offset += 5
 
         this.tocOffset = reader.getUint64()
+
+        console.log(`VERSION %o`, this.version)
     }
 }

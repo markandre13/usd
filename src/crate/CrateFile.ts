@@ -7,6 +7,7 @@ import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { ValueRep } from "./ValueRep.ts"
 import { CrateDataType } from "./CrateDataType.ts"
+import { hexdump } from "../detail/hexdump.ts"
 
 interface BuildDecompressedPathsArg {
     pathIndexes: number[]
@@ -38,7 +39,7 @@ class MyNode {
         this.prim = prim
     }
     print(indent: number = 0) {
-        console.log(`${"  ".repeat(indent)} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.type]}`)
+        console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.type]}`)
         for (const child of this.children) {
             child.print(indent + 1)
         }
@@ -46,10 +47,10 @@ class MyNode {
 }
 
 enum Specifier {
-  Def,  // 0
-  Over,
-  Class,
-  Invalid
+    Def,  // 0
+    Over,
+    Class,
+    Invalid
 };
 
 // SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
@@ -92,7 +93,10 @@ export class CrateFile {
     _mynodes!: MyNode[]
     _specs!: Spec[]
 
+    reader: Reader
+
     constructor(reader: Reader) {
+        this.reader = reader
         this.bootstrap = new BootStrap(reader)
         reader.offset = this.bootstrap.tocOffset
         this.toc = new TableOfContents(reader)
@@ -139,12 +143,13 @@ export class CrateFile {
         this.ReconstructPrimNode(parent, current, level, is_parent_variant, psmap)
 
         // traverse children
-        for(const child of this._mynodes[current].children) {
+        for (const child of this._mynodes[current].children) {
             // console.log(`traverse child ${child.name}`)
-            this.ReconstructPrimRecursively(current, child.index, undefined, level+1, psmap)
+            this.ReconstructPrimRecursively(current, child.index, undefined, level + 1, psmap)
         }
     }
 
+    // ReconstrcutStageMeta
     private ReconstructPrimNode(
         parent: number,
         current: number,
@@ -189,6 +194,7 @@ export class CrateFile {
 
     }
 
+    // tinyusdz ha most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value) {
     private ReconstructStageMeta(fieldset_index: number) {
         for (; this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
             const idx = this.fieldset_indices[fieldset_index]
@@ -197,6 +203,9 @@ export class CrateFile {
             switch (field.valueRep.getType()) {
                 case CrateDataType.Bool:
                     console.log(`${idx} ${token} = ${field.valueRep.getBool()}`)
+                    break
+                case CrateDataType.Float:
+                    console.log(`${idx} ${token} = ${field.valueRep.getFloat()}`)
                     break
                 case CrateDataType.Double:
                     console.log(`${idx} ${token} = ${field.valueRep.getDouble()}`)
@@ -209,6 +218,52 @@ export class CrateFile {
                     break
                 case CrateDataType.Specifier:
                     console.log(`${idx} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
+                    break
+                case CrateDataType.Int:
+                    if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        this.reader.offset = field.valueRep.getIndex()
+                        const n = this.reader.getUint64()
+                        const arr = new Array<number>(n)
+                        for (let i = 0; i < n; ++i) {
+                            arr[i] = this.reader.getInt32()
+                        }
+                        console.log(`${idx} ${token} = %o`, arr)
+                    } if (field.valueRep.isArray() && !field.valueRep.isInlined() && field.valueRep.isCompressed()) {
+                        this.reader.offset = field.valueRep.getIndex()
+                        const n = this.reader.getUint64()
+                        const compSize = this.reader.getUint64()
+                        const comp_buffer = new Uint8Array(this.reader._dataview.buffer, this.reader.offset, compSize)
+                        const workingSpaceSize = 4 + Math.floor((n * 2 + 7) / 8) + n * 4
+                        const workingSpace = new Uint8Array(workingSpaceSize)
+                        const decompSz = decompressFromBuffer(comp_buffer, workingSpace)
+                        const arr = decodeIntegers(new DataView(workingSpace.buffer), n)
+                        console.log(`${idx} ${token} = %o`, arr)
+                    } else {
+                        console.log(`${idx} ${token} ${field}`)
+                    }
+                    break
+                case CrateDataType.Vec3f: // TODO: this is not right
+                    if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        this.reader.offset = field.valueRep.getIndex()
+                        const n = this.reader.getUint64()
+                        const arr = new Array<number>(n * 3)
+                        for (let i = 0; i < n * 3; ++i) {
+                            arr[i] = this.reader.getFloat32()
+                        }
+                        console.log(`${idx} ${token} = %o`, arr)
+                    } else 
+                    if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {    
+                        this.reader.offset = field.valueRep.getIndex()
+                        const arr = new Array<number>(3)
+                        for (let i = 0; i < 3; ++i) {
+                            arr[i] = this.reader.getFloat32()
+                        }
+                        console.log(`${idx} ${token} = %o`, arr)
+                    } else if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} ${token} = %o`, field.valueRep.getVec3f())
+                    } else {
+                        console.log(`${idx} ${token} ${field} XXXX`)
+                    }
                     break
                 default:
                     console.log(`${idx} ${token} ${field}`)

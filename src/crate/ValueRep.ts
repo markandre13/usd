@@ -9,6 +9,7 @@
 import { CrateDataType } from "./CrateDataType.ts"
 
 // value's location.
+// FIXME: last two bytes are type info
 export class ValueRep {
     private _buffer: Uint8Array
     private _offset: number
@@ -27,14 +28,31 @@ export class ValueRep {
     getBool(): boolean {
         return this._buffer.at(this._offset) !== 0
     }
-    getDouble(): number {
+    getHalf(): number {
+        const d = new DataView(this._buffer.buffer)
+        return d.getFloat16(this._offset, true)
+    }
+    getFloat(): number {
         const d = new DataView(this._buffer.buffer)
         return d.getFloat32(this._offset, true)
     }
-    getIndex(): number {
-        return new Number(this.getPayload()).valueOf()
+    getDouble(): number {
+        const d = new DataView(this._buffer.buffer)
+        return d.getFloat32(this._offset, true) // FIXME: Float64 from 6 octets???
     }
-
+    // TODO: signed or unsigned?
+    getVec3f() {
+        const d = new DataView(this._buffer.buffer)
+        return [d.getUint8(this._offset), d.getUint8(this._offset+1), d.getUint8(this._offset+2)]
+    }
+    getIndex(): number {
+        // return new Number(this.getPayload()).valueOf()
+        const d = new DataView(this._buffer.buffer)
+        if (this._buffer.at(this._offset + 4) || this._buffer.at(this._offset + 5)) {
+            throw Error(`getIndex too large`)
+        }
+        return d.getUint32(this._offset, true)
+    }
     toString(): string {
         return `ty: ${GetCrateDataType(this.getType()!)} ${this.getType()}(xxx), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
     }
