@@ -1,4 +1,3 @@
-
 export enum CrateDataType {
     Bool = 1,
     UChar,

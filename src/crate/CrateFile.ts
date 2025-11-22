@@ -228,7 +228,7 @@ export class CrateFile {
                             arr[i] = this.reader.getInt32()
                         }
                         console.log(`${idx} ${token} = %o`, arr)
-                    } if (field.valueRep.isArray() && !field.valueRep.isInlined() && field.valueRep.isCompressed()) {
+                    } else if (field.valueRep.isArray() && !field.valueRep.isInlined() && field.valueRep.isCompressed()) {
                         this.reader.offset = field.valueRep.getIndex()
                         const n = this.reader.getUint64()
                         const compSize = this.reader.getUint64()
@@ -242,31 +242,69 @@ export class CrateFile {
                         console.log(`${idx} ${token} ${field}`)
                     }
                     break
-                case CrateDataType.Vec3f: // TODO: this is not right
+                case CrateDataType.Vec2f:
+                case CrateDataType.Vec3f:
+                case CrateDataType.Vec4f: {
+                    let size = 0
+                    switch (field.valueRep.getType()) {
+                        case CrateDataType.Vec2f:
+                            size = 2
+                            break
+                        case CrateDataType.Vec3f:
+                            size = 3
+                            break
+                        case CrateDataType.Vec4f:
+                            size = 4
+                            break
+                    }
                     if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
                         this.reader.offset = field.valueRep.getIndex()
                         const n = this.reader.getUint64()
-                        const arr = new Array<number>(n * 3)
-                        for (let i = 0; i < n * 3; ++i) {
+                        const arr = new Array<number>(n * size)
+                        for (let i = 0; i < n * size; ++i) {
                             arr[i] = this.reader.getFloat32()
                         }
                         console.log(`${idx} ${token} = %o`, arr)
-                    } else 
-                    if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {    
-                        this.reader.offset = field.valueRep.getIndex()
-                        const arr = new Array<number>(3)
-                        for (let i = 0; i < 3; ++i) {
-                            arr[i] = this.reader.getFloat32()
+                    } else
+                        if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                            this.reader.offset = field.valueRep.getIndex()
+                            const arr = new Array<number>(3)
+                            for (let i = 0; i < 3; ++i) {
+                                arr[i] = this.reader.getFloat32()
+                            }
+                            console.log(`${idx} ${token} = %o`, arr)
+                        } else if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                            console.log(`${idx} ${token} = %o`, field.valueRep.getVec3f())
+                        } else {
+                            console.log(`${idx} ${token} ${field}`)
                         }
-                        console.log(`${idx} ${token} = %o`, arr)
-                    } else if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} ${token} = %o`, field.valueRep.getVec3f())
-                    } else {
-                        console.log(`${idx} ${token} ${field} XXXX`)
+                } break
+                case CrateDataType.TokenVector: {
+                    this.reader.offset = field.valueRep.getIndex()
+                    const n = this.reader.getUint64()
+                    const arr = new Array<string>(n)
+                    for (let i = 0; i < n; ++i) {
+                        const idx = this.reader.getUint32()
+                        arr[i] = this.tokens[idx]
                     }
-                    break
+                    console.log(`${idx} ${token} = %o`, arr)
+                } break
+                case CrateDataType.Dictionary: {
+                    this.reader.offset = field.valueRep.getIndex()
+                    const n = this.reader.getUint64()
+                    for(let i=0; i<n; ++i) {
+                        const key = this.tokens[this.strings[this.reader.getUint32()]]
+                        const offset = this.reader.getUint64()
+                        // this.reader.offset += offset - 8
+                        // read ValueRep
+                        // UnpackValueRep
+                        console.log(`${key} = ? (offset=${offset})`)
+                        break
+                    }
+                    console.log(`${idx} token=${token} ${field} DICT ${n}`)
+                } break
                 default:
-                    console.log(`${idx} ${token} ${field}`)
+                    console.log(`${idx} token=${token} ${field}`)
             }
         }
     }

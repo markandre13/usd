@@ -54,7 +54,7 @@ export class ValueRep {
         return d.getUint32(this._offset, true)
     }
     toString(): string {
-        return `ty: ${GetCrateDataType(this.getType()!)} ${this.getType()}(xxx), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
+        return `type: ${GetCrateDataType(this.getType()!)} (${this.getType()}), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
     }
 }
 
