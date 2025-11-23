@@ -1,10 +1,10 @@
 import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
-import { decodeIntegers, decompressFromBuffer, readCompressedInts, type BuildDecompressedPathsArg } from "../src/index.ts"
+import { decodeIntegers, decompressFromBuffer, readCompressedInts, UsdStage, type BuildDecompressedPathsArg } from "../src/index.ts"
 import { Path } from "../src/path/Path.ts"
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
-import { CrateFile } from "../src/crate/CrateFile.ts"
+import { CrateFile, SpecType } from "../src/crate/CrateFile.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -16,7 +16,7 @@ import { CrateFile } from "../src/crate/CrateFile.ts"
 // readfields -> readcompressedint -> de
 
 describe("USD", function () {
-    it.only("all", function () {
+    it("all", function () {
         const buffer = readFileSync("cube.usdc")
         const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
         const reader = new Reader(data)
@@ -49,6 +49,39 @@ describe("USD", function () {
                   prims
 
             there's the python api!
+
+            from pxr import Usd
+            stage = Usd.Stage.CreateNew('HelloWorldRedux.usda')
+            xform = stage.DefinePrim('/hello', 'Xform')
+            sphere = stage.DefinePrim('/hello/world', 'Sphere')
+            stage.GetRootLayer().Save()
+
+            #usda 1.0
+
+            def Xform "hello"
+            {
+                def Sphere "world"
+                {
+                }
+            }
+
+            from pxr import Usd, Vt
+            stage = Usd.Stage.Open('HelloWorld.usda')
+            xform = stage.GetPrimAtPath('/hello')
+            sphere = stage.GetPrimAtPath('/hello/world')
+            
+            xform.GetPropertyNames()
+
+            >>> extentAttr = sphere.GetAttribute('extent')
+            >>> extentAttr.Get()
+            Vt.Vec3fArray(2, (Gf.Vec3f(-1.0, -1.0, -1.0), Gf.Vec3f(1.0, 1.0, 1.0)))
+
+            >>> radiusAttr = sphere.GetAttribute('radius')
+            >>> radiusAttr.Set(2)
+            True
+            >>> extentAttr.Set(extentAttr.Get() * 2)
+
+            usd-core
 
             # Create a new, empty USD stage where 3D scenes are assembled
             Usd.Stage.CreateNew()
@@ -123,6 +156,45 @@ describe("USD", function () {
         //         asset inputs:texture:file = @./textures/color_121212.hdr@
         //     }
         // }
+    })
+
+    describe("API", function() {
+        it.only("xxx", function() {
+            // from pxr import Usd, UsdGeom
+            // stage = Usd.Stage.CreateNew('HelloWorld.usda')
+            // xformPrim = UsdGeom.Xform.Define(stage, '/hello')
+            // spherePrim = UsdGeom.Sphere.Define(stage, '/hello/world')
+            // stage.GetRootLayer().Save()
+
+            const buffer = readFileSync("cube.usdc")
+            const stage = new UsdStage(buffer)
+
+            console.log(`=======================================`)
+
+            // stage.getPrimAtPath("/")
+            const mesh = stage.getPrimAtPath("/root/Cube/Mesh")
+            expect(mesh?.name).to.equal("Mesh")
+            // mesh!.getAttribute("extend")
+            const extent = mesh?.getAttribute("extent")
+            expect(extent).to.not.be.undefined
+
+            const spec = stage._crate._specs[extent!.spec_index!]
+            console.log(SpecType[spec.spec_type])
+            stage._crate.ReconstructStageMeta(spec.fieldset_index)
+
+            // stage._crate.
+
+            // console.log(mesh?.getAttribute("extent"))
+            // mesh?.print()
+
+            // def <type> <name> ( ... ) { ... }
+
+            //  def Xform "root" ( ... ) {
+            //     def Xform "Cube" {
+            //         def Mesh "Mesh" ( act
+
+            // https://openusd.org/release/api/class_usd_geom_mesh.html
+        })
     })
 
     describe("detail", function () {

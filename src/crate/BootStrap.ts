@@ -22,6 +22,6 @@ export class BootStrap {
 
         this.tocOffset = reader.getUint64()
 
-        console.log(`VERSION %o`, this.version)
+        // console.log(`VERSION %o`, this.version)
     }
 }

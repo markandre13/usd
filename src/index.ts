@@ -3,13 +3,12 @@
 import { compressBound, decompressBlock } from "lz4js"
 import { hexdump } from "./detail/hexdump.ts"
 import { Path } from "./path/Path.ts"
-import type { Reader } from "./crate/Reader.ts"
+import { Reader } from "./crate/Reader.js"
+import { CrateFile, MyNode } from "./crate/CrateFile.ts"
 
 type Index = number
 export type StringIndex = Index
 export type TokenIndex = Index
-
-
 
 // src/integerCoding.cpp: _DecompressIntegers(...)
 export function readCompressedInts(reader: Reader, numInts: number) {
@@ -124,5 +123,42 @@ export function decompressFromBuffer(src: Uint8Array, dst: Uint8Array) {
         return n
     } else {
         throw Error("yikes")
+    }
+}
+
+export class UsdStage {
+    _crate: CrateFile
+    constructor(buffer: Buffer) {
+        const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
+        const reader = new Reader(data)
+        this._crate = new CrateFile(reader)
+
+    }
+    getPrimAtPath(path: string) {
+        if (path[0] !== '/') {
+            throw Error('only absolute paths are implemented')
+        }
+        const s = path.split('/').splice(1)
+        // console.log(`TRAVERSE %o (${path})`, s)
+        let i: MyNode | undefined = this._crate._mynodes[0]
+        for(const t of s) {
+            if (i === undefined) {
+                throw Error(`path '${path}' not found`)
+            }
+            // console.log(`FOUND ${i.name}, LOOKUP '${t}'`)
+            i = i.getChildPrim(t)
+        }
+        
+        // if (i !== undefined) {
+        //     console.log(`FOUND NOW %o`, i.name)
+        // } else {
+        //     console.log(`FOUND NOT`)
+        // }
+        return i
+        // console.log(this._crate._mynodes[0].name)
+        // s s.splice(1)
+        // for(const child of this._crate._mynodes[0].children) {
+        //     console.log(`    ${child.name}`)
+        // }
     }
 }

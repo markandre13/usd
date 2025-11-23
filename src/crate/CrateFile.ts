@@ -20,11 +20,12 @@ interface BuildDecompressedPathsArg {
     // parentPath?: Path
 }
 
-class MyNode {
+export class MyNode {
     parent?: MyNode
     children: MyNode[] = []
 
     index: number
+    spec_index?: number
     name: string
     /** true mean this entry has a value */
     prim: boolean
@@ -45,16 +46,38 @@ class MyNode {
             child.print(indent + 1)
         }
     }
+    getChildPrim(name: string): MyNode | undefined {
+        for (const child of this.children) {
+            if (!child.prim) {
+                continue
+            }
+            if (child.name === name) {
+                return child
+            }
+        }
+        return undefined
+    }
+    getAttribute(name: string) {
+        for (const child of this.children) {
+            if (child.prim) {
+                continue
+            }
+            if (child.name === name) {
+                return child
+            }
+        }
+        return undefined
+    }
 }
 
-enum Specifier {
+export enum Specifier {
     Def,  // 0
     Over,
     Class,
     Invalid
 };
 
-enum Variability {
+export enum Variability {
     Varying,  // 0
     Uniform,
     Config,
@@ -63,7 +86,7 @@ enum Variability {
 
 // SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
 // is stored in Crate directly)
-enum SpecType {
+export enum SpecType {
     Unknown,
     Attribute,
     Connection,
@@ -167,12 +190,18 @@ export class CrateFile {
     ) {
         const spec_index = psmap.get(current)!
         const spec = this._specs[spec_index]
+
+        if (this._mynodes[current].spec_index !== undefined) {
+            throw Error(`yikes: mynodes[${current}].spec_index = ${this._mynodes[current].spec_index}, but wanted to set to ${spec_index}`)
+        }
+        this._mynodes[current].spec_index = spec_index
+
         if (spec.spec_type === SpecType.Attribute || spec.spec_type === SpecType.Relationship) {
             // if (this._)
             // This node is a Properties node. These are processed in
             // ReconstructPrim(), so nothing to do here.
             // console.log(`TODO: may have found a property node ${this._mynodes[current].name}`)
-            console.log(`---------- PROP ${this._mynodes[current].name}`)
+            console.log(`---------- PROP ${this._mynodes[current].name} (spec.fieldset_index=${spec.fieldset_index})`)
             this.ReconstructStageMeta(spec.fieldset_index)
             return
         }
@@ -203,7 +232,7 @@ export class CrateFile {
     }
 
     // tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value) {
-    private ReconstructStageMeta(fieldset_index: number) {
+    ReconstructStageMeta(fieldset_index: number) {
         for (; this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
             const idx = this.fieldset_indices[fieldset_index]
             const field = this.fields[idx]
@@ -367,7 +396,7 @@ export class CrateFile {
                         const read = () => {
                             const n = this.reader.getUint64()
                             const arr = new Array<string>(n)
-                            for(let i=0; i<n; ++i) {
+                            for (let i = 0; i < n; ++i) {
                                 arr[i] = this.tokens[this.reader.getUint32()]
                             }
                             return arr
@@ -403,7 +432,7 @@ export class CrateFile {
                         const read = () => {
                             const n = this.reader.getUint64()
                             const arr = new Array<Path>(n)
-                            for(let i=0; i<n; ++i) {
+                            for (let i = 0; i < n; ++i) {
                                 arr[i] = this._paths[this.reader.getUint32()]
                             }
                             return arr
@@ -724,7 +753,7 @@ export class CrateFile {
             // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
             if (parentPath === undefined) {
                 parentPath = Path.makeRootPath()
-                root = parentNode = new MyNode(undefined, idx)
+                root = parentNode = new MyNode(undefined, idx, "/", true)
                 // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
@@ -741,9 +770,9 @@ export class CrateFile {
                 let isPrimPropertyPath: boolean
                 if (tokenIndex < 0) {
                     tokenIndex = -tokenIndex
-                    isPrimPropertyPath = true
-                } else {
                     isPrimPropertyPath = false
+                } else {
+                    isPrimPropertyPath = true
                 }
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
 
