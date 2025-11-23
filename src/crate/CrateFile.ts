@@ -6,8 +6,9 @@ import type { Reader } from "./Reader.ts"
 import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { ValueRep } from "./ValueRep.ts"
-import { CrateDataType } from "./CrateDataType.ts"
+import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import { hexdump } from "../detail/hexdump.ts"
+import { join } from "path"
 
 interface BuildDecompressedPathsArg {
     pathIndexes: number[]
@@ -50,6 +51,13 @@ enum Specifier {
     Def,  // 0
     Over,
     Class,
+    Invalid
+};
+
+enum Variability {
+    Varying,  // 0
+    Uniform,
+    Config,
     Invalid
 };
 
@@ -122,7 +130,7 @@ export class CrateFile {
         // stage->compute_absolute_prim_path_and_assign_prim_id();
 
 
-        this._mynodes![0].print()
+        // this._mynodes![0].print()
 
         // for(let i=0; i<this.fields!.length; ++i) {
         //     const f = this.fields![i]!
@@ -194,7 +202,7 @@ export class CrateFile {
 
     }
 
-    // tinyusdz ha most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value) {
+    // tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value) {
     private ReconstructStageMeta(fieldset_index: number) {
         for (; this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
             const idx = this.fieldset_indices[fieldset_index]
@@ -211,13 +219,29 @@ export class CrateFile {
                     console.log(`${idx} ${token} = ${field.valueRep.getDouble()}`)
                     break
                 case CrateDataType.Token:
-                    console.log(`${idx} ${token} = ${this.tokens[new Number(field.valueRep.getPayload()).valueOf()]}`)
+                    if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} ${token} = ${this.tokens[field.valueRep.getIndex()]}`)
+                    } else if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        this.reader.offset = field.valueRep.getIndex()
+                        const n = this.reader.getUint64()
+                        const arr = new Array<string>(n)
+                        for (let i = 0; i < n; ++i) {
+                            arr[i] = this.tokens[this.reader.getInt32()]
+                        }
+                        console.log(`${idx} ${token} = %o`, arr)
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
                     break
                 case CrateDataType.String:
                     console.log(`${idx} ${token} = "${this.tokens[this.strings[field.valueRep.getIndex()]]}"`)
                     break
                 case CrateDataType.Specifier:
-                    console.log(`${idx} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
+                    if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
                     break
                 case CrateDataType.Int:
                     if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
@@ -289,20 +313,123 @@ export class CrateFile {
                     }
                     console.log(`${idx} ${token} = %o`, arr)
                 } break
+                case CrateDataType.AssetPath: {
+                    if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} ${token} = "${this.tokens[field.valueRep.getIndex()]}"`)
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
+                } break
+                case CrateDataType.Variability: {
+                    // uniform token info:id = "UsdPreviewSurface"
+                    if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        const v = field.valueRep.getIndex() as Variability
+                        console.log(`${idx} ${token} = ${Variability[v]}`)
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
+                    // const idx = field.valueRep.getIndex()
+                    // console.log(`  idx=${idx}`)
+                    // this.reader.offset = idx
+                    // const n = this.reader.getUint64()
+                    // console.log(`  n=${n}`)
+                    // let txt = ""
+                    // for(let i=0; i<n; ++i) {
+                    //     const keyIdx = this.reader.getUint32()
+                    //     const valueIDx = this.reader.getUint32()
+                    //     console.log(`    ${keyIdx} = ${valueIDx}`)
+                    //     // const key = this.tokens[this.reader.getUint32()]
+                    //     // const value = this.tokens[this.reader.getUint32()]
+                    //     // txt = `${txt} "${key}" = "${value}", `
+                    // }
+                    // console.log(`${idx} ${token} = ${txt} <<<<<<<<<<<<<<<<<<<<<<<<<`)
+                } break
                 case CrateDataType.Dictionary: {
                     this.reader.offset = field.valueRep.getIndex()
                     const n = this.reader.getUint64()
-                    for(let i=0; i<n; ++i) {
+                    for (let i = 0; i < n; ++i) {
                         const key = this.tokens[this.strings[this.reader.getUint32()]]
                         const offset = this.reader.getUint64()
                         // this.reader.offset += offset - 8
                         // read ValueRep
-                        // UnpackValueRep
+                        // UnpackValueRep // NOTE: just reading the ValueRep might be enough if I implement on-demand read
                         console.log(`${key} = ? (offset=${offset})`)
                         break
                     }
                     console.log(`${idx} token=${token} ${field} DICT ${n}`)
                 } break
+                case CrateDataType.TokenListOp:
+                    if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} token = ${token}`)
+                        this.reader.offset = field.valueRep.getIndex()
+                        const hdr = new ListOpHeader(this.reader)
+
+                        const read = () => {
+                            const n = this.reader.getUint64()
+                            const arr = new Array<string>(n)
+                            for(let i=0; i<n; ++i) {
+                                arr[i] = this.tokens[this.reader.getUint32()]
+                            }
+                            return arr
+                        }
+                        if (hdr.isExplicit()) {
+                            console.log(`  explicit: %o`, read())
+                        }
+                        if (hdr.hasAddedItems()) {
+                            console.log(`  add: %o`, read())
+                        }
+                        if (hdr.hasPrependedItems()) {
+                            console.log(`  prepend: %o`, read())
+                        }
+                        if (hdr.hasAppendedItems()) {
+                            console.log(`  append: %o`, read())
+                        }
+                        if (hdr.hasDeletedItems()) {
+                            console.log(`  delete: %o`, read())
+                        }
+                        if (hdr.hasOrderedItems()) {
+                            console.log(`  order: %o`, read())
+                        }
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
+                    break
+                case CrateDataType.PathListOp:
+                    if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
+                        console.log(`${idx} token = ${token}`)
+                        this.reader.offset = field.valueRep.getIndex()
+                        const hdr = new ListOpHeader(this.reader)
+
+                        const read = () => {
+                            const n = this.reader.getUint64()
+                            const arr = new Array<Path>(n)
+                            for(let i=0; i<n; ++i) {
+                                arr[i] = this._paths[this.reader.getUint32()]
+                            }
+                            return arr
+                        }
+                        if (hdr.isExplicit()) {
+                            console.log(`  explicit: [${read().join(", ")}]`)
+                        }
+                        if (hdr.hasAddedItems()) {
+                            console.log(`  add: [${read().join(", ")}]`)
+                        }
+                        if (hdr.hasPrependedItems()) {
+                            console.log(`  prepend: [${read().join(", ")}]`)
+                        }
+                        if (hdr.hasAppendedItems()) {
+                            console.log(`  append: [${read().join(", ")}]`)
+                        }
+                        if (hdr.hasDeletedItems()) {
+                            console.log(`  delete: [${read().join(", ")}]`)
+                        }
+                        if (hdr.hasOrderedItems()) {
+                            console.log(`  order: [${read().join(", ")}]`)
+                        }
+                    } else {
+                        console.log(`${idx} token=${token} ${field}`)
+                    }
+                    break
                 default:
                     console.log(`${idx} token=${token} ${field}`)
             }

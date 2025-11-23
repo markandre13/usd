@@ -37,6 +37,7 @@ export class Path {
     }
 
     clone() { return new Path(this._prim_part, this._prop_part) }
+    toString() { return this.getFullPathName() }
 
     // this is SdfPath::AbsoluteRootPath() in OpenUSD
     static makeRootPath() { return new Path("/", "") }
