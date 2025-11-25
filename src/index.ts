@@ -139,18 +139,18 @@ export class UsdStage {
         if (path[0] !== '/') {
             throw Error('only absolute paths are implemented')
         }
-        const s = path.split('/').splice(1)
+        const pathSegments = path.split('/').splice(1)
         // console.log(`TRAVERSE %o (${path})`, s)
-        let i: UsdNode | undefined = this._crate._nodes[0]
-        for(const t of s) {
-            if (i === undefined) {
+        let node: UsdNode | undefined = this._crate._nodes[0]
+        for(const segment of pathSegments) {
+            if (node === undefined) {
                 throw Error(`path '${path}' not found`)
             }
-            if (t.length === 0) {
+            if (segment.length === 0) {
                 break
             }
             // console.log(`FOUND ${i.name}, LOOKUP '${t}'`)
-            i = i.getChildPrim(t)
+            node = node.getChildPrim(segment)
         }
         
         // if (i !== undefined) {
@@ -158,11 +158,6 @@ export class UsdStage {
         // } else {
         //     console.log(`FOUND NOT`)
         // }
-        return i
-        // console.log(this._crate._mynodes[0].name)
-        // s s.splice(1)
-        // for(const child of this._crate._mynodes[0].children) {
-        //     console.log(`    ${child.name}`)
-        // }
+        return node
     }
 }

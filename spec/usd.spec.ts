@@ -4,9 +4,7 @@ import { decodeIntegers, decompressFromBuffer, readCompressedInts, UsdStage } fr
 import { Path } from "../src/path/Path.ts"
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
-import { CrateFile } from "../src/crate/CrateFile.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
-import type { ValueRep } from "../src/crate/ValueRep.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -27,19 +25,36 @@ import type { ValueRep } from "../src/crate/ValueRep.ts"
 
 describe("USD", function () {
     it("all", function () {
-        const buffer = readFileSync("cube.usdc")
-        const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
-        const reader = new Reader(data)
 
-        const crate = new CrateFile(reader)
-        // for (let i = 0; i < crate._paths!.length; ++i) {
-        //     const p = crate._paths![i]
-        //     console.log(`path[${i}] = ${p ? p.getFullPathName() : "undefined"}`)
-        // }
-        expect(crate._paths).to.not.be.undefined
-        expect(crate._paths).to.have.lengthOf(35)
-        expect(crate._paths![0].getFullPathName()).to.equal("/")
-        expect(crate._paths![1].getFullPathName()).to.equal("/root")
+        const buffer = readFileSync("spec/cube.usdc")
+        const stage = new UsdStage(buffer)
+
+        // expect(stage._crate._paths).to.not.be.undefined
+        // expect(stage._crate._paths).to.have.lengthOf(35)
+        // expect(stage._crate._paths![0].getFullPathName()).to.equal("/")
+        // expect(stage._crate._paths![1].getFullPathName()).to.equal("/root")
+
+        const pseudoRoot = stage.getPrimAtPath("/")!
+        expect(pseudoRoot).to.not.be.undefined
+        expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
+
+        const mesh = stage.getPrimAtPath("/root/Cube/Mesh")!
+        expect(mesh).to.not.be.undefined
+        expect(mesh.getType()).to.equal(SpecType.Prim)
+
+        const faceVertexIndices = mesh.getAttribute("faceVertexIndices")!
+        expect(faceVertexIndices).to.not.be.undefined
+        expect(faceVertexIndices.getType()).to.equal(SpecType.Attribute)
+
+        const materialBinding = mesh.getRelationship("material:binding")!
+        expect(materialBinding).to.not.be.undefined
+        expect(materialBinding.getType()).to.equal(SpecType.Relationship)
+        // console.log(JSON.stringify(materialBinding, undefined, 4))
+
+        // console.log(JSON.stringify(pseudoRoot, undefined))
+
+        const json = JSON.parse(readFileSync("spec/cube.json").toString())
+        expect(pseudoRoot.toJSON()).to.deep.equal(json)
 
         /*
             openusd: /pxr/usd/bin/usdcat/usdcat.cpp
@@ -108,9 +123,6 @@ describe("USD", function () {
             * to read/write usd data, the packages base and usd are needed
             * When authoring or querying USD data, you will almost always use a few common USD modules such as Usd, Sdf, and Gf along with some schema modules.
             * Schemas are grouped into schema domains and each domain has its own module. The schema modules you use will depend on the type of scene description you’re working with. For example, UsdGeom for geometry data, UsdShade for materials and shaders, and UsdPhysics for physics scene description.
-
-
-
          */
 
         // ( ... ) : field set
@@ -166,104 +178,6 @@ describe("USD", function () {
         //         asset inputs:texture:file = @./textures/color_121212.hdr@
         //     }
         // }
-    })
-
-    describe("API", function () {
-        it.only("dump json", function() {
-            const buffer = readFileSync("cube.usdc")
-            const stage = new UsdStage(buffer)
-
-            console.log(`=======================================`)
-            const pseudoRoot = stage.getPrimAtPath("/")!
-            expect(pseudoRoot).to.not.be.undefined
-            expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
-
-            console.log(JSON.stringify(pseudoRoot, undefined, 4))
-        })
-        // to compare with the output of ./tusdcat
-        // LEARNED: mapping from usdc to usda is not 1:1
-        it("dump usda", function () {
-            const buffer = readFileSync("cube.usdc")
-            const stage = new UsdStage(buffer)
-
-            console.log(`=======================================`)
-
-            console.log("#usda 1.0")
-
-            //
-            // ( doc = "Blender v4.5.2 LTS", metersPerUnit = 1, upAxis = "Z", defaultPrim = "root" )
-            //
-            const pseudoRoot = stage.getPrimAtPath("/")!
-            expect(pseudoRoot).to.not.be.undefined
-            expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
-            const fields = pseudoRoot.getFields()
-
-            function fieldsToString(fields: Map<string, ValueRep>) {
-                const docMetaAttributeStrings = fields!.entries()
-                    .filter(([key, rep]) => !["specifier", "typeName", "primChildren", "properties"].includes(key))
-                    .map(([key, rep]) => {
-                        if (key === "documentation") {
-                            key = "doc"
-                        }
-                        const value = rep.getValue(stage._crate)
-                        return `${key} = ${JSON.stringify(value)}`
-                    })
-                const arr = Array.from(docMetaAttributeStrings)
-                return arr.length === 0 ? "" : `( ${arr.join(", ")} )`
-            }
-
-            console.log(fieldsToString(fields))
-
-            //
-            // def Xform "root" ( customData = { dictionary Blender = { bool generated = 1 } } ) {
-            //
-            // for (const child of pseudoRoot.children) {
-            const child = pseudoRoot.children[0].children[0]
-            switch (child.getType()) {
-                case SpecType.Prim:
-                    console.log(`def ${child.getField("typeName")?.getValue(stage._crate)} "${child.name}" ${fieldsToString(child.getFields())}`)
-                    break
-            }
-            // console.log(child)
-            // }
-        })
-        it("xxx", function () {
-            // from pxr import Usd, UsdGeom
-            // stage = Usd.Stage.CreateNew('HelloWorld.usda')
-            // xformPrim = UsdGeom.Xform.Define(stage, '/hello')
-            // spherePrim = UsdGeom.Sphere.Define(stage, '/hello/world')
-            // stage.GetRootLayer().Save()
-
-            const buffer = readFileSync("cube.usdc")
-            const stage = new UsdStage(buffer)
-
-            console.log(`=======================================`)
-
-            // stage.getPrimAtPath("/")
-            const mesh = stage.getPrimAtPath("/root/Cube/Mesh")
-            expect(mesh).to.not.be.undefined
-            expect(mesh?.name).to.equal("Mesh")
-
-            const extent = mesh?.getAttribute("extent")
-            expect(extent).to.not.be.undefined
-
-            // extent.getPropertyNames()
-
-            extent!.foo()
-
-            // stage._crate.
-
-            // console.log(mesh?.getAttribute("extent"))
-            // mesh?.print()
-
-            // def <type> <name> ( ... ) { ... }
-
-            //  def Xform "root" ( ... ) {
-            //     def Xform "Cube" {
-            //         def Mesh "Mesh" ( act
-
-            // https://openusd.org/release/api/class_usd_geom_mesh.html
-        })
     })
 
     describe("detail", function () {
@@ -493,9 +407,5 @@ describe("USD", function () {
         })
         // describe("isEmpty()")
         // describe("isPrimPropertyPath()")
-    })
-
-    it("BuildDecompressedPathsImpl()", function () {
-
     })
 })

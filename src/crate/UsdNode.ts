@@ -29,6 +29,12 @@ export class UsdNode {
     getType(): SpecType {
         return this.crate._specs[this.spec_index!].spec_type
     }
+    getFullPathName(): string {
+        if (this.parent) {
+            return `${this.parent.getFullPathName()}/${this.name}`
+        }
+        return ""
+    }
     traverse(block: (node: UsdNode) => void) {
         block(this)
         for (const child of this.children) {
@@ -55,6 +61,17 @@ export class UsdNode {
     getAttribute(name: string) {
         for (const child of this.children) {
             if (child.getType() !== SpecType.Attribute) {
+                continue
+            }
+            if (child.name === name) {
+                return child
+            }
+        }
+        return undefined
+    }
+    getRelationship(name: string) {
+        for (const child of this.children) {
+            if (child.getType() !== SpecType.Relationship) {
                 continue
             }
             if (child.name === name) {
@@ -96,18 +113,25 @@ export class UsdNode {
         const fields = this.getFields()
         if (fields.size > 0) {
             result.fields = {}
-            for(const [key, value] of fields) {
-                result.fields[key] = {
-                    type: CrateDataType[value.getType()!],
-                    inline: value.isInlined(),
-                    array: value.isArray(),
-                    compressed: value.isCompressed(),
-                    value: value.getValue(this.crate)
-                }
+            for (const [key, value] of fields) {
+                // const v = value.getValue(this.crate)
+                // if (v === undefined) {
+                //     console.log(`ValueRep.getValue(): for ${this.getFullPathName()}.${key} not implemented yet: type: ${CrateDataType[value.getType()]}, array: ${value.isArray()}, inline: ${value.isInlined()}, compressed: ${value.isCompressed()}`)
+                //     // console.log(value.toString())
+                // }
+                result.fields[key] = value.toJSON(this, key)
+
+                // {
+                //     type: CrateDataType[value.getType()!],
+                //     inline: value.isInlined(),
+                //     array: value.isArray(),
+                //     compressed: value.isCompressed(),
+                //     value: v
+                // }
             }
         }
         if (this.children.length > 0) {
-            result.children = this.children.map( child => child.toJSON())
+            result.children = this.children.map(child => child.toJSON())
         }
         return result
 
