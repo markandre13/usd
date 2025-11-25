@@ -1,14 +1,64 @@
 import { BootStrap } from "./BootStrap.ts"
 import { Field } from "./Field.ts"
 import { decompressFromBuffer, readCompressedInts, decodeIntegers, type StringIndex } from "../index.ts"
-import { Node, Path } from "../path/Path.ts"
+import { Path } from "../path/Path.ts"
 import type { Reader } from "./Reader.ts"
 import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { ValueRep } from "./ValueRep.ts"
 import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
-import { hexdump } from "../detail/hexdump.ts"
-import { join } from "path"
+import { UsdNode } from "./UsdNode.ts"
+import { SpecType } from "./SpecType.js"
+import type { Spec } from "./Spec.ts"
+import { Variability } from "./Variability.ts"
+import { Specifier } from "./Specifier.ts"
+
+// https://docs.nvidia.com/learn-openusd/latest/stage-setting/index.html
+// stage, layer
+// the tree of nodes contains prim and attribute
+// nodes have fields: fieldset, field
+
+// stage.DefinePrim(path, prim_type)
+// UsdGeom.Xform.Define(stage, path)
+// prim.GetChildren()
+// prim.GetTypeName()
+// prim.GetProperties()
+
+// stage: Usd.Stage = Usd.Stage.CreateNew("_assets/prims.usda")
+// # Define a new primitive at the path "/hello" on the current stage:
+// stage.definePrim("/hello")
+// # Define a new primitive at the path "/world" on the current stage with the prim type, Sphere.
+// stage.definePrim("/world", "Sphere")
+// stage.save()
+// #usda 1.0
+// def "hello"
+// {
+// }
+// def Sphere "world"
+// {
+// }
+
+// from pxr import Usd, UsdGeom
+// file_path = "_assets/sphere_prim.usda"
+// stage: Usd.Stage = Usd.Stage.CreateNew(file_path)
+// # Define a prim of type `Sphere` at path `/hello`:
+// sphere: UsdGeom.Sphere = UsdGeom.Sphere.Define(stage, "/hello")
+// sphere.CreateRadiusAttr().Set(2)
+// # Save the stage:
+// stage.Save()
+
+// #usda 1.0
+
+// def Sphere "hello"
+// {
+//     double radius = 2
+// }
+
+// blender/source/blender/io/usd/intern/usd_capi_export.cc:
+// pxr::UsdStageRefPtr usd_stage = pxr::UsdStage::CreateNew(filepath);
+// both of the following end up as fields...
+// usd_stage->SetMetadata(pxr::UsdGeomTokens->metersPerUnit, double(scene->unit.scale_length));
+// usd_stage->GetRootLayer()->SetDocumentation(std::string("Blender v") + BKE_blender_version_string());
 
 interface BuildDecompressedPathsArg {
     pathIndexes: number[]
@@ -18,95 +68,6 @@ interface BuildDecompressedPathsArg {
     // startIndex: number // usually 0
     // endIndex: number // inclusive. usually pathIndexes.size() - 1
     // parentPath?: Path
-}
-
-export class MyNode {
-    parent?: MyNode
-    children: MyNode[] = []
-
-    index: number
-    spec_index?: number
-    name: string
-    /** true mean this entry has a value */
-    prim: boolean
-    type!: SpecType
-
-    constructor(parent?: MyNode, index: number = 0, name: string = "/", prim: boolean = false) {
-        this.parent = parent
-        if (parent !== undefined) {
-            parent.children.push(this)
-        }
-        this.index = index
-        this.name = name
-        this.prim = prim
-    }
-    print(indent: number = 0) {
-        console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.type]}`)
-        for (const child of this.children) {
-            child.print(indent + 1)
-        }
-    }
-    getChildPrim(name: string): MyNode | undefined {
-        for (const child of this.children) {
-            if (!child.prim) {
-                continue
-            }
-            if (child.name === name) {
-                return child
-            }
-        }
-        return undefined
-    }
-    getAttribute(name: string) {
-        for (const child of this.children) {
-            if (child.prim) {
-                continue
-            }
-            if (child.name === name) {
-                return child
-            }
-        }
-        return undefined
-    }
-}
-
-export enum Specifier {
-    Def,  // 0
-    Over,
-    Class,
-    Invalid
-};
-
-export enum Variability {
-    Varying,  // 0
-    Uniform,
-    Config,
-    Invalid
-};
-
-// SpecType enum must be same order with pxrUSD's SdfSpecType(since enum value
-// is stored in Crate directly)
-export enum SpecType {
-    Unknown,
-    Attribute,
-    Connection,
-    Expression,
-    Mapper,
-    MapperArg,
-    Prim,
-    PseudoRoot,
-    Relationship,
-    RelationshipTarget,
-    Variant,
-    VariantSet,
-    Invalid,  // or NumSpecTypes
-};
-
-// Spec describes the relation of a path(i.e. node) and field(e.g. vertex data)
-interface Spec {
-    path_index: number
-    fieldset_index: number
-    spec_type: SpecType
 }
 
 export class CrateFile {
@@ -120,8 +81,7 @@ export class CrateFile {
     // paths is the 3 following data structures?
     _paths!: Path[]
     // _elemPaths?: Path[]
-    // _nodes?: Node[]
-    _mynodes!: MyNode[]
+    _nodes!: UsdNode[]
     _specs!: Spec[]
 
     reader: Reader
@@ -174,7 +134,7 @@ export class CrateFile {
         this.ReconstructPrimNode(parent, current, level, is_parent_variant, psmap)
 
         // traverse children
-        for (const child of this._mynodes[current].children) {
+        for (const child of this._nodes[current].children) {
             // console.log(`traverse child ${child.name}`)
             this.ReconstructPrimRecursively(current, child.index, undefined, level + 1, psmap)
         }
@@ -191,17 +151,17 @@ export class CrateFile {
         const spec_index = psmap.get(current)!
         const spec = this._specs[spec_index]
 
-        if (this._mynodes[current].spec_index !== undefined) {
-            throw Error(`yikes: mynodes[${current}].spec_index = ${this._mynodes[current].spec_index}, but wanted to set to ${spec_index}`)
+        if (this._nodes[current].spec_index !== undefined) {
+            throw Error(`yikes: mynodes[${current}].spec_index = ${this._nodes[current].spec_index}, but wanted to set to ${spec_index}`)
         }
-        this._mynodes[current].spec_index = spec_index
+        this._nodes[current].spec_index = spec_index
 
         if (spec.spec_type === SpecType.Attribute || spec.spec_type === SpecType.Relationship) {
             // if (this._)
             // This node is a Properties node. These are processed in
             // ReconstructPrim(), so nothing to do here.
             // console.log(`TODO: may have found a property node ${this._mynodes[current].name}`)
-            console.log(`---------- PROP ${this._mynodes[current].name} (spec.fieldset_index=${spec.fieldset_index})`)
+            // console.log(`---------- PROP ${this._mynodes[current].name} (spec.fieldset_index=${spec.fieldset_index})`)
             this.ReconstructStageMeta(spec.fieldset_index)
             return
         }
@@ -218,7 +178,7 @@ export class CrateFile {
             case SpecType.PseudoRoot:
                 throw Error("SpecType.PseudoRoot in a child node is not supported(yet)")
             case SpecType.Prim: {
-                console.log(`---------- PRIM ${this._mynodes[current].name}`)
+                // console.log(`---------- PRIM ${this._mynodes[current].name}`)
                 this.ParsePrimSpec()
                 this.ReconstructStageMeta(spec.fieldset_index)
             } break
@@ -233,23 +193,24 @@ export class CrateFile {
 
     // tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value) {
     ReconstructStageMeta(fieldset_index: number) {
+        return
         for (; this.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
-            const idx = this.fieldset_indices[fieldset_index]
-            const field = this.fields[idx]
+            const fieldIndex = this.fieldset_indices[fieldset_index]
+            const field = this.fields[fieldIndex]
             const token = this.tokens[field.tokenIndex]
             switch (field.valueRep.getType()) {
                 case CrateDataType.Bool:
-                    console.log(`${idx} ${token} = ${field.valueRep.getBool()}`)
+                    console.log(`${fieldIndex} ${token} = ${field.valueRep.getBool()}`)
                     break
                 case CrateDataType.Float:
-                    console.log(`${idx} ${token} = ${field.valueRep.getFloat()}`)
+                    console.log(`${fieldIndex} ${token} = ${field.valueRep.getFloat()}`)
                     break
                 case CrateDataType.Double:
-                    console.log(`${idx} ${token} = ${field.valueRep.getDouble()}`)
+                    console.log(`${fieldIndex} ${token} = ${field.valueRep.getDouble()}`)
                     break
                 case CrateDataType.Token:
                     if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} ${token} = ${this.tokens[field.valueRep.getIndex()]}`)
+                        console.log(`${fieldIndex} ${token} = ${this.tokens[field.valueRep.getIndex()]}`)
                     } else if (field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
                         this.reader.offset = field.valueRep.getIndex()
                         const n = this.reader.getUint64()
@@ -257,19 +218,19 @@ export class CrateFile {
                         for (let i = 0; i < n; ++i) {
                             arr[i] = this.tokens[this.reader.getInt32()]
                         }
-                        console.log(`${idx} ${token} = %o`, arr)
+                        console.log(`${fieldIndex} ${token} = %o`, arr)
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                     break
                 case CrateDataType.String:
-                    console.log(`${idx} ${token} = "${this.tokens[this.strings[field.valueRep.getIndex()]]}"`)
+                    console.log(`${fieldIndex} ${token} = "${this.tokens[this.strings[field.valueRep.getIndex()]]}"`)
                     break
                 case CrateDataType.Specifier:
                     if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
+                        console.log(`${fieldIndex} ${token} = ${Specifier[field.valueRep.getIndex()]}`)
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                     break
                 case CrateDataType.Int:
@@ -280,7 +241,7 @@ export class CrateFile {
                         for (let i = 0; i < n; ++i) {
                             arr[i] = this.reader.getInt32()
                         }
-                        console.log(`${idx} ${token} = %o`, arr)
+                        console.log(`${fieldIndex} ${token} = %o`, arr)
                     } else if (field.valueRep.isArray() && !field.valueRep.isInlined() && field.valueRep.isCompressed()) {
                         this.reader.offset = field.valueRep.getIndex()
                         const n = this.reader.getUint64()
@@ -290,9 +251,9 @@ export class CrateFile {
                         const workingSpace = new Uint8Array(workingSpaceSize)
                         const decompSz = decompressFromBuffer(comp_buffer, workingSpace)
                         const arr = decodeIntegers(new DataView(workingSpace.buffer), n)
-                        console.log(`${idx} ${token} = %o`, arr)
+                        console.log(`${fieldIndex} ${token} = %o`, arr)
                     } else {
-                        console.log(`${idx} ${token} ${field}`)
+                        console.log(`${fieldIndex} ${token} ${field}`)
                     }
                     break
                 case CrateDataType.Vec2f:
@@ -317,7 +278,7 @@ export class CrateFile {
                         for (let i = 0; i < n * size; ++i) {
                             arr[i] = this.reader.getFloat32()
                         }
-                        console.log(`${idx} ${token} = %o`, arr)
+                        console.log(`${fieldIndex} ${token} = %o`, arr)
                     } else
                         if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
                             this.reader.offset = field.valueRep.getIndex()
@@ -325,11 +286,11 @@ export class CrateFile {
                             for (let i = 0; i < 3; ++i) {
                                 arr[i] = this.reader.getFloat32()
                             }
-                            console.log(`${idx} ${token} = %o`, arr)
+                            console.log(`${fieldIndex} ${token} = %o`, arr)
                         } else if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                            console.log(`${idx} ${token} = %o`, field.valueRep.getVec3f())
+                            console.log(`${fieldIndex} ${token} = %o`, field.valueRep.getVec3f())
                         } else {
-                            console.log(`${idx} ${token} ${field}`)
+                            console.log(`${fieldIndex} ${token} ${field}`)
                         }
                 } break
                 case CrateDataType.TokenVector: {
@@ -340,22 +301,22 @@ export class CrateFile {
                         const idx = this.reader.getUint32()
                         arr[i] = this.tokens[idx]
                     }
-                    console.log(`${idx} ${token} = %o`, arr)
+                    console.log(`${fieldIndex} ${token} = %o`, arr)
                 } break
                 case CrateDataType.AssetPath: {
                     if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} ${token} = "${this.tokens[field.valueRep.getIndex()]}"`)
+                        console.log(`${fieldIndex} ${token} = "${this.tokens[field.valueRep.getIndex()]}"`)
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                 } break
                 case CrateDataType.Variability: {
                     // uniform token info:id = "UsdPreviewSurface"
                     if (!field.valueRep.isArray() && field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
                         const v = field.valueRep.getIndex() as Variability
-                        console.log(`${idx} ${token} = ${Variability[v]}`)
+                        console.log(`${fieldIndex} ${token} = ${Variability[v]}`)
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                     // const idx = field.valueRep.getIndex()
                     // console.log(`  idx=${idx}`)
@@ -385,11 +346,11 @@ export class CrateFile {
                         console.log(`${key} = ? (offset=${offset})`)
                         break
                     }
-                    console.log(`${idx} token=${token} ${field} DICT ${n}`)
+                    console.log(`${fieldIndex} token=${token} ${field} DICT ${n}`)
                 } break
                 case CrateDataType.TokenListOp:
                     if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} token = ${token}`)
+                        console.log(`${fieldIndex} token = ${token}`)
                         this.reader.offset = field.valueRep.getIndex()
                         const hdr = new ListOpHeader(this.reader)
 
@@ -420,12 +381,12 @@ export class CrateFile {
                             console.log(`  order: %o`, read())
                         }
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                     break
                 case CrateDataType.PathListOp:
                     if (!field.valueRep.isArray() && !field.valueRep.isInlined() && !field.valueRep.isCompressed()) {
-                        console.log(`${idx} token = ${token}`)
+                        console.log(`${fieldIndex} token = ${token}`)
                         this.reader.offset = field.valueRep.getIndex()
                         const hdr = new ListOpHeader(this.reader)
 
@@ -456,11 +417,11 @@ export class CrateFile {
                             console.log(`  order: [${read().join(", ")}]`)
                         }
                     } else {
-                        console.log(`${idx} token=${token} ${field}`)
+                        console.log(`${fieldIndex} token=${token} ${field}`)
                     }
                     break
                 default:
-                    console.log(`${idx} token=${token} ${field}`)
+                    console.log(`${fieldIndex} token=${token} ${field}`)
             }
         }
     }
@@ -597,7 +558,7 @@ export class CrateFile {
         this._paths = new Array<Path>(num_paths)
         const _elemPaths = new Array<Path>(num_paths)
         const _nodes = new Array<Node>(num_paths)
-        this._mynodes = new Array<MyNode>(num_paths)
+        this._nodes = new Array<UsdNode>(num_paths)
 
         //
         // bool CrateReader::ReadCompressedPaths(const uint64_t maxNumPaths)
@@ -740,11 +701,11 @@ export class CrateFile {
     private BuildDecompressedPathsImpl(
         arg: BuildDecompressedPathsArg,
         parentPath: Path | undefined = undefined,
-        parentNode: MyNode | undefined = undefined,
+        parentNode: UsdNode | undefined = undefined,
         curIndex: number = 0
     ) {
         let hasChild = true, hasSibling = true
-        let root: MyNode | undefined
+        let root: UsdNode | undefined
         while (hasChild || hasSibling) {
             const thisIndex = curIndex++
             const idx = arg.pathIndexes[thisIndex]
@@ -753,12 +714,12 @@ export class CrateFile {
             // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
             if (parentPath === undefined) {
                 parentPath = Path.makeRootPath()
-                root = parentNode = new MyNode(undefined, idx, "/", true)
+                root = parentNode = new UsdNode(this, undefined, idx, "/", true)
                 // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
-                this._mynodes![idx] = parentNode
+                this._nodes![idx] = parentNode
                 this._paths![idx] = parentPath
                 // console.log(`path[${idx}] = /`)
                 // console.log('make root node /')
@@ -783,10 +744,10 @@ export class CrateFile {
                 // console.log(`path[${idx}] = ${parentPath._element} -> ${elemToken} (${parentNode?.name} -> ${elemToken})`)
                 // const node = new MyNode(thisNode, elemToken)
                 // console.log(`node ${parentNode?.name} add ${thisNode.name}`)
-                if (this._mynodes![idx] !== undefined) {
+                if (this._nodes![idx] !== undefined) {
                     throw Error("yikes")
                 }
-                this._mynodes![idx] = new MyNode(parentNode, idx, elemToken, isPrimPropertyPath)
+                this._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
                 this._paths![idx] = isPrimPropertyPath ?
                     parentPath.AppendProperty(elemToken)
                     : parentPath.AppendElement(elemToken) // prim, variantSelection, etc.
@@ -802,7 +763,7 @@ export class CrateFile {
                     this.BuildDecompressedPathsImpl(arg, parentPath, parentNode, siblingIndex)
                 }
                 parentPath = this._paths![idx] // reset parent path
-                parentNode = this._mynodes![idx] // reset parent path
+                parentNode = this._nodes![idx] // reset parent path
             }
         }
         return root

@@ -4,7 +4,8 @@ import { compressBound, decompressBlock } from "lz4js"
 import { hexdump } from "./detail/hexdump.ts"
 import { Path } from "./path/Path.ts"
 import { Reader } from "./crate/Reader.js"
-import { CrateFile, MyNode } from "./crate/CrateFile.ts"
+import { CrateFile } from "./crate/CrateFile.ts"
+import { UsdNode } from "./crate/UsdNode.ts"
 
 type Index = number
 export type StringIndex = Index
@@ -140,10 +141,13 @@ export class UsdStage {
         }
         const s = path.split('/').splice(1)
         // console.log(`TRAVERSE %o (${path})`, s)
-        let i: MyNode | undefined = this._crate._mynodes[0]
+        let i: UsdNode | undefined = this._crate._nodes[0]
         for(const t of s) {
             if (i === undefined) {
                 throw Error(`path '${path}' not found`)
+            }
+            if (t.length === 0) {
+                break
             }
             // console.log(`FOUND ${i.name}, LOOKUP '${t}'`)
             i = i.getChildPrim(t)

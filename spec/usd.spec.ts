@@ -1,10 +1,12 @@
 import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
-import { decodeIntegers, decompressFromBuffer, readCompressedInts, UsdStage, type BuildDecompressedPathsArg } from "../src/index.ts"
+import { decodeIntegers, decompressFromBuffer, readCompressedInts, UsdStage } from "../src/index.ts"
 import { Path } from "../src/path/Path.ts"
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
-import { CrateFile, SpecType } from "../src/crate/CrateFile.ts"
+import { CrateFile } from "../src/crate/CrateFile.ts"
+import { SpecType } from "../src/crate/SpecType.ts"
+import type { ValueRep } from "../src/crate/ValueRep.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -14,6 +16,14 @@ import { CrateFile, SpecType } from "../src/crate/CrateFile.ts"
 // ./tusdcat /Users/mark/js/usd/cube.usdc
 
 // readfields -> readcompressedint -> de
+
+// UsdObject ;; GetAllMetadata(), points to stage
+//   UsdPrim
+//   UsdProperty
+//   UsdAttribute: UsdProperty
+//   UsdReleationship: UsdProperty
+
+// field / metadata
 
 describe("USD", function () {
     it("all", function () {
@@ -30,7 +40,7 @@ describe("USD", function () {
         expect(crate._paths).to.have.lengthOf(35)
         expect(crate._paths![0].getFullPathName()).to.equal("/")
         expect(crate._paths![1].getFullPathName()).to.equal("/root")
-       
+
         /*
             openusd: /pxr/usd/bin/usdcat/usdcat.cpp
             // stage = UsdStage::Open(input);
@@ -158,8 +168,66 @@ describe("USD", function () {
         // }
     })
 
-    describe("API", function() {
-        it.only("xxx", function() {
+    describe("API", function () {
+        it.only("dump json", function() {
+            const buffer = readFileSync("cube.usdc")
+            const stage = new UsdStage(buffer)
+
+            console.log(`=======================================`)
+            const pseudoRoot = stage.getPrimAtPath("/")!
+            expect(pseudoRoot).to.not.be.undefined
+            expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
+
+            console.log(JSON.stringify(pseudoRoot, undefined, 4))
+        })
+        // to compare with the output of ./tusdcat
+        // LEARNED: mapping from usdc to usda is not 1:1
+        it("dump usda", function () {
+            const buffer = readFileSync("cube.usdc")
+            const stage = new UsdStage(buffer)
+
+            console.log(`=======================================`)
+
+            console.log("#usda 1.0")
+
+            //
+            // ( doc = "Blender v4.5.2 LTS", metersPerUnit = 1, upAxis = "Z", defaultPrim = "root" )
+            //
+            const pseudoRoot = stage.getPrimAtPath("/")!
+            expect(pseudoRoot).to.not.be.undefined
+            expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
+            const fields = pseudoRoot.getFields()
+
+            function fieldsToString(fields: Map<string, ValueRep>) {
+                const docMetaAttributeStrings = fields!.entries()
+                    .filter(([key, rep]) => !["specifier", "typeName", "primChildren", "properties"].includes(key))
+                    .map(([key, rep]) => {
+                        if (key === "documentation") {
+                            key = "doc"
+                        }
+                        const value = rep.getValue(stage._crate)
+                        return `${key} = ${JSON.stringify(value)}`
+                    })
+                const arr = Array.from(docMetaAttributeStrings)
+                return arr.length === 0 ? "" : `( ${arr.join(", ")} )`
+            }
+
+            console.log(fieldsToString(fields))
+
+            //
+            // def Xform "root" ( customData = { dictionary Blender = { bool generated = 1 } } ) {
+            //
+            // for (const child of pseudoRoot.children) {
+            const child = pseudoRoot.children[0].children[0]
+            switch (child.getType()) {
+                case SpecType.Prim:
+                    console.log(`def ${child.getField("typeName")?.getValue(stage._crate)} "${child.name}" ${fieldsToString(child.getFields())}`)
+                    break
+            }
+            // console.log(child)
+            // }
+        })
+        it("xxx", function () {
             // from pxr import Usd, UsdGeom
             // stage = Usd.Stage.CreateNew('HelloWorld.usda')
             // xformPrim = UsdGeom.Xform.Define(stage, '/hello')
@@ -173,14 +241,15 @@ describe("USD", function () {
 
             // stage.getPrimAtPath("/")
             const mesh = stage.getPrimAtPath("/root/Cube/Mesh")
+            expect(mesh).to.not.be.undefined
             expect(mesh?.name).to.equal("Mesh")
-            // mesh!.getAttribute("extend")
+
             const extent = mesh?.getAttribute("extent")
             expect(extent).to.not.be.undefined
 
-            const spec = stage._crate._specs[extent!.spec_index!]
-            console.log(SpecType[spec.spec_type])
-            stage._crate.ReconstructStageMeta(spec.fieldset_index)
+            // extent.getPropertyNames()
+
+            extent!.foo()
 
             // stage._crate.
 
@@ -413,14 +482,14 @@ describe("USD", function () {
                 path.append_property("")
                 expect(path.isValid()).to.be.false
             })
-            it("xxx", function() {
+            it("xxx", function () {
                 const path = Path.makeRootPath()
                 path.append_property("aa")
                 expect(path.isValid()).to.be.true
                 expect(path.prop_part()).is.equal("aa")
                 expect(path._element).is.equal("aa")
             })
-            
+
         })
         // describe("isEmpty()")
         // describe("isPrimPropertyPath()")
@@ -430,7 +499,3 @@ describe("USD", function () {
 
     })
 })
-
-function BuildDecompressedPathsImpl(arg: BuildDecompressedPathsArg): boolean {
-    return true
-}

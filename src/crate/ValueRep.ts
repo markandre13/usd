@@ -7,6 +7,7 @@
 // inline, the 6 data bytes are the offset from the start of the file to the
 
 import { CrateDataType } from "./CrateDataType.ts"
+import type { CrateFile } from "./CrateFile.ts"
 
 // value's location.
 // FIXME: last two bytes are type info
@@ -17,7 +18,49 @@ export class ValueRep {
         this._buffer = buffer
         this._offset = offset
     }
-    getType() { return this._buffer.at(this._offset + 6) }
+    getValue(crate: CrateFile) {
+        switch (this.getType()) {
+            case CrateDataType.Double:
+                if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
+                    return this.getDouble()
+                }
+                break
+            case CrateDataType.String:
+                if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
+                    return crate.tokens[crate.strings[this.getIndex()]]
+                }
+                break
+            case CrateDataType.Token:
+                if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
+                    return crate.tokens[this.getIndex()]
+                }
+                if (!this.isInlined() && this.isArray() && !this.isCompressed()) {
+                    crate.reader.offset = this.getIndex()
+                    const n = crate.reader.getUint64()
+                    const arr = new Array<string>(n)
+                    for (let i = 0; i < n; ++i) {
+                        arr[i] = crate.tokens[crate.reader.getInt32()]
+                    }
+                    return arr
+                }
+                break
+            case CrateDataType.TokenVector: {
+                if (!this.isInlined() && !this.isArray() && !this.isCompressed()) {
+                    crate.reader.offset = this.getIndex()
+                    const n = crate.reader.getUint64()
+                    const arr = new Array<string>(n)
+                    for (let i = 0; i < n; ++i) {
+                        const idx = crate.reader.getUint32()
+                        arr[i] = crate.tokens[idx]
+                    }
+                    return arr
+                }
+            } break
+        }
+        console.log(`ValueRep.getValue(): not implemented yet: type: ${CrateDataType[this.getType()]}, array: ${this.isArray()}, inline: ${this.isInlined()}, compressed: ${this.isCompressed()}`)
+        return undefined
+    }
+    getType() { return this._buffer.at(this._offset + 6) as CrateDataType }
     isArray() { return (this._buffer.at(this._offset + 7)! & 128) !== 0 }
     isInlined() { return (this._buffer.at(this._offset + 7)! & 64) !== 0 }
     isCompressed() { return (this._buffer.at(this._offset + 7)! & 32) !== 0 }
@@ -25,6 +68,7 @@ export class ValueRep {
         const d = new DataView(this._buffer.buffer)
         return d.getBigUint64(this._offset, true) & 0xffffffffffffn
     }
+    // TODO: rename the following to inline? or merge them with the general ones
     getBool(): boolean {
         return this._buffer.at(this._offset) !== 0
     }
@@ -43,7 +87,7 @@ export class ValueRep {
     // TODO: signed or unsigned?
     getVec3f() {
         const d = new DataView(this._buffer.buffer)
-        return [d.getUint8(this._offset), d.getUint8(this._offset+1), d.getUint8(this._offset+2)]
+        return [d.getUint8(this._offset), d.getUint8(this._offset + 1), d.getUint8(this._offset + 2)]
     }
     getIndex(): number {
         // return new Number(this.getPayload()).valueOf()

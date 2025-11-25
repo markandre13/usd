@@ -2,17 +2,17 @@ import type { PathType } from "./PathType.ts"
 
 // OpenUSD has SdfPath and Sdf_PathNode
 
-export class Node {
-    private parent = 0
-    private _children = new Array<number>()
-    private _primChildren = new Set<string>
-    private _path = new Path()
-    private _elemPath = new Path()
-}
+// export class Node {
+//     private parent = 0
+//     private _children = new Array<number>()
+//     private _primChildren = new Set<string>
+//     private _path = new Path()
+//     private _elemPath = new Path()
+// }
 
-function is_variantElementName(name: string) {
-    return name[0] === '{'
-}
+// function is_variantElementName(name: string) {
+//     return name[0] === '{'
+// }
 
 export class Path {
     private _prim_part: string = ""; // e.g. /Model/MyMesh, MySphere

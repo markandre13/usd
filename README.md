@@ -1,6 +1,16 @@
 # USD Subset for makehuman.js
 
+Things that did not work for me:
+
+* https://charlesfleche.net/building-usd-on-debian/
+* pip install usd-core
+
 ### USD Terminology
+
+* What's in a USDC file?
+  * a tree of nodes consisting of prims and attributes as leaves
+  * each nodes has fields, which contain the actual values
+  * prims can be defined in a schema OpenUSD/pxr/usd/usdGeom/schema.usda
 
 * Prims (Primitive)
   * node with parent & children
@@ -10,7 +20,6 @@
     * relationships, which point to other Prims or Properties
   Path
 Layer
-
 
 Encoding
 
