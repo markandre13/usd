@@ -7,7 +7,6 @@
 // inline, the 6 data bytes are the offset from the start of the file to the
 
 import { decodeIntegers, decompressFromBuffer } from "../index.ts"
-import type { Path } from "../path/Path.ts"
 import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import type { CrateFile } from "./CrateFile.ts"
 import { Specifier } from "./Specifier.ts"

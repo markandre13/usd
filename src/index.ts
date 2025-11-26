@@ -1,8 +1,6 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
 import { compressBound, decompressBlock } from "lz4js"
-import { hexdump } from "./detail/hexdump.ts"
-import { Path } from "./path/Path.ts"
 import { Reader } from "./crate/Reader.js"
 import { CrateFile } from "./crate/CrateFile.ts"
 import { UsdNode } from "./crate/UsdNode.ts"

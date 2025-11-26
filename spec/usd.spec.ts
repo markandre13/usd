@@ -1,7 +1,6 @@
 import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
 import { decodeIntegers, decompressFromBuffer, readCompressedInts, UsdStage } from "../src/index.ts"
-import { Path } from "../src/path/Path.ts"
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
@@ -28,11 +27,6 @@ describe("USD", function () {
 
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
-
-        // expect(stage._crate._paths).to.not.be.undefined
-        // expect(stage._crate._paths).to.have.lengthOf(35)
-        // expect(stage._crate._paths![0].getFullPathName()).to.equal("/")
-        // expect(stage._crate._paths![1].getFullPathName()).to.equal("/root")
 
         const pseudoRoot = stage.getPrimAtPath("/")!
         expect(pseudoRoot).to.not.be.undefined
@@ -206,156 +200,5 @@ describe("USD", function () {
             expect(result).to.deep.equal(want)
             expect(reader.offset).to.equal(compressed.byteLength)
         })
-    })
-
-    /**
-     * Path in tinyusdz, SdfPath in OpenUSD
-     * couldn't find any documentation/spec yet, so based on tinyusdz
-     * which might be incomplete but was easier to read
-     */
-    describe("Path", function () {
-        describe("constructor", function () {
-            it("prop must not contain slashes", function () {
-                const path = new Path("", "a/b")
-                expect(path.isValid()).to.be.false
-            })
-            it("prop must not start with '.'", function () {
-                const path = new Path("", ".a")
-                expect(path.isValid()).to.be.false
-            })
-            it("/.", function () {
-                const path = new Path("/.", "")
-                expect(path.isValid()).to.be.false
-            })
-            // i think this is needed but not covered by tiyusdz?
-            xit("./", function () {
-                const path = new Path("./", "")
-                expect(path.isValid()).to.be.false
-            })
-            describe("absolute path /...", function () {
-                it("x0", function () {
-                    const path = new Path("/", "a")
-                    expect(path.isValid()).to.be.true
-                    expect(path.prim_part()).to.equal("/")
-                    expect(path.prop_part()).to.equal("a")
-                    expect(path._element).to.equal("a")
-                })
-                it("x2", function () {
-                    const path = new Path("/a/b", "")
-                    expect(path.isValid()).to.be.true
-                    expect(path.prim_part()).to.equal("/a/b")
-                    expect(path._element).to.equal("b")
-                })
-                it("x3", function () {
-                    const path = new Path("/a", "")
-                    expect(path.isValid()).to.be.true
-                    expect(path.prim_part()).to.equal("/a")
-                    expect(path._element).to.equal("a")
-                })
-                it("when prim_part contains property name, prop must be empty", function () {
-                    const path = new Path("/a.b", "x")
-                    expect(path.isValid()).to.be.false
-                })
-                it("prim contains property name, it's split into primt and prop part", function () {
-                    const path = new Path("/a.b", "")
-                    expect(path.prim_part()).to.equal("/a")
-                    expect(path.prop_part()).to.equal("b")
-                    expect(path._element).to.equal("b")
-                    expect(path.isValid()).to.be.true
-                })
-                it("absolute path must not contain more than one property name", function () {
-                    const path = new Path("/a.b.c", "")
-                    expect(path.isValid()).to.be.false
-                })
-            })
-            describe("relative path", function () {
-                it("relative path", function () {
-                    const path = new Path("./xform", "b")
-                    expect(path.prim_part()).to.equal("./xform")
-                    expect(path.prop_part()).to.equal("b")
-                    expect(path._element).to.equal("b")
-                    expect(path.isValid()).to.be.true
-                })
-                it("relative path with prop", function () {
-                    const path = new Path("./xform", "b")
-                    expect(path.prim_part()).to.equal("./xform")
-                    expect(path.prop_part()).to.equal("b")
-                    expect(path._element).to.equal("b")
-                    expect(path.isValid()).to.be.true
-                })
-                it("relative path without prop", function () {
-                    const path = new Path("./xform", "")
-                    expect(path.prim_part()).to.equal("./xform")
-                    expect(path._element).to.equal("xform")
-                    expect(path.isValid()).to.be.true
-                })
-            })
-            describe("neiter absolute nor relative path", function () {
-                it("relative prim", function () {
-                    const path = new Path("prim", "a")
-                    expect(path.prim_part()).to.equal("prim")
-                    expect(path.prop_part()).to.equal("a")
-                    expect(path.isValid()).to.be.true
-                })
-                it("relative prim", function () {
-                    const path = new Path("prim", "a")
-                    expect(path.prim_part()).to.equal("prim")
-                    expect(path.prop_part()).to.equal("a")
-                    expect(path.isValid()).to.be.true
-                })
-                it("relative prim with prop", function () {
-                    const path = new Path("prim.prop", "a")
-                    expect(path.prim_part()).to.equal("prim")
-                    expect(path.prop_part()).to.equal("prop")
-                    expect(path.isValid()).to.be.true
-                })
-                it("prop must not contain '/", function () {
-                    const path = new Path("prim.prop/pop", "a")
-                    // expect(path.prim_part()).to.equal("prim")
-                    // expect(path.prop_part()).to.equal("prop")
-                    expect(path.isValid()).to.be.false
-                })
-                it("xxx", function () {
-                    const path = new Path("prim.prop/pop.top", "a")
-                    // expect(path.prim_part()).to.equal("prim")
-                    // expect(path.prop_part()).to.equal("prop")
-                    expect(path.isValid()).to.be.false
-                })
-            })
-
-        })
-        it("makeRootPath", function () {
-            const path = Path.makeRootPath()
-            expect(path.prim_part()).to.equal("/")
-            expect(path.prop_part()).to.equal("")
-            expect(path.isValid()).to.be.true
-        })
-        describe("isValid()", function () {
-            it("Path() -> false", function () {
-                const path = new Path()
-                expect(path.isValid()).to.be.false
-            })
-            it("Path('', '') -> false", function () {
-                const path = new Path("", "")
-                expect(path.isValid()).to.be.false
-            })
-        })
-        describe("append_property(element: string)", function () {
-            it("element is empty -> invalid", function () {
-                const path = Path.makeRootPath()
-                path.append_property("")
-                expect(path.isValid()).to.be.false
-            })
-            it("xxx", function () {
-                const path = Path.makeRootPath()
-                path.append_property("aa")
-                expect(path.isValid()).to.be.true
-                expect(path.prop_part()).is.equal("aa")
-                expect(path._element).is.equal("aa")
-            })
-
-        })
-        // describe("isEmpty()")
-        // describe("isPrimPropertyPath()")
     })
 })

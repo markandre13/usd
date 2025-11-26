@@ -80,11 +80,6 @@ export class UsdNode {
         }
         return undefined
     }
-    foo() {
-        const spec = this.crate._specs[this.spec_index!]
-        console.log(SpecType[spec.spec_type])
-        this.crate.ReconstructStageMeta(spec.fieldset_index)
-    }
     private fields?: Map<string, ValueRep>
     getFields() {
         if (this.fields) {

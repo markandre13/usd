@@ -1,17 +1,13 @@
 import { BootStrap } from "./BootStrap.ts"
 import { Field } from "./Field.ts"
 import { decompressFromBuffer, readCompressedInts, decodeIntegers, type StringIndex } from "../index.ts"
-import { Path } from "../path/Path.ts"
 import type { Reader } from "./Reader.ts"
 import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { ValueRep } from "./ValueRep.ts"
-import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import { UsdNode } from "./UsdNode.ts"
 import { SpecType } from "./SpecType.js"
 import type { Spec } from "./Spec.ts"
-import { Variability } from "./Variability.ts"
-import { Specifier } from "./Specifier.ts"
 
 // https://docs.nvidia.com/learn-openusd/latest/stage-setting/index.html
 // stage, layer
@@ -64,10 +60,6 @@ interface BuildDecompressedPathsArg {
     pathIndexes: number[]
     elementTokenIndexes: number[]
     jumps: number[]
-    // visit_table: boolean[]
-    // startIndex: number // usually 0
-    // endIndex: number // inclusive. usually pathIndexes.size() - 1
-    // parentPath?: Path
 }
 
 export class CrateFile {
@@ -78,9 +70,6 @@ export class CrateFile {
     strings!: StringIndex[]
     fields!: Field[]
     fieldset_indices!: number[]
-    // paths is the 3 following data structures?
-    // _paths!: Path[]
-    // _elemPaths?: Path[]
     _nodes!: UsdNode[]
     _specs!: Spec[]
 
@@ -98,27 +87,8 @@ export class CrateFile {
         this.readPaths(reader)
         this.readSpecs(reader)
 
-        const path_index_to_spec_index_map = new Map<number, number>()
-        for (let i = 0; i < this._specs!.length; i++) {
-            // console.log(`path index[${i}] -> spec index [${this._specs[i].path_index}]`)
-            path_index_to_spec_index_map.set(this._specs[i].path_index, i)
-        }
-
-        this.ReconstructPrimRecursively(0, path_index_to_spec_index_map)
-    }
-
-    private ReconstructPrimRecursively(
-        current: number,
-        psmap: Map<number, number>
-    ) {
-        if (this._nodes[current].spec_index !== undefined) {
-            throw Error(`yikes: mynodes[${current}].spec_index !== undefined`)
-        }
-        this._nodes[current].spec_index = psmap.get(current)!
-
-        // traverse children
-        for (const child of this._nodes[current].children) {
-            this.ReconstructPrimRecursively(child.index, psmap)
+        for (let i = 0; i < this._nodes!.length; i++) {
+            this._nodes[i].spec_index = this._specs[i].path_index
         }
     }
 
@@ -370,7 +340,6 @@ export class CrateFile {
 
     private BuildDecompressedPathsImpl(
         arg: BuildDecompressedPathsArg,
-        parentPath: Path | undefined = undefined,
         parentNode: UsdNode | undefined = undefined,
         curIndex: number = 0
     ) {
@@ -382,8 +351,7 @@ export class CrateFile {
             const jump = arg.jumps[thisIndex]
 
             // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
-            if (parentPath === undefined) {
-                parentPath = Path.makeRootPath()
+            if (parentNode === undefined) {
                 root = parentNode = new UsdNode(this, undefined, idx, "/", true)
                 // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
                 if (thisIndex >= arg.pathIndexes.length) {
@@ -420,7 +388,7 @@ export class CrateFile {
             if (hasChild) {
                 if (hasSibling) {
                     const siblingIndex = thisIndex + jump
-                    this.BuildDecompressedPathsImpl(arg, parentPath, parentNode, siblingIndex)
+                    this.BuildDecompressedPathsImpl(arg, parentNode, siblingIndex)
                 }
                 parentNode = this._nodes![idx] // reset parent path
             }
