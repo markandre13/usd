@@ -7,7 +7,7 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
   },
   "dependencies": {
     "@types/chai": "^5.2.3",
@@ -15,6 +15,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.0",
     "chai": "^6.2.0",
+    "gl-matrix": "^3.4.4",
     "lz4js": "^0.2.0",
     "mocha": "^11.7.5"
   }
