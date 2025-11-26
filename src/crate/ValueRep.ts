@@ -40,6 +40,7 @@ export class ValueRep {
             value: v
         }
     }
+    // NOTE: tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value)
     getValue(crate: CrateFile): any {
         const reader = crate.reader
         switch (this.getType()) {
