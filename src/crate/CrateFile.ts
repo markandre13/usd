@@ -502,10 +502,11 @@ export class CrateFile {
         if (uncompressedSize !== decompressFromBuffer(compressed, uncompressed)) {
             throw Error("Failed to read Fields ValueRep data.")
         }
+        const dataview = new DataView(uncompressed.buffer)
 
         this.fields = new Array(numFields)
         for (let i = 0; i < numFields; ++i) {
-            this.fields[i] = new Field(indices[i], new ValueRep(uncompressed, i * 8))
+            this.fields[i] = new Field(indices[i], new ValueRep(dataview, i * 8))
         }
 
         // for (let i = 0; i < numFields; ++i) {

@@ -17,9 +17,9 @@ import { Variability } from "./Variability.js"
 // value's location.
 // FIXME: last two bytes are type info
 export class ValueRep {
-    private _buffer: Uint8Array
+    private _buffer: DataView
     private _offset: number
-    constructor(buffer: Uint8Array, offset: number) {
+    constructor(buffer: DataView, offset: number) {
         this._buffer = buffer
         this._offset = offset
     }
@@ -257,42 +257,36 @@ export class ValueRep {
         }
         return undefined
     }
-    getType() { return this._buffer.at(this._offset + 6) as CrateDataType }
-    isArray() { return (this._buffer.at(this._offset + 7)! & 128) !== 0 }
-    isInlined() { return (this._buffer.at(this._offset + 7)! & 64) !== 0 }
-    isCompressed() { return (this._buffer.at(this._offset + 7)! & 32) !== 0 }
+    getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
+    isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
+    isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
+    isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
     getPayload(): bigint {
         const d = new DataView(this._buffer.buffer)
         return d.getBigUint64(this._offset, true) & 0xffffffffffffn
     }
     // TODO: rename the following to inline? or merge them with the general ones
     getBool(): boolean {
-        return this._buffer.at(this._offset) !== 0
+        return this._buffer.getUint8(this._offset) !== 0
     }
     getHalf(): number {
-        const d = new DataView(this._buffer.buffer)
-        return d.getFloat16(this._offset, true)
+        return this._buffer.getFloat16(this._offset, true)
     }
     getFloat(): number {
-        const d = new DataView(this._buffer.buffer)
-        return d.getFloat32(this._offset, true)
+        return this._buffer.getFloat32(this._offset, true)
     }
     getDouble(): number {
-        const d = new DataView(this._buffer.buffer)
-        return d.getFloat32(this._offset, true) // FIXME: Float64 from 6 octets???
+        return this._buffer.getFloat32(this._offset, true) // FIXME: Float64 from 6 octets???
     }
     // TODO: signed or unsigned?
     getVec3f() {
-        const d = new DataView(this._buffer.buffer)
-        return [d.getUint8(this._offset), d.getUint8(this._offset + 1), d.getUint8(this._offset + 2)]
+        return [this._buffer.getUint8(this._offset), this._buffer.getUint8(this._offset + 1), this._buffer.getUint8(this._offset + 2)]
     }
     getIndex(): number {
-        // return new Number(this.getPayload()).valueOf()
-        const d = new DataView(this._buffer.buffer)
-        if (this._buffer.at(this._offset + 4) || this._buffer.at(this._offset + 5)) {
+        if (this._buffer.getUint8(this._offset + 4) || this._buffer.getUint8(this._offset + 5)) {
             throw Error(`getIndex too large`)
         }
-        return d.getUint32(this._offset, true)
+        return this._buffer.getUint32(this._offset, true)
     }
     toString(): string {
         return `type: ${GetCrateDataType(this.getType()!)} (${this.getType()}), isArray: ${this.isArray()}, isInlined: ${this.isInlined()}, isCompressed:${this.isCompressed()}, payload: ${this.getPayload()}`
