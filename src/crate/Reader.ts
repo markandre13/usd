@@ -1,3 +1,5 @@
+import { decodeIntegers, decompressFromBuffer } from "../index.ts"
+
 export const _SectionNameMaxLength = 15
 
 export class Reader {
@@ -59,5 +61,23 @@ export class Reader {
         const value = new Number(this._dataview.getFloat64(this.offset, true)).valueOf()
         this.offset += 8
         return value
+    }
+    getCompressedIntegers(numberOfInts?: number) {
+        if (numberOfInts === undefined) {
+            numberOfInts = this.getUint64()
+        }
+
+        const compressedSize = this.getUint64()
+        const compressed = new Uint8Array(this._dataview.buffer, this.offset, compressedSize)
+        this.offset += compressedSize
+
+        const workingSpaceSize = 4                   // common value uint32
+            + Math.floor((numberOfInts * 2 + 7) / 8) // number of code bytes
+            + numberOfInts * 4                       // max. space for uint32
+        const workingSpace = new Uint8Array(workingSpaceSize)
+
+        const decompSz = decompressFromBuffer(compressed, workingSpace)
+        const result = decodeIntegers(new DataView(workingSpace.buffer), numberOfInts)
+        return result
     }
 }

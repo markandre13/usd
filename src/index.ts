@@ -1,6 +1,6 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { compressBound, decompressBlock } from "lz4js"
+import { decompressBlock } from "lz4js"
 import { Reader } from "./crate/Reader.js"
 import { CrateFile } from "./crate/CrateFile.ts"
 import { UsdNode } from "./crate/UsdNode.ts"
@@ -9,20 +9,6 @@ import { vec3 } from "gl-matrix"
 type Index = number
 export type StringIndex = Index
 export type TokenIndex = Index
-
-// src/integerCoding.cpp: _DecompressIntegers(...)
-export function readCompressedInts(reader: Reader, numInts: number) {
-    const compressedSize = reader.getUint64()
-    // console.log(`readCompressedInts(): n=${numInts}, compressedSize=${compressedSize}`)
-
-    const uncompressed = Buffer.alloc(numInts * 4)
-    const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
-    reader.offset += compressedSize
-
-    const decompSz = decompressFromBuffer(compressed, uncompressed)
-
-    return decodeIntegers(new DataView(uncompressed.buffer), numInts)
-}
 
 interface ARG {
     src: DataView
@@ -59,17 +45,13 @@ function decodeNHelper(N: number, arg: ARG) {
                 break
         }
         arg.prevVal &= 0xffffffff
-        // console.log(`  i=${i}, x=${x}, prevVal=${arg.prevVal} []`)
         arg.result[arg.output++] = arg.prevVal
     }
 }
 
 export function decodeIntegers(src: DataView, numInts: number) {
-    // console.log("decodeIntegers() >>>>>>>>>>>>>>>>>>>>>>>>>>")
 
-    // const src = new DataView(uncompressed)
     const commonValue = src.getUint32(0, true)
-    // console.log(`commonValue = ${commonValue}`)
 
     const numCodesBytes = (numInts * 2 + 7) / 8
     let prevVal = 0
@@ -88,28 +70,11 @@ export function decodeIntegers(src: DataView, numInts: number) {
         decodeNHelper(4, arg)
         intsLeft -= 4
     }
-    switch (intsLeft) {
-        case 1:
-        case 2:
-        case 3:
-            decodeNHelper(intsLeft, arg)
-            break
-        case 0:
-        default:
-            break
-    };
-    // hexdump(new Uint8Array(arg.result.buffer))
-    // console.log("decodeIntegers() <<<<<<<<<<<<<<<<<<<<<<<<<<")
-    // for (let i = 0; i < arg.result.length; ++i) {
-    //     console.log(`[${i}] = ${arg.result[i]}`)
-    // }
+    if (intsLeft > 0) {
+        decodeNHelper(intsLeft, arg)
+    }
     return arg.result
 }
-
-// // readfields 
-// export function readCompressedInts(reader: Reader) {
-//     const compSize = reader.getUint64()
-// }
 
 // OpenUSD/pxr/base/tf/fastCompression.cpp: TfFastCompression::DecompressFromBuffer(...)
 // tinyusdz/src/lz4-compression.cc: LZ4Compression::DecompressFromBuffer(...)
