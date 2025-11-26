@@ -79,7 +79,7 @@ export class CrateFile {
     fields!: Field[]
     fieldset_indices!: number[]
     // paths is the 3 following data structures?
-    _paths!: Path[]
+    // _paths!: Path[]
     // _elemPaths?: Path[]
     _nodes!: UsdNode[]
     _specs!: Spec[]
@@ -97,8 +97,6 @@ export class CrateFile {
         this.readFieldSets(reader)
         this.readPaths(reader)
         this.readSpecs(reader)
-
-        this.BuildLiveFieldSets()
 
         const path_index_to_spec_index_map = new Map<number, number>()
         for (let i = 0; i < this._specs!.length; i++) {
@@ -254,9 +252,6 @@ export class CrateFile {
 
         const num_paths = reader.getUint64()
 
-        this._paths = new Array<Path>(num_paths)
-        const _elemPaths = new Array<Path>(num_paths)
-        const _nodes = new Array<Node>(num_paths)
         this._nodes = new Array<UsdNode>(num_paths)
 
         //
@@ -370,31 +365,7 @@ export class CrateFile {
                 fieldset_index: fieldsetIndexes[i],
                 spec_type: specTypeIndexes[i] as SpecType
             }
-
-            // this._mynodes![pathIndexes[i]].type = specTypeIndexes[i] as SpecType
-            // this._mynodes[pathIndexes[i]].type = this.fieldset_indices[fieldsetIndexes]
         }
-    }
-
-    BuildLiveFieldSets() {
-        // ...
-
-        // for (const a of this.fieldset_indices!) {
-        //     if (a >= 0) {
-        //         console.log(`${a}\t${this.tokens[this.fields[a].tokenIndex]}`)
-        //     } else {
-        //         console.log("--------------")
-        //     }
-        //     console.log(``)
-        // }
-        // let sum = 0
-        // for(const item of this._live_fieldsets) {
-        //     console.log(`livefieldsets[${item.first.value}].count = ${item.second.length}`)
-        //     sum += item.second.length
-        //     for(const x of item.second) {
-
-        //     }
-        // }
     }
 
     private BuildDecompressedPathsImpl(
@@ -419,9 +390,6 @@ export class CrateFile {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
                 this._nodes![idx] = parentNode
-                this._paths![idx] = parentPath
-                // console.log(`path[${idx}] = /`)
-                // console.log('make root node /')
             } else {
                 if (thisIndex >= arg.elementTokenIndexes.length) {
                     throw Error(`Index exceeds elementTokenIndexes.length`)
@@ -440,17 +408,10 @@ export class CrateFile {
                     throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
                 }
                 const elemToken = this.tokens![tokenIndex]
-                // console.log(`path[${idx}] = ${parentPath._element} -> ${elemToken} (${parentNode?.name} -> ${elemToken})`)
-                // const node = new MyNode(thisNode, elemToken)
-                // console.log(`node ${parentNode?.name} add ${thisNode.name}`)
                 if (this._nodes![idx] !== undefined) {
                     throw Error("yikes")
                 }
                 this._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
-                this._paths![idx] = isPrimPropertyPath ?
-                    parentPath.AppendProperty(elemToken)
-                    : parentPath.AppendElement(elemToken) // prim, variantSelection, etc.
-                // _elemPaths[idx] = Path(elemToken, "");
             }
 
             hasChild = jump > 0 || jump === -1
@@ -461,7 +422,6 @@ export class CrateFile {
                     const siblingIndex = thisIndex + jump
                     this.BuildDecompressedPathsImpl(arg, parentPath, parentNode, siblingIndex)
                 }
-                parentPath = this._paths![idx] // reset parent path
                 parentNode = this._nodes![idx] // reset parent path
             }
         }
