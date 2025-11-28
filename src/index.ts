@@ -1,16 +1,144 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { decompressBlock } from "lz4js"
+import { compressBlock, compressBound, decompressBlock } from "lz4js"
 import { Reader } from "./crate/Reader.js"
 import { CrateFile } from "./crate/CrateFile.ts"
 import { UsdNode } from "./crate/UsdNode.ts"
 import { vec3 } from "gl-matrix"
+import { hexdump } from "./detail/hexdump.ts"
 
 type Index = number
 export type StringIndex = Index
 export type TokenIndex = Index
 
-interface ARG {
+// encode / decode int32
+// int32: common value
+// sequence of uint8 containing 4 Codes
+// sequence of int8|int16|int32 as defined by the codes
+// encoded values are the difference to the previous value
+enum Code { Common, Int8, Int16, Int32 };
+
+interface ARGE {
+    input: number[],
+    output: DataView,
+    cur: number,
+    commonValue: number,
+    prevVal: number,
+    codesOut: number,
+    vintsOut: number
+}
+
+function encodeNHelper(N: number, arg: ARGE) {
+    const getCode = (x: number) => {
+        if (x === arg.commonValue) { return Code.Common }
+        if (x >= -128 && x <= 127) { return Code.Int8 }
+        if (x >= -32768 && x <= 32767) { return Code.Int16 }
+        return Code.Int32
+    }
+
+    let codeByte = 0
+    for (let i = 0; i != N; ++i) {
+        let val = arg.input[arg.cur] - arg.prevVal
+        arg.prevVal = arg.input[arg.cur++]
+        const code = getCode(val)
+        codeByte |= (code << (2 * i))
+        switch (code) {
+            default:
+            case Code.Common:
+                break
+            case Code.Int8:
+                arg.output.setInt8(arg.vintsOut, val)
+                arg.vintsOut += 1
+                break
+            case Code.Int16:
+                arg.output.setInt16(arg.vintsOut, val, true)
+                arg.vintsOut += 2
+                break
+            case Code.Int32:
+                arg.output.setInt32(arg.vintsOut, val, true)
+                arg.vintsOut += 4
+                break
+        };
+    }
+    arg.output.setUint8(arg.codesOut, codeByte)
+    ++arg.codesOut
+}
+
+export function encodeIntegers(input: number[], output: DataView) {
+    if (input.length === 0) {
+        return 0
+    }
+
+    // First find the most common element value.
+    let commonValue = 0
+    {
+        let commonCount = 0
+        const counts = new Map<number, number>()
+        let prevVal = 0
+        for (let cur = 0; cur < input.length; ++cur) {
+            let val = input[cur] - prevVal
+            let count = counts.get(val)
+            if (count === undefined) {
+                count = 1
+            } else {
+                ++count
+            }
+            counts.set(val, count)
+
+            if (count > commonCount) {
+                commonValue = val
+                commonCount = count
+            } else if (count == commonCount && val > commonValue) {
+                // Take the largest common value in case of a tie -- this gives
+                // the biggest potential savings in the encoded stream.
+                commonValue = val
+            }
+            prevVal = input[cur]
+        }
+    }
+
+    console.log(`commonValue = ${commonValue}`)
+
+    // Now code the values.
+
+    // Write most common value.
+    output.setUint32(0, commonValue, true)
+    // let p = 4
+    let codesOut = 4
+    let vintsOut = Math.floor(4 + (input.length * 2 + 7) / 8)
+
+    let cur = 0
+    let prevVal = 0
+    let numInts = input.length
+
+    const arg: ARGE = {
+        input,
+        output,
+        cur,
+        commonValue,
+        prevVal,
+        codesOut,
+        vintsOut
+    }
+
+    while (numInts >= 4) {
+        encodeNHelper(4, arg)
+        numInts -= 4
+    }
+    switch (numInts) {
+        case 0: default: break
+        case 1: encodeNHelper(1, arg)
+            break
+        case 2: encodeNHelper(2, arg)
+            break
+        case 3: encodeNHelper(3, arg)
+            break
+    };
+
+    return vintsOut
+}
+
+interface ARGD {
     src: DataView
     result: number[]
     output: number
@@ -20,8 +148,7 @@ interface ARG {
     prevVal: number
 }
 
-function decodeNHelper(N: number, arg: ARG) {
-    enum Code { Common, Small, Medium, Large };
+function decodeNHelper(N: number, arg: ARGD) {
     const codeByte = arg.src.getUint8(arg.codesIn++)
     // console.log(`decodeNHelper(N=${N}): codeByte=${codeByte}`)
     for (let i = 0; i != N; ++i) {
@@ -31,15 +158,15 @@ function decodeNHelper(N: number, arg: ARG) {
             case Code.Common:
                 arg.prevVal += arg.commonValue
                 break
-            case Code.Small:
+            case Code.Int8:
                 arg.prevVal += arg.src.getInt8(arg.vintsIn)
                 arg.vintsIn += 1
                 break
-            case Code.Medium:
+            case Code.Int16:
                 arg.prevVal += arg.src.getInt16(arg.vintsIn)
                 arg.vintsIn += 2
                 break
-            case Code.Large:
+            case Code.Int32:
                 arg.prevVal += arg.src.getInt32(arg.vintsIn)
                 arg.vintsIn += 4
                 break
@@ -49,15 +176,15 @@ function decodeNHelper(N: number, arg: ARG) {
     }
 }
 
-export function decodeIntegers(src: DataView, numInts: number) {
+export function decodeIntegers(src: DataView, numInts: number): number[] {
 
-    const commonValue = src.getUint32(0, true)
+    const commonValue = src.getInt32(0, true)
 
     const numCodesBytes = (numInts * 2 + 7) / 8
     let prevVal = 0
     let intsLeft = numInts
 
-    const arg: ARG = {
+    const arg: ARGD = {
         src,
         result: new Array(numInts),
         output: 0,
@@ -79,16 +206,31 @@ export function decodeIntegers(src: DataView, numInts: number) {
 // OpenUSD/pxr/base/tf/fastCompression.cpp: TfFastCompression::DecompressFromBuffer(...)
 // tinyusdz/src/lz4-compression.cc: LZ4Compression::DecompressFromBuffer(...)
 export function decompressFromBuffer(src: Uint8Array, dst: Uint8Array) {
-    const nChunks = src.at(0)
+    const nChunks = src.at(0)!
+    if (nChunks > 127) {
+        throw Error(`too many chunks`)
+    }
     if (nChunks === 0) {
         const n = decompressBlock(src, dst, 1, src.byteLength - 1, 0)
         if (n < 0) {
             throw Error("Failed to decompress data, possibly corrupt?")
         }
         return n
-    } else {
-        throw Error("yikes")
     }
+    throw Error("decompressFromBuffer(): chunks are not implemented yet")
+}
+
+export function compressToBuffer(src: Uint8Array, dst: Uint8Array) {
+    const LZ4_MAX_INPUT_SIZE = 0x7E000000
+    if (src.length < LZ4_MAX_INPUT_SIZE) {
+        if (dst.length < compressBound(src.length) + 1) {
+            throw Error(`compressToBuffer(): dst has ${dst.length} octets but at least ${compressBound(src.length) + 1} are needed`)
+        }
+        const lz4 = new Uint8Array(dst.buffer, 1, src.length)
+        const n = compressBlock(src, lz4, 0, src.byteLength, [])
+        return n + 1
+    }
+    throw Error("compressToBuffer(): chunks are not implemented yet")
 }
 
 export class UsdStage {
@@ -97,7 +239,6 @@ export class UsdStage {
         const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
         const reader = new Reader(data)
         this._crate = new CrateFile(reader)
-
     }
     getPrimAtPath(path: string) {
         if (path[0] !== '/') {

@@ -1,9 +1,10 @@
 import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
-import { decodeIntegers, decompressFromBuffer, UsdStage } from "../src/index.ts"
+import { compressToBuffer, decodeIntegers, decompressFromBuffer, encodeIntegers, UsdStage } from "../src/index.ts"
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
+import { compressBound } from "lz4js"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -23,7 +24,7 @@ import { SpecType } from "../src/crate/SpecType.ts"
 // field / metadata
 
 describe("USD", function () {
-    it("all", function () {
+    it("Crate file", function () {
 
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
@@ -124,67 +125,90 @@ describe("USD", function () {
 
     describe("compression", function () {
         describe("LZ4", function () {
+            const src = parseHexDump(`
+                0000 00 52 2d 00 00 00 55 01 00 f0 18 44 11 45 15 45 .R-...U....D.E.E
+                0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
+                0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
+                0030 d3 00 03 00 f0 02 00 00 00 d3 09 ca 0b 02 c6 d3 ................
+                0040 00 11 c2 00 00 d3 d3                            .......         `)
+            const dst = parseHexDump(`
+                0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
+                0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
+                0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
+                0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
+                0040 00 11 c2 00 00 d3 d3                                            `)
             it("decompressFromBuffer(src, dst)", function () {
-                const src = parseHexDump(`
-                    0000 00 52 2d 00 00 00 55 01 00 f0 18 44 11 45 15 45 .R-...U....D.E.E
-                    0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
-                    0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
-                    0030 d3 00 03 00 f0 02 00 00 00 d3 09 ca 0b 02 c6 d3 ................
-                    0040 00 11 c2 00 00 d3 d3                            .......         `)
-
-                const e = parseHexDump(`
-                    0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
-                    0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
-                    0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
-                    0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
-                    0040 00 11 c2 00 00 d3 d3                                            `)
-
-                const dst = new Uint8Array(e.length)
-                const n = decompressFromBuffer(src, dst)
-                expect(n).to.equal(e.length)
-                expect(dst).to.deep.equal(e)
+                const uncompressed = new Uint8Array(dst.length)
+                const n = decompressFromBuffer(src, uncompressed)
+                expect(n).to.equal(dst.length)
+                expect(uncompressed).to.deep.equal(dst)
+            })
+            it("compressToBuffer(src, dst)", function () {
+                const compressed = new Uint8Array(compressBound(dst.length + 1))
+                const n = compressToBuffer(dst, compressed)
+                expect(n).to.equal(src.length)
+                expect(new Uint8Array(compressed.buffer, 0, n)).to.deep.equal(src)
             })
         })
 
         describe("integers", function () {
+            describe("decodeIntegers()", function () {
+                it("simple", function () {
+                    const encoded = parseHexDump(`
+                        0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
+                        0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
+                        0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
+                        0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
+                        0040 00 11 c2 00 00 d3 d3
+                    `)
 
-            it("decodeIntegers()", function () {
-                const src = parseHexDump(`
-                    0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
-                    0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
-                    0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
-                    0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
-                    0040 00 11 c2 00 00 d3 d3         `)
+                    const result = decodeIntegers(new DataView(encoded.buffer), 63)
 
-                const result = decodeIntegers(new DataView(src.buffer), 63)
+                    const decoded = [
+                        2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
+                        7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
+                        11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
+                        69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
 
-                const want = [
-                    2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
-                    7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
-                    11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
-                    69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
+                    expect(result).to.deep.equal(decoded)
+                })
 
-                expect(result).to.deep.equal(want)
+                it("decodeIntegers() with overflow in prevVal", function () {
+                    const encoded = parseHexDump(`
+                        0000 fd ff ff ff 55 55 55 40 55 55 44 54 15 01 07 08 ....UUU@UUDT....
+                        0010 dc 29 ca 03 04 ff fb 03 04 33 13 b6 04 47 b3 f9 .).......3...G..
+                        0020 ff 07 02 02 08 38 bb 01 fe ff                   .....8....     
+                    `)
+
+                    const result = decodeIntegers(new DataView(encoded.buffer), 35)
+
+                    const want = [
+                        1, 8, 16, -20, 21, -33, -30, -26, -27, -32, -29, -25, -28, -31, -34, 17,
+                        36, -38, -34, 37, -40, -47, -48, -41, -44, -42, -45, -43, -46, -38, 18, -51,
+                        -50, -52, -53,]
+
+                    expect(result).to.deep.equal(want)
+                })
+
+                it.only("encodeIntegers()", function() {
+                    const decoded = [
+                        2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
+                        7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
+                        11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
+                        69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
+
+                    const buffer = new Uint8Array(decoded.length*3)
+                    const encoded = new DataView(buffer.buffer)
+
+                    const n = encodeIntegers(decoded, encoded)
+
+                    const out = decodeIntegers(encoded, decoded.length)
+                    console.log(out)
+                    expect(out).to.deep.equal(decoded)
+                })
             })
 
-            it("decodeIntegers() with overflow in prevVal", function () {
-                const src = parseHexDump(`
-                    0000 fd ff ff ff 55 55 55 40 55 55 44 54 15 01 07 08 ....UUU@UUDT....
-                    0010 dc 29 ca 03 04 ff fb 03 04 33 13 b6 04 47 b3 f9 .).......3...G..
-                    0020 ff 07 02 02 08 38 bb 01 fe ff                   .....8....     
-                `)
-
-                const result = decodeIntegers(new DataView(src.buffer), 35)
-
-                const want = [
-                    1, 8, 16, -20, 21, -33, -30, -26, -27, -32, -29, -25, -28, -31, -34, 17,
-                    36, -38, -34, 37, -40, -47, -48, -41, -44, -42, -45, -43, -46, -38, 18, -51,
-                    -50, -52, -53,]
-
-                expect(result).to.deep.equal(want)
-            })
-
-            it("readCompressedInts()", function () {
+            it("Reader.readCompressedInts()", function () {
                 const compressed = parseHexDump(`
                     0000 47 00 00 00 00 00 00 00 00 52 2d 00 00 00 55 01 G........R-...U.
                     0010 00 f0 18 44 11 45 15 45 45 54 54 04 02 01 02 02 ...D.E.EETT.....
