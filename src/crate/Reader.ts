@@ -48,17 +48,17 @@ export class Reader {
         return value
     }
     getFloat16() {
-        const value = new Number(this._dataview.getFloat16(this.offset, true)).valueOf()
+        const value = this._dataview.getFloat16(this.offset, true)
         this.offset += 2
         return value
     }
     getFloat32() {
-        const value = new Number(this._dataview.getFloat32(this.offset, true)).valueOf()
+        const value = this._dataview.getFloat32(this.offset, true)
         this.offset += 4
         return value
     }
     getFloat64() {
-        const value = new Number(this._dataview.getFloat64(this.offset, true)).valueOf()
+        const value = this._dataview.getFloat64(this.offset, true)
         this.offset += 8
         return value
     }

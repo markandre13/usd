@@ -5,6 +5,13 @@ import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
 import { compressBound } from "lz4js"
+import { UsdNode } from "../src/crate/UsdNode.ts"
+import { CrateDataType } from "../src/crate/CrateDataType.ts"
+import { UsdGeom, Writer } from "../src/crate/Writer.ts"
+import { writer } from "repl"
+import { BootStrap } from "../src/crate/BootStrap.ts"
+import { TableOfContents } from "../src/crate/TableOfContents.ts"
+import { Section } from "../src/crate/Section.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -23,7 +30,97 @@ import { compressBound } from "lz4js"
 
 // field / metadata
 
+
 describe("USD", function () {
+    it("write CrateFile", function () {
+        const stage = new UsdStage()
+        const form = new UsdGeom.Xform()
+
+        const mesh = new UsdGeom.Mesh()
+        mesh.points = [
+            -1, -1, -1,
+            -1, -1, 1,
+            -1, 1, -1,
+            -1, 1, 1,
+            1, -1, -1,
+            1, -1, 1,
+            1, 1, -1,
+            1, 1, 1
+        ]
+        mesh.normals = [
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0,
+
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0,
+
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0,
+
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1,
+
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1
+        ]
+        mesh.faceVertexIndices = [
+            0, 1, 3, 2,
+            2, 3, 7, 6,
+            6, 7, 5, 4,
+            4, 5, 1, 0,
+            2, 6, 4, 0,
+            7, 3, 1, 5]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+
+        const writer = new Writer()
+        mesh.serialize(writer)
+    })
+    describe("BootStrap", function () {
+        it("read/write", function () {
+            const writer = new Writer()
+            const bout = new BootStrap(writer)
+
+            const reader = new Reader(writer.buffer)
+            const bin = new BootStrap(reader)
+
+            expect(bout.indent).to.equal(bin.indent)
+            expect(bout.version).to.deep.equal(bin.version)
+            expect(bout.tocOffset).to.equal(bin.tocOffset)
+        })
+    })
+    it("TableOfContents & Section", function () {
+        const tocIn = new TableOfContents()
+        tocIn.addSection(new Section({ name: "A", start: 1, size: 2 }))
+        tocIn.addSection(new Section({ name: "B", start: 3, size: 4 }))
+
+        const writer = new Writer()
+        tocIn.serialize(writer)
+
+        const reader = new Reader(writer.buffer)
+        const tocOut = new TableOfContents(reader)
+
+        // expect(tocOut).to.deep.equal(tocIn)
+        expect(tocOut.sections.size).to.equal(tocIn.sections.size)
+        expect(tocOut.sections.get("A")).to.deep.equal(tocIn.sections.get("A"))
+        expect(tocOut.sections.get("B")).to.deep.equal(tocIn.sections.get("B"))
+    })
+    // tokens
+
     it("Crate file", function () {
 
         const buffer = readFileSync("spec/cube.usdc")
@@ -33,7 +130,7 @@ describe("USD", function () {
         expect(pseudoRoot).to.not.be.undefined
         expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
 
-        const mesh = stage.getPrimAtPath("/root/Cube/Mesh")!
+        const mesh = stage.getPrimAtPath("/root/Cube/Cube_001")!
         expect(mesh).to.not.be.undefined
         expect(mesh.getType()).to.equal(SpecType.Prim)
 
@@ -49,6 +146,7 @@ describe("USD", function () {
         // console.log(JSON.stringify(pseudoRoot, undefined))
 
         const json = JSON.parse(readFileSync("spec/cube.json").toString())
+        // console.log(JSON.stringify(pseudoRoot.toJSON()))
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
 
         /*
@@ -190,20 +288,20 @@ describe("USD", function () {
                     expect(result).to.deep.equal(want)
                 })
 
-                it.only("encodeIntegers()", function() {
+                it("encodeIntegers()", function () {
                     const decoded = [
                         2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
                         7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
                         11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
                         69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
 
-                    const buffer = new Uint8Array(decoded.length*3)
+                    const buffer = new Uint8Array(decoded.length * 3)
                     const encoded = new DataView(buffer.buffer)
 
                     const n = encodeIntegers(decoded, encoded)
 
                     const out = decodeIntegers(encoded, decoded.length)
-                    console.log(out)
+                    // console.log(out)
                     expect(out).to.deep.equal(decoded)
                 })
             })

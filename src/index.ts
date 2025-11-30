@@ -97,7 +97,7 @@ export function encodeIntegers(input: number[], output: DataView) {
         }
     }
 
-    console.log(`commonValue = ${commonValue}`)
+    // console.log(`commonValue = ${commonValue}`)
 
     // Now code the values.
 
@@ -234,11 +234,13 @@ export function compressToBuffer(src: Uint8Array, dst: Uint8Array) {
 }
 
 export class UsdStage {
-    _crate: CrateFile
-    constructor(buffer: Buffer) {
-        const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
-        const reader = new Reader(data)
-        this._crate = new CrateFile(reader)
+    _crate!: CrateFile
+    constructor(buffer?: Buffer) {
+        if (buffer) {
+            const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
+            const reader = new Reader(data)
+            this._crate = new CrateFile(reader)
+        }
     }
     getPrimAtPath(path: string) {
         if (path[0] !== '/') {
@@ -246,29 +248,29 @@ export class UsdStage {
         }
         const pathSegments = path.split('/').splice(1)
         // console.log(`TRAVERSE %o (${path})`, s)
+        let parent: UsdNode | undefined
         let node: UsdNode | undefined = this._crate._nodes[0]
         for (const segment of pathSegments) {
             if (node === undefined) {
-                throw Error(`path '${path}' not found`)
+                break
             }
             if (segment.length === 0) {
                 break
             }
-            // console.log(`FOUND ${i.name}, LOOKUP '${t}'`)
+            parent = node
             node = node.getChildPrim(segment)
         }
-
-        // if (i !== undefined) {
-        //     console.log(`FOUND NOW %o`, i.name)
-        // } else {
-        //     console.log(`FOUND NOT`)
-        // }
+        if (node == undefined) {
+            throw Error(`path '${path}' not found. At ${parent?.getFullPathName()} available children are ${parent?.children.map(it => it.name).join(", ")}`)
+        }
         return node
     }
 }
 
 // OpenUSD/pxr/usd/usd/schema.usda:class "Typed"
 // OpenUSD/pxr/usd/usd/typed.h
+
+class UsdSchemaBase { }
 
 /**
  * The base class for all _typed_ schemas (those that can impart a
@@ -278,7 +280,7 @@ export class UsdStage {
  * UsdTyped implements a typeName-based query for its override of
  * UsdSchemaBase::_IsCompatible().  It provides no other behavior.
  */
-class Typed {
+class UsdTyped extends UsdSchemaBase {
 
 }
 
@@ -291,7 +293,7 @@ class Typed {
  * what geometry should be included for processing by rendering and other
  * computations.
  */
-class Imageable extends Typed {
+class UsdImageable extends UsdTyped {
 
 }
 
@@ -299,14 +301,14 @@ class Imageable extends Typed {
  * Base class for all transformable prims, which allows arbitrary
  * sequences of component affine transformations to be encoded.
  */
-class Xformable extends Imageable {
+class UsdGeomXformable extends UsdImageable {
 
 }
 
 /**
  * Concrete prim schema for a transform, which implements Xformable
  */
-class XForm extends Xformable {
+class UsdGeomXform extends UsdGeomXformable {
 }
 
 /**
@@ -337,7 +339,7 @@ class XForm extends Xformable {
  * will be pruned from BBox computation; the authored extent is expected to
  * incorporate all child bounds.
  */
-class Boundable extends Xformable {
+class Boundable extends UsdGeomXformable {
     extent!: vec3[]
 }
 
@@ -361,7 +363,7 @@ class PointBased extends Gprim {
     normals?: ArrayLike<number>
 }
 
-class Mesh extends PointBased {
-    faceVertexIndices!: ArrayLike<number>
-    faceVertexCounts!: ArrayLike<number>
+class UsdGeomMesh extends PointBased {
+    faceVertexIndices?: ArrayLike<number>
+    faceVertexCounts?: ArrayLike<number>
 }
