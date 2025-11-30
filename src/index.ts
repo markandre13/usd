@@ -1,11 +1,11 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { compressBlock, compressBound, decompressBlock } from "lz4js"
 import { Reader } from "./crate/Reader.js"
 import { CrateFile } from "./crate/CrateFile.ts"
 import { UsdNode } from "./crate/UsdNode.ts"
 import { vec3 } from "gl-matrix"
 import { hexdump } from "./detail/hexdump.ts"
+import { compressBlock, compressBound, decompressBlock } from "./crate/lz4.ts"
 
 type Index = number
 export type StringIndex = Index
@@ -227,7 +227,7 @@ export function compressToBuffer(src: Uint8Array, dst: Uint8Array) {
             throw Error(`compressToBuffer(): dst has ${dst.length} octets but at least ${compressBound(src.length) + 1} are needed`)
         }
         const lz4 = new Uint8Array(dst.buffer, 1, src.length)
-        const n = compressBlock(src, lz4, 0, src.byteLength, [])
+        const n = compressBlock(src, lz4, 0, src.byteLength)
         return n + 1
     }
     throw Error("compressToBuffer(): chunks are not implemented yet")

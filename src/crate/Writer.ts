@@ -121,7 +121,11 @@ export class Writer {
         this.buffer.setBigUint64(this.offset, BigInt(value), true)
         this.offset += 8
     }
-
+    writeBuffer(value: ArrayLike<number>, start: number, length: number) {
+        for (let i = 0; i < length; ++i) {
+            this.buffer.setUint8(this.offset++, value[start + i])
+        }
+    }
     writeIntArray(name: string, value: ArrayLike<number>) {
         const attr = new Attribute(name)
         attr.setToken("typeName", "int[]")

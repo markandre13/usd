@@ -4,7 +4,6 @@ import { compressToBuffer, decodeIntegers, decompressFromBuffer, encodeIntegers,
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
-import { compressBound } from "lz4js"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 import { CrateDataType } from "../src/crate/CrateDataType.ts"
 import { UsdGeom, Writer } from "../src/crate/Writer.ts"
@@ -12,6 +11,9 @@ import { writer } from "repl"
 import { BootStrap } from "../src/crate/BootStrap.ts"
 import { TableOfContents } from "../src/crate/TableOfContents.ts"
 import { Section } from "../src/crate/Section.ts"
+import { Tokens } from "../src/crate/Tokens.ts"
+import { SectionName } from "../src/crate/SectionName.ts"
+import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.ts"
 
 // https://github.com/lighttransport/tinyusdz
 // mkdir build
@@ -29,7 +31,6 @@ import { Section } from "../src/crate/Section.ts"
 //   UsdReleationship: UsdProperty
 
 // field / metadata
-
 
 describe("USD", function () {
     it("write CrateFile", function () {
@@ -103,23 +104,41 @@ describe("USD", function () {
             expect(bout.tocOffset).to.equal(bin.tocOffset)
         })
     })
-    it("TableOfContents & Section", function () {
-        const tocIn = new TableOfContents()
-        tocIn.addSection(new Section({ name: "A", start: 1, size: 2 }))
-        tocIn.addSection(new Section({ name: "B", start: 3, size: 4 }))
+    describe("TableOfContents & Section", function () {
+        it("read/write", function () {
+            const tocIn = new TableOfContents()
+            tocIn.addSection(new Section({ name: "A", start: 1, size: 2 }))
+            tocIn.addSection(new Section({ name: "B", start: 3, size: 4 }))
 
-        const writer = new Writer()
-        tocIn.serialize(writer)
+            const writer = new Writer()
+            tocIn.serialize(writer)
 
-        const reader = new Reader(writer.buffer)
-        const tocOut = new TableOfContents(reader)
+            const reader = new Reader(writer.buffer)
+            const tocOut = new TableOfContents(reader)
 
-        // expect(tocOut).to.deep.equal(tocIn)
-        expect(tocOut.sections.size).to.equal(tocIn.sections.size)
-        expect(tocOut.sections.get("A")).to.deep.equal(tocIn.sections.get("A"))
-        expect(tocOut.sections.get("B")).to.deep.equal(tocIn.sections.get("B"))
+            // expect(tocOut).to.deep.equal(tocIn)
+            expect(tocOut.sections.size).to.equal(tocIn.sections.size)
+            expect(tocOut.sections.get("A")).to.deep.equal(tocIn.sections.get("A"))
+            expect(tocOut.sections.get("B")).to.deep.equal(tocIn.sections.get("B"))
+        })
     })
-    // tokens
+    describe("Tokens", function () {
+        it("read/write", function () {
+            const tokensIn = new Tokens()
+            tokensIn.add("Mesh")
+            tokensIn.add("Cylinder")
+
+            const writer = new Writer()
+            tokensIn.serialize(writer)
+            const toc = new TableOfContents()
+            toc.addSection(new Section({ name: SectionName.TOKENS, start: 0, size: writer.offset }))
+
+            const reader = new Reader(writer.buffer)
+            const tokensOut = new Tokens(reader, toc)
+
+            expect(tokensOut.tokens).to.deep.equal(tokensIn.tokens)
+        })
+    })
 
     it("Crate file", function () {
 
@@ -246,6 +265,86 @@ describe("USD", function () {
                 const n = compressToBuffer(dst, compressed)
                 expect(n).to.equal(src.length)
                 expect(new Uint8Array(compressed.buffer, 0, n)).to.deep.equal(src)
+            })
+            describe("regression", function () {
+                it("compress 1 byte", function () {
+                    const compressed = parseHexDump(`  0000 10 4d                                           .M`)
+                    const uncompressed = parseHexDump(`0000 4d                                              M`)
+                    const out = new Uint8Array(4096)
+                    const n = compressBlock(uncompressed, out, 0, uncompressed.length)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(compressed)
+                })
+                it("compress 17 bytes", function () {
+                    const compressed = parseHexDump(`
+                        0000 f0 02 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 ..MeshCylinderSp
+                        0010 68 65 72                                        her       
+                    `)
+                    const uncompressed = parseHexDump(`
+                        0000 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 68 65 MeshCylinderSphe
+                        0010 72  
+                    `)
+                    const out = new Uint8Array(4096)
+                    const n = compressBlock(uncompressed, out, 0, uncompressed.length)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(compressed)
+                })
+                it("decompress 1 byte", function () {
+                    const compressed = parseHexDump(`  0000 10 4d                                           .M`)
+                    const uncompressed = parseHexDump(`0000 4d                                              M`)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
+                it("decompress 2 bytes", function () {
+                    const compressed = parseHexDump(`  0000 20 4d 65                                         Me`)
+                    const uncompressed = parseHexDump(`0000 4d 65                                           Me`)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
+                it("decompress 14 bytes", function () {
+                    const compressed = parseHexDump(`  0000 e0 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70    .MeshCylinderSp`)
+                    const uncompressed = parseHexDump(`0000 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70       MeshCylinderSp`)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
+                it("decompress 15 bytes", function () {
+                    const compressed = parseHexDump(`
+                        0000 f0 00 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 ..MeshCylinderSp
+                        0010 68  `
+                    )
+                    const uncompressed = parseHexDump(`
+                        0000 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 68    MeshCylinderSph
+                    `)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
+                it("decompress 16 bytes", function () {
+                    const compressed = parseHexDump(`
+                        0000 f0 01 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 ..MeshCylinderSp
+                        0010 68 65                                           he 
+                    `)
+                    const uncompressed = parseHexDump(`
+                        0000 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 68 65 MeshCylinderSphe
+                    `)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
+                it("decompress 17 bytes", function () {
+                    const compressed = parseHexDump(`
+                        0000 f0 02 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 ..MeshCylinderSp
+                        0010 68 65 72                                        her       
+                    `)
+                    const uncompressed = parseHexDump(`
+                        0000 4d 65 73 68 43 79 6c 69 6e 64 65 72 53 70 68 65 MeshCylinderSphe
+                        0010 72  
+                    `)
+                    const out = new Uint8Array(4096)
+                    const n = decompressBlock(compressed, out, 0, compressed.length, 0)
+                    expect(new Uint8Array(out.buffer, 0, n)).to.deep.equal(uncompressed)
+                })
             })
         })
 
