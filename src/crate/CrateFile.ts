@@ -75,6 +75,7 @@ export class CrateFile {
 
         const indices = reader.getCompressedIntegers(numFields)
 
+        // ValueReps
         const compressedSize = reader.getUint64()
         const uncompressedSize = numFields * 8
         const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)

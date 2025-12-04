@@ -1,3 +1,4 @@
+import { hexdump } from "../detail/hexdump.ts"
 import { CrateDataType } from "./CrateDataType.ts"
 
 enum Axis {
@@ -81,8 +82,31 @@ class Attribute extends Prim { }
 //   [ ] then a single field
 
 export class Writer {
-    offset = 0
-    buffer = new DataView(new Uint8Array(0xffff).buffer)
+    buffer: ArrayBuffer
+    private view: DataView
+    private offset: number
+
+    constructor(byteLength?: number) {
+        this.buffer = new ArrayBuffer(0, { maxByteLength: byteLength ? byteLength : 4096 })
+        this.view = new DataView(this.buffer)
+        this.offset = 0
+    }
+    /**
+     * make sure there are n bytes available at the current offset
+     */
+    reserve(n: number) {
+        if (this.offset + n >= this.buffer.byteLength) {
+            if (this.offset + n >= this.buffer.maxByteLength) {
+                const buffer = new ArrayBuffer(this.offset + n, { maxByteLength: this.buffer.maxByteLength * 2 })
+                new Uint8Array(buffer).set(new Uint8Array(this.buffer))
+                this.buffer = buffer
+                this.view = new DataView(this.buffer)
+            } else {
+                this.buffer.resize(this.offset + n)
+            }
+        }
+    }
+
     // tokens   string[]
     // strings  number[]
     // fields   Field[] {name, valuerep}
@@ -98,34 +122,45 @@ export class Writer {
                 throw Error(`string ${value} exceeds required fixedSize of ${fixedSize} bytes`)
             }
             end = this.offset + fixedSize
+            this.reserve(fixedSize)
+        } else {
+            this.reserve(value.length)
         }
         for (let i = 0; i < value.length; ++i) {
-            this.buffer.setUint8(this.offset++, value.charCodeAt(i))
+            this.view.setUint8(this.offset++, value.charCodeAt(i))
         }
         if (end) {
             this.offset = end
         }
     }
     writeUint8(value: number) {
-        this.buffer.setUint8(this.offset++, value)
+        this.reserve(1)
+        this.view.setUint8(this.offset++, value)
     }
     writeUint16(value: number) {
-        this.buffer.setUint16(this.offset, value, true)
+        this.reserve(2)
+        this.view.setUint16(this.offset, value, true)
         this.offset += 2
     }
     writeUint32(value: number) {
-        this.buffer.setUint16(this.offset, value, true)
+        this.reserve(4)
+        this.view.setUint16(this.offset, value, true)
         this.offset += 4
     }
     writeUint64(value: number) {
-        this.buffer.setBigUint64(this.offset, BigInt(value), true)
+        this.reserve(8)
+        this.view.setBigUint64(this.offset, BigInt(value), true)
         this.offset += 8
     }
     writeBuffer(value: ArrayLike<number>, start: number, length: number) {
+        this.reserve(length)
+        // FIXME: use Uint8Array.set(...)
         for (let i = 0; i < length; ++i) {
-            this.buffer.setUint8(this.offset++, value[start + i])
+            this.view.setUint8(this.offset++, value[start + i])
         }
     }
+
+    // higher order, maybe to be placed elsewhere
     writeIntArray(name: string, value: ArrayLike<number>) {
         const attr = new Attribute(name)
         attr.setToken("typeName", "int[]")
@@ -135,5 +170,8 @@ export class Writer {
         const attr = new Attribute(name)
         attr.setToken("typeName", "point3f[]")
         attr.setVec3fArray("default", value)
+    }
+    hexdump() {
+        hexdump(new Uint8Array(this.buffer))
     }
 }

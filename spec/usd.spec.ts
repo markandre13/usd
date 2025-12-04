@@ -7,32 +7,84 @@ import { SpecType } from "../src/crate/SpecType.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 import { CrateDataType } from "../src/crate/CrateDataType.ts"
 import { UsdGeom, Writer } from "../src/crate/Writer.ts"
-import { writer } from "repl"
 import { BootStrap } from "../src/crate/BootStrap.ts"
 import { TableOfContents } from "../src/crate/TableOfContents.ts"
 import { Section } from "../src/crate/Section.ts"
 import { Tokens } from "../src/crate/Tokens.ts"
 import { SectionName } from "../src/crate/SectionName.ts"
 import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.ts"
+import { table } from "console"
 
-// https://github.com/lighttransport/tinyusdz
-// mkdir build
-// cd build
-// cmake ..
-// make -j12
-// ./tusdcat /Users/mark/js/usd/cube.usdc
+// file layout of cube.udsc:
+// BOOTSTRAP:         start: 0, size: 24
+// non-inlined values
+// name: "TOKENS",    start: 1112, size: 739
+// name: "STRINGS",   start: 1851, size: 32,
+// name: "FIELDS",    start: 1883, size: 403,
+// name: "FIELDSETS", start: 2286, size: 132,
+// name: "PATHS",     start: 2418, size: 146,
+// name: "SPECS",     start: 2564, size: 108
+// TOC:               start: 2672, size: 200
+// end of file: 2872
 
-// readfields -> readcompressedint -> de
+// tokens: string[]
+// strings: number[] -> tokens
+// fields: Field { tokenIndex: number, valueRep: ValueRep }[]
+// fieldsets: number[][] -> fields
+// paths: { path_index, tokenIndex, jump }
+//   tokenIndex < 0: tokenIndex = -tokenIndex, isPrimPropertyPath = false
+//   else          : isPrimPropertyPath = trye
+//   hasChild = jump > 0 || jump === -1
+//   hasSibling = jump >= 0
+//   if (hasChild && hasSibling) siblingIndex = thisIndex + jump
+//
+// specs: specs: Spec {path_index, fieldset_index, spec_type } []
+//    assigns each node (path_index) a fieldset and a spec_type (Prim, Attribute, ...)
 
-// UsdObject ;; GetAllMetadata(), points to stage
-//   UsdPrim
-//   UsdProperty
-//   UsdAttribute: UsdProperty
-//   UsdReleationship: UsdProperty
+class Fields {
+    tokenIndices: number[] = []
 
-// field / metadata
+    valueReps0 = new Uint8Array(4096)
+    valueReps = new DataView(this.valueReps0.buffer)
+    offset = 0
+
+    private tokens!: Tokens
+    constructor(tokens: Tokens | Reader) {
+        if (tokens instanceof Reader) {
+
+        } else {
+            this.tokens = tokens
+        }
+    }
+    setFloat(name: string, value: number) {
+        this.tokenIndices.push(this.tokens.add(name))
+        // ValueRep
+
+        this.valueReps.setUint8(this.offset + 6, CrateDataType.Float)
+        this.valueReps.setUint8(this.offset + 7, 64)
+        this.valueReps.setFloat32(this.offset, value)
+        this.offset += 8
+
+        // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
+        // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
+        // isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
+        // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
+    }
+    serialize(writer: Writer) {
+        // writer.putCompressedIntegers(this.tokenIndices)
+    }
+}
 
 describe("USD", function () {
+    describe("Writer", function() {
+    it("grows on demand", function () {
+        const flex = new Writer(8)
+        for (let i = 0; i < 20; ++i) {
+            flex.writeUint8(i)
+        }
+        expect(flex.buffer).to.deep.equal(new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).buffer)
+    })
+    })
     it("write CrateFile", function () {
         const stage = new UsdStage()
         const form = new UsdGeom.Xform()
@@ -140,6 +192,15 @@ describe("USD", function () {
         })
     })
 
+    describe("Fields", function () {
+        const tokens = new Tokens()
+        const fieldsIn = new Fields(tokens)
+        fieldsIn.setFloat("metersPerUnit", 1)
+
+        const writer = new Writer()
+        // fields.serialize(writer)
+    })
+
     it("Crate file", function () {
 
         const buffer = readFileSync("spec/cube.usdc")
@@ -167,6 +228,10 @@ describe("USD", function () {
         const json = JSON.parse(readFileSync("spec/cube.json").toString())
         // console.log(JSON.stringify(pseudoRoot.toJSON()))
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
+
+        console.log(stage._crate.fields[0].toString())
+        console.log(stage._crate.tokens[stage._crate.fields[0].tokenIndex])
+        console.log(stage._crate.fields[0].valueRep.getValue(stage._crate))
 
         /*
             openusd: /pxr/usd/bin/usdcat/usdcat.cpp

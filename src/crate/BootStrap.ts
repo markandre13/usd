@@ -23,6 +23,7 @@ export class BootStrap {
             }
             io.offset += 5
             this.tocOffset = io.getUint64()
+            // console.log(`tocOffset: ${this.tocOffset}`)
             // console.log(`VERSION %o`, this.version)
         } else {
             this.indent = "PXR-USDC"

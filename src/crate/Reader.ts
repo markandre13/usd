@@ -6,8 +6,12 @@ export class Reader {
     _dataview: DataView
 
     offset = 0;
-    constructor(dataview: DataView) {
-        this._dataview = dataview
+    constructor(dataview: DataView | ArrayBuffer) {
+        if (dataview instanceof ArrayBuffer) {
+            this._dataview = new DataView(dataview)
+        } else {
+            this._dataview = dataview
+        }
     }
     get byteLength() {
         return this._dataview.byteLength
