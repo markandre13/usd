@@ -44,8 +44,7 @@ import { table } from "console"
 class Fields {
     tokenIndices: number[] = []
 
-    valueReps0 = new Uint8Array(4096)
-    valueReps = new DataView(this.valueReps0.buffer)
+    valueReps = new Writer()
     offset = 0
 
     private tokens!: Tokens
@@ -60,10 +59,10 @@ class Fields {
         this.tokenIndices.push(this.tokens.add(name))
         // ValueRep
 
-        this.valueReps.setUint8(this.offset + 6, CrateDataType.Float)
-        this.valueReps.setUint8(this.offset + 7, 64)
-        this.valueReps.setFloat32(this.offset, value)
-        this.offset += 8
+        this.valueReps.writeFloat32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Float)
+        this.valueReps.writeUint8(64)
 
         // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
         // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
@@ -76,14 +75,58 @@ class Fields {
 }
 
 describe("USD", function () {
-    describe("Writer", function() {
-    it("grows on demand", function () {
-        const flex = new Writer(8)
-        for (let i = 0; i < 20; ++i) {
-            flex.writeUint8(i)
-        }
-        expect(flex.buffer).to.deep.equal(new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).buffer)
-    })
+    describe("Reader & Writer", function () {
+        it("grows on demand", function () {
+            const flex = new Writer(8)
+            for (let i = 0; i < 20; ++i) {
+                flex.writeUint8(i)
+            }
+            expect(flex.buffer).to.deep.equal(new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]).buffer)
+        })
+        describe("compressedInts", function () {
+            it("Reader.readCompressedInts()", function () {
+                const compressed = parseHexDump(`
+                    0000 47 00 00 00 00 00 00 00 00 52 2d 00 00 00 55 01 G........R-...U.
+                    0010 00 f0 18 44 11 45 15 45 45 54 54 04 02 01 02 02 ...D.E.EETT.....
+                    0020 02 01 01 02 fa 0c f4 04 0b 02 fb f8 fc 04 fc 0c ................
+                    0030 f8 08 f8 08 f8 2c 01 d3 d3 00 03 00 f0 02 00 00 .....,..........
+                    0040 00 d3 09 ca 0b 02 c6 d3 00 11 c2 00 00 d3 d3    ...............
+                    `)
+                const reader = new Reader(new DataView(compressed.buffer))
+                const result = reader.getCompressedIntegers(63)
+                const want = [2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
+                    7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
+                    11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
+                    69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
+
+                expect(result).to.deep.equal(want)
+                expect(reader.offset).to.equal(compressed.byteLength)
+            })
+            it("Writer.writeCompressedInts()", function () {
+                const uncompressed = [2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
+                    7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
+                    11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
+                    69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56,]
+
+
+                const writer = new Writer()
+                writer.writeCompressedInt(uncompressed)
+
+                const compressed = parseHexDump(`
+                    0000 3f 00 00 00 00 00 00 00 47 00 00 00 00 00 00 00 ?.......G.......
+                    0010 00 52 2d 00 00 00 55 01 00 f0 18 44 11 45 15 45 .R-...U....D.E.E
+                    0020 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
+                    0030 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
+                    0040 d3 00 03 00 f0 02 00 00 00 d3 09 ca 0b 02 c6 d3 ................
+                    0050 00 11 c2 00 00 d3 d3                            .......
+                `)
+                expect(new Uint8Array(writer.buffer)).to.deep.equal(compressed)
+
+                const reader = new Reader(writer.buffer)
+                const result = reader.getCompressedIntegers()
+                expect(result).to.deep.equal(uncompressed)
+            })
+        })
     })
     it("write CrateFile", function () {
         const stage = new UsdStage()
@@ -183,7 +226,7 @@ describe("USD", function () {
             const writer = new Writer()
             tokensIn.serialize(writer)
             const toc = new TableOfContents()
-            toc.addSection(new Section({ name: SectionName.TOKENS, start: 0, size: writer.offset }))
+            toc.addSection(new Section({ name: SectionName.TOKENS, start: 0, size: writer.tell() }))
 
             const reader = new Reader(writer.buffer)
             const tokensOut = new Tokens(reader, toc)
@@ -193,16 +236,24 @@ describe("USD", function () {
     })
 
     describe("Fields", function () {
-        const tokens = new Tokens()
-        const fieldsIn = new Fields(tokens)
-        fieldsIn.setFloat("metersPerUnit", 1)
+        it("read/write", function () {
+            const tokens = new Tokens()
+            const fieldsIn = new Fields(tokens)
+            fieldsIn.setFloat("metersPerUnit", 1)
 
-        const writer = new Writer()
-        // fields.serialize(writer)
+            const writer = new Writer()
+            fieldsIn.serialize(writer)
+            const toc = new TableOfContents()
+            toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
+
+            const reader = new Reader(writer.buffer)
+            // const fieldsOut = new Fields(reader, toc)
+
+            // expect ...
+        })
     })
 
     it("Crate file", function () {
-
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
 
@@ -319,6 +370,30 @@ describe("USD", function () {
                 0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
                 0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
                 0040 00 11 c2 00 00 d3 d3                                            `)
+
+            it("regression", function () {
+                const src = parseHexDump(`
+                    0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
+                    0010 45 54 54 04                                     ETT.
+                `)
+
+                const compressed = new Uint8Array(compressBound(src.length + 1))
+                const n = compressToBuffer(src, compressed)
+
+                const dst = parseHexDump(`
+                    0000 00 52 2d 00 00 00 55 01 00 90 44 11 45 15 45 45 .R-...U...D.E.EE
+                    0010 54 54 04                                        TT.
+                `)
+                expect(new Uint8Array(compressed.buffer, 0, n)).to.deep.equal(dst)
+
+                const uncompressed = new Uint8Array(src.length)
+                const m = decompressFromBuffer(new Uint8Array(compressed.buffer, 0, n), uncompressed)
+                expect(n).to.equal(dst.length)
+                expect(uncompressed).to.deep.equal(src)
+
+                expect(m).to.equal(src.length)
+            })
+
             it("decompressFromBuffer(src, dst)", function () {
                 const uncompressed = new Uint8Array(dst.length)
                 const n = decompressFromBuffer(src, uncompressed)
@@ -458,35 +533,18 @@ describe("USD", function () {
                         7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
                         11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
                         69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56]
-
                     const buffer = new Uint8Array(decoded.length * 3)
                     const encoded = new DataView(buffer.buffer)
-
                     const n = encodeIntegers(decoded, encoded)
-
-                    const out = decodeIntegers(encoded, decoded.length)
-                    // console.log(out)
-                    expect(out).to.deep.equal(decoded)
-                })
-            })
-
-            it("Reader.readCompressedInts()", function () {
-                const compressed = parseHexDump(`
-                    0000 47 00 00 00 00 00 00 00 00 52 2d 00 00 00 55 01 G........R-...U.
-                    0010 00 f0 18 44 11 45 15 45 45 54 54 04 02 01 02 02 ...D.E.EETT.....
-                    0020 02 01 01 02 fa 0c f4 04 0b 02 fb f8 fc 04 fc 0c ................
-                    0030 f8 08 f8 08 f8 2c 01 d3 d3 00 03 00 f0 02 00 00 .....,..........
-                    0040 00 d3 09 ca 0b 02 c6 d3 00 11 c2 00 00 d3 d3    ...............
+                    const yyy = parseHexDump(`
+                        0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
+                        0010 45 54 54 04 02 01 02 02 02 01 01 02 fa 0c f4 04 ETT.............
+                        0020 0b 02 fb f8 fc 04 fc 0c f8 08 f8 08 f8 2c 01 d3 .............,..
+                        0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
+                        0040 00 11 c2 00 00 d3 d3                            .......         
                     `)
-                const reader = new Reader(new DataView(compressed.buffer))
-                const result = reader.getCompressedIntegers(63)
-                const want = [2, 3, 5, 7, 9, 10, 11, 13, 7, 19, 7, 11, 22, 24, 19, 11,
-                    7, 11, 7, 19, 11, 19, 11, 19, 11, 55, 56, 11, 56, 11, 56, 56,
-                    11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
-                    69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56,]
-
-                expect(result).to.deep.equal(want)
-                expect(reader.offset).to.equal(compressed.byteLength)
+                    expect(new Uint8Array(buffer.buffer, 0, n)).to.deep.equal(yyy)
+                })
             })
         })
     })

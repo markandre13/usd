@@ -97,28 +97,20 @@ export function encodeIntegers(input: number[], output: DataView) {
         }
     }
 
-    // console.log(`commonValue = ${commonValue}`)
-
     // Now code the values.
 
     // Write most common value.
-    output.setUint32(0, commonValue, true)
-    // let p = 4
-    let codesOut = 4
-    let vintsOut = Math.floor(4 + (input.length * 2 + 7) / 8)
-
-    let cur = 0
-    let prevVal = 0
+    output.setInt32(0, commonValue, true)
     let numInts = input.length
 
     const arg: ARGE = {
         input,
         output,
-        cur,
+        cur: 0,
         commonValue,
-        prevVal,
-        codesOut,
-        vintsOut
+        prevVal: 0,
+        codesOut: 4,
+        vintsOut: Math.floor(4 + (input.length * 2 + 7) / 8)
     }
 
     while (numInts >= 4) {
@@ -134,8 +126,7 @@ export function encodeIntegers(input: number[], output: DataView) {
         case 3: encodeNHelper(3, arg)
             break
     };
-
-    return vintsOut
+    return arg.vintsOut
 }
 
 interface ARGD {
@@ -180,7 +171,7 @@ export function decodeIntegers(src: DataView, numInts: number): number[] {
 
     const commonValue = src.getInt32(0, true)
 
-    const numCodesBytes = (numInts * 2 + 7) / 8
+    const numCodesBytes = Math.floor((numInts * 2 + 7) / 8)
     let prevVal = 0
     let intsLeft = numInts
 

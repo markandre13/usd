@@ -1,4 +1,5 @@
 import { hexdump } from "../detail/hexdump.ts"
+import { compressToBuffer, encodeIntegers } from "../index.ts"
 import { CrateDataType } from "./CrateDataType.ts"
 
 enum Axis {
@@ -91,6 +92,13 @@ export class Writer {
         this.view = new DataView(this.buffer)
         this.offset = 0
     }
+    skip(n: number) {
+        this.reserve(n)
+        this.offset += n
+    }
+    tell() {
+        return this.offset
+    }
     /**
      * make sure there are n bytes available at the current offset
      */
@@ -147,6 +155,11 @@ export class Writer {
         this.view.setUint16(this.offset, value, true)
         this.offset += 4
     }
+    writeFloat32(value: number) {
+        this.reserve(4)
+        this.view.setFloat32(this.offset, value, true)
+        this.offset += 4
+    }
     writeUint64(value: number) {
         this.reserve(8)
         this.view.setBigUint64(this.offset, BigInt(value), true)
@@ -161,6 +174,19 @@ export class Writer {
     }
 
     // higher order, maybe to be placed elsewhere
+    writeCompressedInt(value: number[]) {
+        const buffer = new Uint8Array(value.length * 4)
+        const encoded = new DataView(buffer.buffer)
+        const n = encodeIntegers(value, encoded)
+        const compressed = new Uint8Array(value.length * 4 + 32)
+        const b = new Uint8Array(buffer.buffer, 0, n)
+
+        const m = compressToBuffer(b, compressed)
+        this.writeUint64(value.length)
+        this.writeUint64(m)
+        this.writeBuffer(compressed, 0, m)
+    }
+
     writeIntArray(name: string, value: ArrayLike<number>) {
         const attr = new Attribute(name)
         attr.setToken("typeName", "int[]")

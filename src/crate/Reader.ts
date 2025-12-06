@@ -1,3 +1,4 @@
+import { hexdump } from "../detail/hexdump.ts"
 import { decodeIntegers, decompressFromBuffer } from "../index.ts"
 
 export const _SectionNameMaxLength = 15
@@ -81,7 +82,9 @@ export class Reader {
         const workingSpace = new Uint8Array(workingSpaceSize)
 
         const decompSz = decompressFromBuffer(compressed, workingSpace)
-        const result = decodeIntegers(new DataView(workingSpace.buffer), numberOfInts)
+        const xxx = new Uint8Array(workingSpace.buffer, 0, decompSz)
+
+        const result = decodeIntegers(new DataView(xxx.buffer), numberOfInts)
         return result
     }
 }
