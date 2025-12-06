@@ -1,6 +1,7 @@
-import { decompressFromBuffer } from "../index.ts"
+import { compressToBuffer, decompressFromBuffer } from "../index.ts"
 import { CrateDataType } from "./CrateDataType.ts"
 import { Field } from "./Field.ts"
+import { compressBound } from "./lz4.ts"
 import { Reader } from "./Reader.js"
 import { SectionName } from "./SectionName.ts"
 import type { TableOfContents } from "./TableOfContents.ts"
@@ -17,11 +18,11 @@ export class Fields {
 
     private tokens!: Tokens
 
-    // constructor(tokens: Reader)
+    // constructor(reader: Reader)
     // constructor(tokens: Tokens, toc: TableOfContents)
-    constructor(tokens: Tokens | Reader, toc?: TableOfContents) {
-        if (tokens instanceof Reader) {
-            const reader = tokens
+    constructor(tokensOrReader: Tokens | Reader, toc: TableOfContents | undefined = undefined) {
+        if (tokensOrReader instanceof Reader) {
+            const reader = tokensOrReader
             const section = toc!.sections.get(SectionName.FIELDS)
             if (section === undefined) {
                 return
@@ -40,10 +41,11 @@ export class Fields {
                 throw Error("Failed to read Fields ValueRep data.")
             }
 
+            // create fields
             const dataview = new DataView(uncompressed.buffer)
             this.fields = new Array(numFields)
-            for (let i = 0; i < numFields; ++i) {
-                this.fields[i] = new Field(indices[i], new ValueRep(dataview, i * 8))
+            for (let field = 0; field < numFields; ++field) {
+                this.fields[field] = new Field(indices[field], new ValueRep(dataview, field * 8))
             }
 
             // for (let i = 0; i < numFields; ++i) {
@@ -52,9 +54,8 @@ export class Fields {
             // if (section.start + section.size !== reader.offset) {
             //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
             // }
-
         } else {
-            this.tokens = tokens
+            this.tokens = tokensOrReader
         }
     }
     setFloat(name: string, value: number) {
@@ -72,6 +73,14 @@ export class Fields {
         // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
     }
     serialize(writer: Writer) {
-        // writer.putCompressedIntegers(this.tokenIndices)
+        // const numFields = this.tokenIndices.length
+        // writer.writeUint64(numFields) // done in writeCompresedInt
+
+        writer.writeCompressedInt(this.tokenIndices)
+
+        const compressed = new Uint8Array(compressBound(this.valueReps.buffer.byteLength)+1)
+        const compresedSize = compressToBuffer(new Uint8Array(this.valueReps.buffer), compressed)
+        writer.writeUint64(compresedSize)
+        writer.writeBuffer(compressed, 0, compresedSize)
     }
 }

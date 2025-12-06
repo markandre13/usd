@@ -16,6 +16,8 @@ import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.
 import { table } from "console"
 import { Field } from "../src/crate/Field.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
+import { Fields } from "../src/crate/Fields.ts"
+import { CrateFile } from "../src/crate/CrateFile.ts"
 
 // file layout of cube.udsc:
 // BOOTSTRAP:         start: 0, size: 24
@@ -207,19 +209,43 @@ describe("USD", function () {
 
     describe("Fields", function () {
         it("read/write", function () {
-            // const tokens = new Tokens()
-            // const fieldsIn = new Fields(tokens)
-            // fieldsIn.setFloat("metersPerUnit", 1)
+            const tokens = new Tokens()
+            const fieldsIn = new Fields(tokens)
+            fieldsIn.setFloat("metersPerUnit", 1)
 
-            // const writer = new Writer()
-            // fieldsIn.serialize(writer)
-            // const toc = new TableOfContents()
-            // toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
+            const writer = new Writer()
+            fieldsIn.serialize(writer)
 
-            // const reader = new Reader(writer.buffer)
-            // const fieldsOut = new Fields(reader, toc)
+            // console.log(`ENCODED VALUE REP`)
+            // hexdump(new Uint8Array(fieldsIn.valueReps.buffer))
 
-            // expect ...
+            const toc = new TableOfContents()
+            toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
+
+            const reader = new Reader(writer.buffer)
+            const fieldsOut = new Fields(reader, toc)
+
+            // console.log(fieldsOut.fields)
+
+            expect(fieldsOut.fields).to.have.lengthOf(1)
+
+            // console.log(`DECODED VALUE REP`)
+            // fieldsOut.fields![0].valueRep.hexdump()
+
+            expect(fieldsOut.fields![0].valueRep.getType()).to.equal(CrateDataType.Float)
+            expect(fieldsOut.fields![0].valueRep.isInlined()).to.be.true
+            expect(fieldsOut.fields![0].valueRep.isArray()).to.be.false
+            expect(fieldsOut.fields![0].valueRep.isCompressed()).to.be.false
+
+            // console.log(`${fieldsOut.fields![0]}`)
+
+            const crate = {
+                tokens,
+                reader
+            } as any as CrateFile
+
+            // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
+            expect(fieldsOut.fields![0].valueRep.getValue(crate)).to.equal(1)
         })
     })
 
@@ -341,7 +367,7 @@ describe("USD", function () {
                 0030 d3 00 d3 d3 00 d3 00 00 00 d3 09 ca 0b 02 c6 d3 ................
                 0040 00 11 c2 00 00 d3 d3                                            `)
 
-            it("regression", function () {
+            it("regression 1", function () {
                 const src = parseHexDump(`
                     0000 2d 00 00 00 55 55 55 55 55 55 55 44 11 45 15 45 -...UUUUUUUD.E.E
                     0010 45 54 54 04                                     ETT.
@@ -358,6 +384,36 @@ describe("USD", function () {
 
                 const uncompressed = new Uint8Array(src.length)
                 const m = decompressFromBuffer(new Uint8Array(compressed.buffer, 0, n), uncompressed)
+                expect(n).to.equal(dst.length)
+                expect(uncompressed).to.deep.equal(src)
+
+                expect(m).to.equal(src.length)
+            })
+
+            it("regression 2", function() {
+                const src = parseHexDump(`
+                    0000 00 00 80 3f 00 00 08 40                         ...?...@
+                `)
+                // console.log("ORIGINAL")
+                // hexdump(src)
+
+                const compressed = new Uint8Array(compressBound(src.length) + 1)
+                const n = compressToBuffer(src, compressed)
+                const b = new Uint8Array(compressed.buffer, 0, n)
+                // console.log("COMPRESSED")
+                // hexdump(b)
+
+                const dst = parseHexDump(`
+                    0000 00 80 00 00 80 3f 00 00 08 40                   .....?...@
+                `)
+                expect(new Uint8Array(compressed.buffer, 0, n)).to.deep.equal(dst)
+
+                const uncompressed = new Uint8Array(src.length)
+                const m = decompressFromBuffer(b, uncompressed)
+
+                // console.log("UNCOMPRESSED")
+                // hexdump(uncompressed, 0, m)
+
                 expect(n).to.equal(dst.length)
                 expect(uncompressed).to.deep.equal(src)
 

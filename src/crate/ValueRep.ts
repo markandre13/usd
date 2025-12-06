@@ -6,6 +6,7 @@
 // (zero vectors, identity matrices, etc).  For values that aren't stored
 // inline, the 6 data bytes are the offset from the start of the file to the
 
+import { hexdump } from "../detail/hexdump.ts"
 import { decodeIntegers, decompressFromBuffer } from "../index.ts"
 import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import type { CrateFile } from "./CrateFile.ts"
@@ -261,6 +262,9 @@ export class ValueRep {
     isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
     isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
     isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
+    hexdump() {
+        hexdump(new Uint8Array(this._buffer.buffer), this._offset, 8)
+    }
     getPayload(): bigint {
         const d = new DataView(this._buffer.buffer)
         return d.getBigUint64(this._offset, true) & 0xffffffffffffn

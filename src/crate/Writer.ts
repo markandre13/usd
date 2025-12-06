@@ -1,6 +1,7 @@
 import { hexdump } from "../detail/hexdump.ts"
 import { compressToBuffer, encodeIntegers } from "../index.ts"
 import { CrateDataType } from "./CrateDataType.ts"
+import { compressBound } from "./lz4.ts"
 
 enum Axis {
     X, Y, Z
@@ -175,16 +176,19 @@ export class Writer {
 
     // higher order, maybe to be placed elsewhere
     writeCompressedInt(value: number[]) {
-        const buffer = new Uint8Array(value.length * 4)
+        // console.log(`writeCompressedInt(): ENTER`)
+        // console.log(value)
+        const buffer = new Uint8Array(value.length * 8 + 32)
         const encoded = new DataView(buffer.buffer)
         const n = encodeIntegers(value, encoded)
-        const compressed = new Uint8Array(value.length * 4 + 32)
         const b = new Uint8Array(buffer.buffer, 0, n)
+        // hexdump(b)
 
-        const m = compressToBuffer(b, compressed)
+        const compressed = new Uint8Array(compressBound(n) + 1)
+        const compressedSize = compressToBuffer(b, compressed)
         this.writeUint64(value.length)
-        this.writeUint64(m)
-        this.writeBuffer(compressed, 0, m)
+        this.writeUint64(compressedSize)
+        this.writeBuffer(compressed, 0, compressedSize)
     }
 
     writeIntArray(name: string, value: ArrayLike<number>) {
