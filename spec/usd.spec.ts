@@ -14,6 +14,8 @@ import { Tokens } from "../src/crate/Tokens.ts"
 import { SectionName } from "../src/crate/SectionName.ts"
 import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.ts"
 import { table } from "console"
+import { Field } from "../src/crate/Field.ts"
+import { ValueRep } from "../src/crate/ValueRep.ts"
 
 // file layout of cube.udsc:
 // BOOTSTRAP:         start: 0, size: 24
@@ -41,38 +43,6 @@ import { table } from "console"
 // specs: specs: Spec {path_index, fieldset_index, spec_type } []
 //    assigns each node (path_index) a fieldset and a spec_type (Prim, Attribute, ...)
 
-class Fields {
-    tokenIndices: number[] = []
-
-    valueReps = new Writer()
-    offset = 0
-
-    private tokens!: Tokens
-    constructor(tokens: Tokens | Reader) {
-        if (tokens instanceof Reader) {
-
-        } else {
-            this.tokens = tokens
-        }
-    }
-    setFloat(name: string, value: number) {
-        this.tokenIndices.push(this.tokens.add(name))
-        // ValueRep
-
-        this.valueReps.writeFloat32(value)
-        this.valueReps.skip(2)
-        this.valueReps.writeUint8(CrateDataType.Float)
-        this.valueReps.writeUint8(64)
-
-        // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
-        // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
-        // isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
-        // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
-    }
-    serialize(writer: Writer) {
-        // writer.putCompressedIntegers(this.tokenIndices)
-    }
-}
 
 describe("USD", function () {
     describe("Reader & Writer", function () {
@@ -237,16 +207,16 @@ describe("USD", function () {
 
     describe("Fields", function () {
         it("read/write", function () {
-            const tokens = new Tokens()
-            const fieldsIn = new Fields(tokens)
-            fieldsIn.setFloat("metersPerUnit", 1)
+            // const tokens = new Tokens()
+            // const fieldsIn = new Fields(tokens)
+            // fieldsIn.setFloat("metersPerUnit", 1)
 
-            const writer = new Writer()
-            fieldsIn.serialize(writer)
-            const toc = new TableOfContents()
-            toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
+            // const writer = new Writer()
+            // fieldsIn.serialize(writer)
+            // const toc = new TableOfContents()
+            // toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
 
-            const reader = new Reader(writer.buffer)
+            // const reader = new Reader(writer.buffer)
             // const fieldsOut = new Fields(reader, toc)
 
             // expect ...

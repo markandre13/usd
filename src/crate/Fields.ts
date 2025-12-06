@@ -1,0 +1,77 @@
+import { decompressFromBuffer } from "../index.ts"
+import { CrateDataType } from "./CrateDataType.ts"
+import { Field } from "./Field.ts"
+import { Reader } from "./Reader.js"
+import { SectionName } from "./SectionName.ts"
+import type { TableOfContents } from "./TableOfContents.ts"
+import type { Tokens } from "./Tokens.ts"
+import { ValueRep } from "./ValueRep.ts"
+import { Writer } from "./Writer.js"
+
+export class Fields {
+    tokenIndices: number[] = []
+    fields?: Field[]
+
+    valueReps = new Writer()
+    offset = 0
+
+    private tokens!: Tokens
+
+    // constructor(tokens: Reader)
+    // constructor(tokens: Tokens, toc: TableOfContents)
+    constructor(tokens: Tokens | Reader, toc?: TableOfContents) {
+        if (tokens instanceof Reader) {
+            const reader = tokens
+            const section = toc!.sections.get(SectionName.FIELDS)
+            if (section === undefined) {
+                return
+            }
+            reader.offset = section.start
+            const numFields = reader.getUint64()
+
+            const indices = reader.getCompressedIntegers(numFields)
+
+            // ValueReps
+            const compressedSize = reader.getUint64()
+            const uncompressedSize = numFields * 8
+            const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
+            const uncompressed = new Uint8Array(uncompressedSize)
+            if (uncompressedSize !== decompressFromBuffer(compressed, uncompressed)) {
+                throw Error("Failed to read Fields ValueRep data.")
+            }
+
+            const dataview = new DataView(uncompressed.buffer)
+            this.fields = new Array(numFields)
+            for (let i = 0; i < numFields; ++i) {
+                this.fields[i] = new Field(indices[i], new ValueRep(dataview, i * 8))
+            }
+
+            // for (let i = 0; i < numFields; ++i) {
+            //     console.log(`fields[${i}] = ${this.fields[i].toString(this.tokens)}`)
+            // }
+            // if (section.start + section.size !== reader.offset) {
+            //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
+            // }
+
+        } else {
+            this.tokens = tokens
+        }
+    }
+    setFloat(name: string, value: number) {
+        this.tokenIndices.push(this.tokens.add(name))
+        // ValueRep
+
+        this.valueReps.writeFloat32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Float)
+        this.valueReps.writeUint8(64)
+
+        // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
+        // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
+        // isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
+        // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
+    }
+    serialize(writer: Writer) {
+        // writer.putCompressedIntegers(this.tokenIndices)
+    }
+}

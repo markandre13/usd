@@ -9,6 +9,7 @@ import { UsdNode } from "./UsdNode.ts"
 import { SpecType } from "./SpecType.js"
 import type { Spec } from "./Spec.ts"
 import { Tokens } from "./Tokens.ts"
+import { Fields } from "./Fields.ts"
 
 interface BuildDecompressedPathsArg {
     pathIndexes: number[]
@@ -39,7 +40,10 @@ export class CrateFile {
         this.tokens = tokens.tokens
 
         this.readStrings(reader)
-        this.readFields(reader)
+
+        const fields = new Fields(reader, this.toc)
+        this.fields = fields.fields!
+
         this.readFieldSets(reader)
         this.readPaths(reader)
         this.readSpecs(reader)
@@ -63,39 +67,6 @@ export class CrateFile {
         if (section.start + section.size !== reader.offset) {
             throw Error(`STRINGS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
         }
-    }
-
-    readFields(reader: Reader) {
-        const section = this.toc.sections.get(SectionName.FIELDS)
-        if (section === undefined) {
-            return
-        }
-        reader.offset = section.start
-        const numFields = reader.getUint64()
-
-        const indices = reader.getCompressedIntegers(numFields)
-
-        // ValueReps
-        const compressedSize = reader.getUint64()
-        const uncompressedSize = numFields * 8
-        const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
-        const uncompressed = new Uint8Array(uncompressedSize)
-        if (uncompressedSize !== decompressFromBuffer(compressed, uncompressed)) {
-            throw Error("Failed to read Fields ValueRep data.")
-        }
-
-        const dataview = new DataView(uncompressed.buffer)
-        this.fields = new Array(numFields)
-        for (let i = 0; i < numFields; ++i) {
-            this.fields[i] = new Field(indices[i], new ValueRep(dataview, i * 8))
-        }
-
-        // for (let i = 0; i < numFields; ++i) {
-        //     console.log(`fields[${i}] = ${this.fields[i].toString(this.tokens)}`)
-        // }
-        // if (section.start + section.size !== reader.offset) {
-        //     throw Error(`FIELDS: not at end: expected end at ${section.start + section.size} but reader is at ${reader.offset}`)
-        // }
     }
 
     readFieldSets(reader: Reader) {
