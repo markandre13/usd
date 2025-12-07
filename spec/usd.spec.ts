@@ -80,7 +80,6 @@ describe("USD", function () {
                     11, 56, 11, 56, 56, 11, 56, 56, 56, 56, 11, 56, 65, 11, 56, 67,
                     69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56,]
 
-
                 const writer = new Writer()
                 writer.writeCompressedInt(uncompressed)
 
@@ -246,6 +245,12 @@ describe("USD", function () {
 
             // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
             expect(fieldsOut.fields![0].valueRep.getValue(crate)).to.equal(1)
+        })
+    })
+
+    describe("Paths", function() {
+        it("read/write", function() {
+            
         })
     })
 

@@ -1,21 +1,15 @@
 import { BootStrap } from "./BootStrap.ts"
 import { Field } from "./Field.ts"
-import { decompressFromBuffer, decodeIntegers, type StringIndex } from "../index.ts"
+import { type StringIndex } from "../index.ts"
 import type { Reader } from "./Reader.ts"
 import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
-import { ValueRep } from "./ValueRep.ts"
 import { UsdNode } from "./UsdNode.ts"
 import { SpecType } from "./SpecType.js"
 import type { Spec } from "./Spec.ts"
 import { Tokens } from "./Tokens.ts"
 import { Fields } from "./Fields.ts"
-
-interface BuildDecompressedPathsArg {
-    pathIndexes: number[]
-    elementTokenIndexes: number[]
-    jumps: number[]
-}
+import { Paths } from "./Paths.ts"
 
 export class CrateFile {
     bootstrap: BootStrap
@@ -35,17 +29,14 @@ export class CrateFile {
         this.bootstrap = new BootStrap(reader)
         reader.offset = this.bootstrap.tocOffset
         this.toc = new TableOfContents(reader)
-
         const tokens = new Tokens(reader, this.toc)
         this.tokens = tokens.tokens
-
         this.readStrings(reader)
-
         const fields = new Fields(reader, this.toc)
         this.fields = fields.fields!
-
         this.readFieldSets(reader)
-        this.readPaths(reader)
+        const paths = new Paths(reader, this)
+        this._nodes = paths._nodes
         this.readSpecs(reader)
 
         for (let i = 0; i < this._nodes!.length; i++) {
@@ -78,27 +69,6 @@ export class CrateFile {
         this.fieldset_indices = reader.getCompressedIntegers()
     }
 
-    readPaths(reader: Reader) {
-        const section = this.toc.sections.get(SectionName.PATHS)
-        if (section === undefined) {
-            return
-        }
-        reader.offset = section.start
-
-        const num_nodes = reader.getUint64()
-        const numEncodedPaths = reader.getUint64()
-        const pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
-        const elementTokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
-        const jumps = reader.getCompressedIntegers(numEncodedPaths)
-
-        this._nodes = new Array<UsdNode>(num_nodes)
-        const node = this.buildNodeTree({
-            pathIndexes,
-            elementTokenIndexes,
-            jumps
-        })
-    }
-
     readSpecs(reader: Reader) {
         const section = this.toc.sections.get(SectionName.SPECS)
         if (section === undefined) {
@@ -120,64 +90,6 @@ export class CrateFile {
                 spec_type: specTypeIndexes[i] as SpecType
             }
         }
-    }
-
-    private buildNodeTree(
-        arg: BuildDecompressedPathsArg,
-        parentNode: UsdNode | undefined = undefined,
-        curIndex: number = 0
-    ) {
-        let hasChild = true, hasSibling = true
-        let root: UsdNode | undefined
-        while (hasChild || hasSibling) {
-            const thisIndex = curIndex++
-            const idx = arg.pathIndexes[thisIndex]
-            const jump = arg.jumps[thisIndex]
-
-            // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
-            if (parentNode === undefined) {
-                root = parentNode = new UsdNode(this, undefined, idx, "/", true)
-                // console.log(`paths[${arg.pathIndexes[thisIndex]}] is parent. name = ${parentPath.getFullPathName()}`)
-                if (thisIndex >= arg.pathIndexes.length) {
-                    throw Error("yikes: Index exceeds pathIndexes.size()")
-                }
-                this._nodes![idx] = parentNode
-            } else {
-                if (thisIndex >= arg.elementTokenIndexes.length) {
-                    throw Error(`Index exceeds elementTokenIndexes.length`)
-                }
-                let tokenIndex = arg.elementTokenIndexes[thisIndex]
-                let isPrimPropertyPath: boolean
-                if (tokenIndex < 0) {
-                    tokenIndex = -tokenIndex
-                    isPrimPropertyPath = false
-                } else {
-                    isPrimPropertyPath = true
-                }
-                // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
-
-                if (tokenIndex >= this.tokens!.length) {
-                    throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
-                }
-                const elemToken = this.tokens![tokenIndex]
-                if (this._nodes![idx] !== undefined) {
-                    throw Error("yikes")
-                }
-                this._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
-            }
-
-            hasChild = jump > 0 || jump === -1
-            hasSibling = jump >= 0
-
-            if (hasChild) {
-                if (hasSibling) {
-                    const siblingIndex = thisIndex + jump
-                    this.buildNodeTree(arg, parentNode, siblingIndex)
-                }
-                parentNode = this._nodes![idx] // reset parent path
-            }
-        }
-        return root
     }
 }
 
