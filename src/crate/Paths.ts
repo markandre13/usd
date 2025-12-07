@@ -1,12 +1,13 @@
 import type { CrateFile } from "./CrateFile.ts"
 import { Reader } from "./Reader.js"
 import { SectionName } from "./SectionName.ts"
+import type { Tokens } from "./Tokens.ts"
 import { UsdNode } from "./UsdNode.ts"
 import type { Writer } from "./Writer.ts"
 
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
-    elementTokenIndexes: number[]
+    tokenIndexes: number[]
     jumps: number[]
 }
 
@@ -29,7 +30,6 @@ export class Paths {
             const tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
             const jumps = reader.getCompressedIntegers(numEncodedPaths)
 
-
             console.log(`pathIndices : ${pathIndexes}`)
             console.log(`tokenIndexes: ${tokenIndexes}`)
             console.log(`jumps       : ${jumps}`)
@@ -37,7 +37,7 @@ export class Paths {
             this._nodes = new Array<UsdNode>(num_nodes)
             const node = this.buildNodeTree({
                 pathIndexes,
-                elementTokenIndexes: tokenIndexes,
+                tokenIndexes: tokenIndexes,
                 jumps
             })
         } else {
@@ -45,15 +45,47 @@ export class Paths {
         }
     }
 
-    serialize(writer: Writer) {
+    serialize(writer: Writer, tokens: Tokens) {
+        const numEncodedPaths = this._nodes.length
+        const arg: BuildNodeTreeArgs = {
+            pathIndexes: new Array<number>(numEncodedPaths),
+            tokenIndexes : new Array<number>(numEncodedPaths),
+            jumps : new Array<number>(numEncodedPaths)
+        }
+        this.dump(this._nodes[0], 0, arg, tokens)
         writer.writeUint64(this._nodes.length) // number of nodes
         writer.writeUint64(this._nodes.length) // number of paths
-        writer.writeCompressedIntWithoutSize([0])
-        writer.writeCompressedIntWithoutSize([0])
-        writer.writeCompressedIntWithoutSize([0])
-        // path indices
-        // element token indices
-        // jumps
+        writer.writeCompressedIntWithoutSize(arg.pathIndexes)
+        writer.writeCompressedIntWithoutSize(arg.tokenIndexes)
+        writer.writeCompressedIntWithoutSize(arg.jumps)
+    }
+
+    private dump(node: UsdNode, thisIndex: number, arg: BuildNodeTreeArgs, tokens: Tokens) {
+        const hasChild = node.children.length > 0
+        let hasSibling = false
+        if (node.parent && node.parent.children.findIndex(it => it == node) < node.parent.children.length - 1) {
+            hasSibling = true
+        }
+        let jump = 0
+        if (!hasChild && !hasSibling) {
+            jump = -2
+        }
+        if (hasChild && !hasSibling) {
+            jump = -1
+        }
+        if (!hasChild && hasSibling) {
+            jump = 0
+        }
+        if (hasChild && hasSibling) {
+            throw Error("not implemented yet")
+        }
+        arg.pathIndexes[thisIndex] = thisIndex
+        arg.tokenIndexes[thisIndex] = tokens.add(node.name)
+        arg.jumps[thisIndex] = jump
+        console.log(`${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
+        for(const child of node.children) {
+            this.dump(child, ++thisIndex, arg, tokens)
+        }
     }
 
     private buildNodeTree(
@@ -67,7 +99,7 @@ export class Paths {
             const thisIndex = curIndex++
             const idx = arg.pathIndexes[thisIndex]
             const jump = arg.jumps[thisIndex]
-                let tokenIndex = arg.elementTokenIndexes[thisIndex]
+                let tokenIndex = arg.tokenIndexes[thisIndex]
                 let isPrimPropertyPath: boolean
                 if (tokenIndex < 0) {
                     tokenIndex = -tokenIndex
@@ -84,7 +116,7 @@ export class Paths {
                 root = parentNode = new UsdNode(this.crate, undefined, idx, "/", true)
                 this._nodes![idx] = parentNode
             } else {
-                if (thisIndex >= arg.elementTokenIndexes.length) {
+                if (thisIndex >= arg.tokenIndexes.length) {
                     throw Error(`Index exceeds elementTokenIndexes.length`)
                 }
 
@@ -99,6 +131,10 @@ export class Paths {
                 this._nodes![idx] = new UsdNode(this.crate, parentNode, idx, elemToken, isPrimPropertyPath)
             }
             console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
+            if (this.crate.tokens[tokenIndex] === undefined) {
+                console.log(`BUMMER at tokenIndex ${tokenIndex}`)
+                console.log(this.crate.tokens)
+            }
 
             // the meaning of jump (maybe?)
             // -2: has no child and no siblings

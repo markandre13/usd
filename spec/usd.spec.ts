@@ -15,6 +15,7 @@ import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.
 import { Fields } from "../src/crate/Fields.ts"
 import { CrateFile } from "../src/crate/CrateFile.ts"
 import { Paths } from "../src/crate/Paths.ts"
+import { UsdNode } from "../src/crate/UsdNode.ts"
 
 // file layout of cube.udsc is as follows
 //   BOOTSTRAP
@@ -238,13 +239,51 @@ describe("USD", function () {
         })
     })
 
-    describe("Paths", function() {
-        it("read/write", function() {
+    describe.only("Paths", function() {
+        it.only("read/write", function() {
             const inPaths = new Paths()
+            inPaths._nodes = []
+
+            const crate = {} as any as CrateFile
+
+            const pseudoRoot = new UsdNode(crate, undefined, inPaths._nodes.length, "", true)
+            inPaths._nodes.push(pseudoRoot)
+            const xform = new UsdNode(crate, pseudoRoot, inPaths._nodes.length, "Group", true)
+            inPaths._nodes.push(xform)
+            const cube = new UsdNode(crate, xform, inPaths._nodes.length, "Cube", true)
+            inPaths._nodes.push(cube)
+            const sphere = new UsdNode(crate, xform, inPaths._nodes.length, "Sphere", true)
+            inPaths._nodes.push(sphere)
+
+            const writer = new Writer()
+            const tokens = new Tokens()
+            console.log("------------------------------------------")
+            inPaths.serialize(writer, tokens)
+            console.log("------------------------------------------")
+
+            const toc = new TableOfContents()
+            toc.addSection(new Section({ name: SectionName.PATHS, start: 0, size: writer.tell() }))
+
+            console.log("------------------------------------------")
+            const reader = new Reader(writer.buffer)
+            const crateOut = {
+                toc: toc,
+                tokens: tokens.tokens,
+                reader
+            } as any as CrateFile
+            const pathsOut = new Paths(reader, crateOut)
+            console.log("------------------------------------------")
+
+            expect(pathsOut._nodes).to.have.lengthOf(4)
+            const root = pathsOut._nodes[0]
+            expect(root.name).to.equal("/")
+            expect(root.children[0].name).to.equal("Group")
+            expect(root.children[0].children[0].name).to.equal("Cube")
+            expect(root.children[0].children[1].name).to.equal("Sphere")
         })
     })
 
-    it.only("Crate file", function () {
+    it("Crate file", function () {
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
 
