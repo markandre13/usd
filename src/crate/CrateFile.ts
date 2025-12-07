@@ -42,6 +42,7 @@ export class CrateFile {
         for (let i = 0; i < this._nodes!.length; i++) {
             this._nodes[i].spec_index = this._specs[i].path_index
         }
+
     }
 
     readStrings(reader: Reader) {

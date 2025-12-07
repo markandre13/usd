@@ -4,7 +4,6 @@ import { compressToBuffer, decodeIntegers, decompressFromBuffer, encodeIntegers,
 import { readFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
-import { UsdNode } from "../src/crate/UsdNode.ts"
 import { CrateDataType } from "../src/crate/CrateDataType.ts"
 import { UsdGeom, Writer } from "../src/crate/Writer.ts"
 import { BootStrap } from "../src/crate/BootStrap.ts"
@@ -13,38 +12,30 @@ import { Section } from "../src/crate/Section.ts"
 import { Tokens } from "../src/crate/Tokens.ts"
 import { SectionName } from "../src/crate/SectionName.ts"
 import { compressBlock, compressBound, decompressBlock } from "../src/crate/lz4.ts"
-import { table } from "console"
-import { Field } from "../src/crate/Field.ts"
-import { ValueRep } from "../src/crate/ValueRep.ts"
 import { Fields } from "../src/crate/Fields.ts"
 import { CrateFile } from "../src/crate/CrateFile.ts"
+import { Paths } from "../src/crate/Paths.ts"
 
-// file layout of cube.udsc:
-// BOOTSTRAP:         start: 0, size: 24
-// non-inlined values
-// name: "TOKENS",    start: 1112, size: 739
-// name: "STRINGS",   start: 1851, size: 32,
-// name: "FIELDS",    start: 1883, size: 403,
-// name: "FIELDSETS", start: 2286, size: 132,
-// name: "PATHS",     start: 2418, size: 146,
-// name: "SPECS",     start: 2564, size: 108
-// TOC:               start: 2672, size: 200
-// end of file: 2872
-
-// tokens: string[]
-// strings: number[] -> tokens
-// fields: Field { tokenIndex: number, valueRep: ValueRep }[]
-// fieldsets: number[][] -> fields
-// paths: { path_index, tokenIndex, jump }
-//   tokenIndex < 0: tokenIndex = -tokenIndex, isPrimPropertyPath = false
-//   else          : isPrimPropertyPath = trye
-//   hasChild = jump > 0 || jump === -1
-//   hasSibling = jump >= 0
-//   if (hasChild && hasSibling) siblingIndex = thisIndex + jump
-//
-// specs: specs: Spec {path_index, fieldset_index, spec_type } []
-//    assigns each node (path_index) a fieldset and a spec_type (Prim, Attribute, ...)
-
+// file layout of cube.udsc is as follows
+//   BOOTSTRAP
+//   non-inlined values
+//   TOKENS
+//   STRINGS
+//   FIELDS
+//   FIELDSETS
+//   PATHS
+//   SPECS
+//   TOC
+//   end of file
+// assumptions:
+// * with the exception of BOOTSTRAP, sections are placed in the order they are created
+// * the non-inlined values are placed close to the the beginning of the file to
+//   have lower indices, which can be compressed better
+// * on the relation of TOKENS and STRINGS
+//   * STRINGS might be there to allow for smaller indices
+//     this would suggest to place strings at the end of TOKENS
+//   * the actual string values are within TOKENS might be there as compressing them together
+//     might be more efficient
 
 describe("USD", function () {
     describe("Reader & Writer", function () {
@@ -205,7 +196,6 @@ describe("USD", function () {
             expect(tokensOut.tokens).to.deep.equal(tokensIn.tokens)
         })
     })
-
     describe("Fields", function () {
         it("read/write", function () {
             const tokens = new Tokens()
@@ -250,11 +240,11 @@ describe("USD", function () {
 
     describe("Paths", function() {
         it("read/write", function() {
-            
+            const inPaths = new Paths()
         })
     })
 
-    it("Crate file", function () {
+    it.only("Crate file", function () {
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
 
@@ -281,9 +271,9 @@ describe("USD", function () {
         // console.log(JSON.stringify(pseudoRoot.toJSON()))
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
 
-        console.log(stage._crate.fields[0].toString())
-        console.log(stage._crate.tokens[stage._crate.fields[0].tokenIndex])
-        console.log(stage._crate.fields[0].valueRep.getValue(stage._crate))
+        // console.log(stage._crate.fields[0].toString())
+        // console.log(stage._crate.tokens[stage._crate.fields[0].tokenIndex])
+        // console.log(stage._crate.fields[0].valueRep.getValue(stage._crate))
 
         /*
             openusd: /pxr/usd/bin/usdcat/usdcat.cpp
