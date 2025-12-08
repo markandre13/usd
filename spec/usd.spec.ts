@@ -239,8 +239,8 @@ describe("USD", function () {
         })
     })
 
-    describe.only("Paths", function() {
-        it.only("read/write", function() {
+    describe("Paths", function () {
+        it("read/write", function () {
             const inPaths = new Paths()
             inPaths._nodes = []
 
@@ -252,19 +252,23 @@ describe("USD", function () {
             inPaths._nodes.push(xform)
             const cube = new UsdNode(crate, xform, inPaths._nodes.length, "Cube", true)
             inPaths._nodes.push(cube)
+            const attr = new UsdNode(crate, cube, inPaths._nodes.length, "Attribute", true)
+            inPaths._nodes.push(attr)
             const sphere = new UsdNode(crate, xform, inPaths._nodes.length, "Sphere", true)
             inPaths._nodes.push(sphere)
 
+            // pseudoRoot.print()
+
             const writer = new Writer()
             const tokens = new Tokens()
-            console.log("------------------------------------------")
+            // console.log("------------------------------------------ serialize")
             inPaths.serialize(writer, tokens)
-            console.log("------------------------------------------")
+            // console.log("------------------------------------------")
 
             const toc = new TableOfContents()
             toc.addSection(new Section({ name: SectionName.PATHS, start: 0, size: writer.tell() }))
 
-            console.log("------------------------------------------")
+            // console.log("------------------------------------------ deserialize")
             const reader = new Reader(writer.buffer)
             const crateOut = {
                 toc: toc,
@@ -272,13 +276,21 @@ describe("USD", function () {
                 reader
             } as any as CrateFile
             const pathsOut = new Paths(reader, crateOut)
-            console.log("------------------------------------------")
+            // console.log("------------------------------------------ dump")
+            // for(let i=0; i<pathsOut._nodes.length; ++i) {
+            //     const n = pathsOut._nodes[i]
+            //     console.log(`[${i}] = ${n.name} ${n.index}`)
+            // }
 
-            expect(pathsOut._nodes).to.have.lengthOf(4)
             const root = pathsOut._nodes[0]
+            // root.print()
+
+            expect(pathsOut._nodes).to.have.lengthOf(5)
+
             expect(root.name).to.equal("/")
             expect(root.children[0].name).to.equal("Group")
             expect(root.children[0].children[0].name).to.equal("Cube")
+            expect(root.children[0].children[0].children[0].name).to.equal("Attribute")
             expect(root.children[0].children[1].name).to.equal("Sphere")
         })
     })
@@ -424,7 +436,7 @@ describe("USD", function () {
                 expect(m).to.equal(src.length)
             })
 
-            it("regression 2", function() {
+            it("regression 2", function () {
                 const src = parseHexDump(`
                     0000 00 00 80 3f 00 00 08 40                         ...?...@
                 `)

@@ -11,6 +11,18 @@ interface BuildNodeTreeArgs {
     jumps: number[]
 }
 
+interface BuildNodeTreeArgs2 {
+    thisIndex: number
+    pathIndexes: number[]
+    tokenIndexes: number[]
+    jumps: number[]
+}
+
+// the meaning of jump (maybe?)
+// -2: has no child and no siblings
+// -1: next is child, there are no siblings
+//  0: no child, next is sibling
+//  x: next is child, sibling at +x
 export class Paths {
     _nodes!: UsdNode[]
     crate!: CrateFile
@@ -25,14 +37,18 @@ export class Paths {
 
             const num_nodes = reader.getUint64()
             const numEncodedPaths = reader.getUint64()
-            console.log(`num_nodes = ${num_nodes}, numEncodedPaths=${numEncodedPaths}`)
+            // console.log(`num_nodes = ${num_nodes}, numEncodedPaths=${numEncodedPaths}`)
             const pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
             const tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
             const jumps = reader.getCompressedIntegers(numEncodedPaths)
 
-            console.log(`pathIndices : ${pathIndexes}`)
-            console.log(`tokenIndexes: ${tokenIndexes}`)
-            console.log(`jumps       : ${jumps}`)
+            // console.log(`pathIndices : ${pathIndexes}`)
+            // console.log(`tokenIndexes: ${tokenIndexes}`)
+            // console.log(`jumps       : ${jumps}`)
+
+            // for(let i=0; i<numEncodedPaths; ++i) {
+            //     console.log(`[${i}] = token ${tokenIndexes[i]} ${crate?.tokens[tokenIndexes[i]]}, jump ${jumps[i]}`)
+            // }
 
             this._nodes = new Array<UsdNode>(num_nodes)
             const node = this.buildNodeTree({
@@ -47,12 +63,19 @@ export class Paths {
 
     serialize(writer: Writer, tokens: Tokens) {
         const numEncodedPaths = this._nodes.length
-        const arg: BuildNodeTreeArgs = {
+        const arg: BuildNodeTreeArgs2 = {
+            thisIndex: 0,
             pathIndexes: new Array<number>(numEncodedPaths),
             tokenIndexes : new Array<number>(numEncodedPaths),
             jumps : new Array<number>(numEncodedPaths)
         }
-        this.dump(this._nodes[0], 0, arg, tokens)
+        this.dump(this._nodes[0], arg, tokens)
+
+        // for(let i=0; i<numEncodedPaths; ++i) {
+        //     const n = this._nodes[i]
+        //     console.log(`[${i}] = token ${arg.tokenIndexes[i]} ${n.name}, jump ${arg.jumps[i]}`)
+        // }
+
         writer.writeUint64(this._nodes.length) // number of nodes
         writer.writeUint64(this._nodes.length) // number of paths
         writer.writeCompressedIntWithoutSize(arg.pathIndexes)
@@ -60,7 +83,7 @@ export class Paths {
         writer.writeCompressedIntWithoutSize(arg.jumps)
     }
 
-    private dump(node: UsdNode, thisIndex: number, arg: BuildNodeTreeArgs, tokens: Tokens) {
+    private dump(node: UsdNode, arg: BuildNodeTreeArgs2, tokens: Tokens) {
         const hasChild = node.children.length > 0
         let hasSibling = false
         if (node.parent && node.parent.children.findIndex(it => it == node) < node.parent.children.length - 1) {
@@ -77,14 +100,16 @@ export class Paths {
             jump = 0
         }
         if (hasChild && hasSibling) {
-            throw Error("not implemented yet")
+            // jump needs to be the position of the next sibling
+            jump = node.children.length + 1
         }
-        arg.pathIndexes[thisIndex] = thisIndex
-        arg.tokenIndexes[thisIndex] = tokens.add(node.name)
-        arg.jumps[thisIndex] = jump
-        console.log(`${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
+        arg.pathIndexes[arg.thisIndex] = arg.thisIndex
+        arg.tokenIndexes[arg.thisIndex] = tokens.add(node.name)
+        arg.jumps[arg.thisIndex] = jump
+        // console.log(`[${arg.thisIndex}] := ${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
         for(const child of node.children) {
-            this.dump(child, ++thisIndex, arg, tokens)
+            ++arg.thisIndex
+            this.dump(child, arg, tokens)
         }
     }
 
@@ -126,21 +151,15 @@ export class Paths {
                 }
                 const elemToken = this.crate.tokens![tokenIndex]
                 if (this._nodes![idx] !== undefined) {
-                    throw Error("yikes")
+                    throw Error(`yikes: node[${idx}] is already set`)
                 }
                 this._nodes![idx] = new UsdNode(this.crate, parentNode, idx, elemToken, isPrimPropertyPath)
             }
-            console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
+            // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
             if (this.crate.tokens[tokenIndex] === undefined) {
                 console.log(`BUMMER at tokenIndex ${tokenIndex}`)
                 console.log(this.crate.tokens)
             }
-
-            // the meaning of jump (maybe?)
-            // -2: has no child and no siblings
-            // -1: next is child, there are no siblings
-            //  0: no child, next is sibling
-            //  x: next is child, sibling at +x
 
             hasChild = jump > 0 || jump === -1
             hasSibling = jump >= 0

@@ -42,7 +42,11 @@ export class UsdNode {
         }
     }
     print(indent: number = 0) {
-        console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.getType()]}`)
+        if (this.crate._specs !== undefined) {
+            console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.getType()]}`)
+        } else {
+            console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""}`)
+        }
         for (const child of this.children) {
             child.print(indent + 1)
         }
