@@ -6,7 +6,6 @@ import { SectionName } from "./SectionName.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { UsdNode } from "./UsdNode.ts"
 import { SpecType } from "./SpecType.js"
-import type { Spec } from "./Spec.ts"
 import { Tokens } from "./Tokens.ts"
 import { Fields } from "./Fields.ts"
 import { Paths } from "./Paths.ts"
@@ -20,7 +19,6 @@ export class CrateFile {
     fields!: Field[]
     fieldset_indices!: number[]
     _nodes!: UsdNode[]
-    _specs!: Spec[]
 
     reader: Reader
 
@@ -38,11 +36,6 @@ export class CrateFile {
         const paths = new Paths(reader, this)
         this._nodes = paths._nodes
         this.readSpecs(reader)
-
-        for (let i = 0; i < this._nodes!.length; i++) {
-            this._nodes[i].spec_index = this._specs[i].path_index
-        }
-
     }
 
     readStrings(reader: Reader) {
@@ -83,13 +76,10 @@ export class CrateFile {
         const fieldsetIndexes = reader.getCompressedIntegers(num_specs)
         const specTypeIndexes = reader.getCompressedIntegers(num_specs)
 
-        this._specs = new Array(num_specs)
         for (let i = 0; i < num_specs; ++i) {
-            this._specs[i] = {
-                path_index: pathIndexes[i],
-                fieldset_index: fieldsetIndexes[i],
-                spec_type: specTypeIndexes[i] as SpecType
-            }
+            const idx = pathIndexes[i]
+            this._nodes[i].fieldset_index = fieldsetIndexes[idx]
+            this._nodes[i].spec_type = specTypeIndexes[idx] as SpecType
         }
     }
 }

@@ -12,7 +12,8 @@ export class UsdNode {
     children: UsdNode[] = [];
 
     index: number
-    spec_index?: number
+    spec_type?: SpecType
+    fieldset_index?: number
     name: string
     prim: boolean
 
@@ -27,7 +28,7 @@ export class UsdNode {
         this.prim = prim
     }
     getType(): SpecType {
-        return this.crate._specs[this.spec_index!].spec_type
+        return this.spec_type!
     }
     getFullPathName(): string {
         if (this.parent) {
@@ -42,11 +43,7 @@ export class UsdNode {
         }
     }
     print(indent: number = 0) {
-        if (this.crate._specs !== undefined) {
-            console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.getType()]}`)
-        } else {
-            console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""}`)
-        }
+        console.log(`${"  ".repeat(indent)} ${this.index} ${this.name}${this.prim ? " = ..." : ""} ${SpecType[this.getType()]}`)
         for (const child of this.children) {
             child.print(indent + 1)
         }
@@ -90,8 +87,7 @@ export class UsdNode {
             return this.fields
         }
         this.fields = new Map<string, ValueRep>()
-        const spec = this.crate._specs[this.spec_index!]
-        let fieldset_index = spec.fieldset_index
+        let fieldset_index = this.fieldset_index!
         for (; this.crate.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
             const fieldIndex = this.crate.fieldset_indices[fieldset_index]
             const field = this.crate.fields[fieldIndex]

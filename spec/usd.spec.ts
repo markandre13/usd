@@ -17,6 +17,9 @@ import { CrateFile } from "../src/crate/CrateFile.ts"
 import { Paths } from "../src/crate/Paths.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 
+// UsdObject < UsdProperty < UsdAttribute
+//           < UsdPrim
+
 // file layout of cube.udsc is as follows
 //   BOOTSTRAP
 //   non-inlined values
@@ -238,7 +241,6 @@ describe("USD", function () {
             expect(fieldsOut.fields![0].valueRep.getValue(crate)).to.equal(1)
         })
     })
-
     describe("Paths", function () {
         it("read/write", function () {
             const inPaths = new Paths()
@@ -294,6 +296,11 @@ describe("USD", function () {
             expect(root.children[0].children[1].name).to.equal("Sphere")
         })
     })
+
+    // it.only("READ", () => {
+    //     const buffer = readFileSync("spec/cube.usdc")
+    //     const stage = new UsdStage(buffer)    
+    // })
 
     it("Crate file", function () {
         const buffer = readFileSync("spec/cube.usdc")

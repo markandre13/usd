@@ -3,16 +3,17 @@
 
 export enum SpecType {
     Unknown,
-    Attribute,
+    Attribute, // is a property
     Connection,
     Expression,
     Mapper,
     MapperArg,
     Prim,
-    PseudoRoot,
-    Relationship,
+    PseudoRoot, // is a prim
+    Relationship, // is a property
     RelationshipTarget,
     Variant,
     VariantSet,
     Invalid
 }
+
