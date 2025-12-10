@@ -1,10 +1,19 @@
 import { CrateDataType } from "./CrateDataType.ts"
 import { CrateFile } from "./CrateFile.ts"
 import { SpecType } from "./SpecType.ts"
+import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.js"
 
 // Prim
 //   Attribute (is a property)
+
+export interface UsdNodeSerializeArgs {
+    tokens: Tokens
+    thisIndex: number
+    pathIndexes: number[]
+    tokenIndexes: number[]
+    jumps: number[]
+}
 
 export class UsdNode {
     crate: CrateFile
@@ -129,6 +138,34 @@ export class UsdNode {
             result.children = this.children.map(child => child.toJSON())
         }
         return result
-
+    }
+    serialize(arg: UsdNodeSerializeArgs) {
+        const hasChild = this.children.length > 0
+        let hasSibling = false
+        if (this.parent && this.parent.children.findIndex(it => it == this) < this.parent.children.length - 1) {
+            hasSibling = true
+        }
+        let jump = 0
+        if (!hasChild && !hasSibling) {
+            jump = -2
+        }
+        if (hasChild && !hasSibling) {
+            jump = -1
+        }
+        if (!hasChild && hasSibling) {
+            jump = 0
+        }
+        if (hasChild && hasSibling) {
+            // jump needs to be the position of the next sibling
+            jump = this.children.length + 1
+        }
+        arg.pathIndexes[arg.thisIndex] = arg.thisIndex
+        arg.tokenIndexes[arg.thisIndex] = arg.tokens.add(this.name)
+        arg.jumps[arg.thisIndex] = jump
+        // console.log(`[${arg.thisIndex}] := ${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
+        for(const child of this.children) {
+            ++arg.thisIndex
+            child.serialize(arg)
+        }
     }
 }

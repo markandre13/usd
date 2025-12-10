@@ -2,17 +2,10 @@ import type { CrateFile } from "./CrateFile.ts"
 import { Reader } from "./Reader.js"
 import { SectionName } from "./SectionName.ts"
 import type { Tokens } from "./Tokens.ts"
-import { UsdNode } from "./UsdNode.ts"
+import { UsdNode, type UsdNodeSerializeArgs } from "./UsdNode.ts"
 import type { Writer } from "./Writer.ts"
 
 interface BuildNodeTreeArgs {
-    pathIndexes: number[]
-    tokenIndexes: number[]
-    jumps: number[]
-}
-
-interface BuildNodeTreeArgs2 {
-    thisIndex: number
     pathIndexes: number[]
     tokenIndexes: number[]
     jumps: number[]
@@ -63,13 +56,14 @@ export class Paths {
 
     serialize(writer: Writer, tokens: Tokens) {
         const numEncodedPaths = this._nodes.length
-        const arg: BuildNodeTreeArgs2 = {
+        const arg: UsdNodeSerializeArgs = {
+            tokens,
             thisIndex: 0,
             pathIndexes: new Array<number>(numEncodedPaths),
             tokenIndexes : new Array<number>(numEncodedPaths),
             jumps : new Array<number>(numEncodedPaths)
         }
-        this.dump(this._nodes[0], arg, tokens)
+        this._nodes[0].serialize(arg)
 
         // for(let i=0; i<numEncodedPaths; ++i) {
         //     const n = this._nodes[i]
@@ -81,36 +75,6 @@ export class Paths {
         writer.writeCompressedIntWithoutSize(arg.pathIndexes)
         writer.writeCompressedIntWithoutSize(arg.tokenIndexes)
         writer.writeCompressedIntWithoutSize(arg.jumps)
-    }
-
-    private dump(node: UsdNode, arg: BuildNodeTreeArgs2, tokens: Tokens) {
-        const hasChild = node.children.length > 0
-        let hasSibling = false
-        if (node.parent && node.parent.children.findIndex(it => it == node) < node.parent.children.length - 1) {
-            hasSibling = true
-        }
-        let jump = 0
-        if (!hasChild && !hasSibling) {
-            jump = -2
-        }
-        if (hasChild && !hasSibling) {
-            jump = -1
-        }
-        if (!hasChild && hasSibling) {
-            jump = 0
-        }
-        if (hasChild && hasSibling) {
-            // jump needs to be the position of the next sibling
-            jump = node.children.length + 1
-        }
-        arg.pathIndexes[arg.thisIndex] = arg.thisIndex
-        arg.tokenIndexes[arg.thisIndex] = tokens.add(node.name)
-        arg.jumps[arg.thisIndex] = jump
-        // console.log(`[${arg.thisIndex}] := ${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
-        for(const child of node.children) {
-            ++arg.thisIndex
-            this.dump(child, arg, tokens)
-        }
     }
 
     private buildNodeTree(
