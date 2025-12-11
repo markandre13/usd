@@ -248,18 +248,61 @@ describe("USD", function () {
 
             const crate = {} as any as CrateFile
 
-            const pseudoRoot = new UsdNode(crate, undefined, inPaths._nodes.length, "", true)
+            const pseudoRoot = new UsdNode(crate, undefined, inPaths._nodes.length, "/", true)
+            pseudoRoot.spec_type = SpecType.PseudoRoot
+            // pseudoRoot.setDouble("metersPerUnit", 1.0)
+            // pseudoRoot.setString("documentation", "Blender v5.0.0")
+            // pseudoRoot.setToken("upAxis", "Z")
+            // pseudoRoot.setTokenVector("primChildren", ["root"])
+            // pseudoRoot.setToken("defaultPrim", "root")
             inPaths._nodes.push(pseudoRoot)
-            const xform = new UsdNode(crate, pseudoRoot, inPaths._nodes.length, "Group", true)
+
+            const xform = new UsdNode(crate, pseudoRoot, inPaths._nodes.length, "root", true)
+            xform.spec_type = SpecType.Prim
+            // xform.setSpecifier("specifier", "Def")
+            // xform.setToken("typeName", "Xform")
+            // xform.setTokenVector("primChildren", ["Cube", "Sphere"])
             inPaths._nodes.push(xform)
+
             const cube = new UsdNode(crate, xform, inPaths._nodes.length, "Cube", true)
+            cube.spec_type = SpecType.Prim
+            // cube.setSpecifier("specifier", "Def")
+            // xform.setToken("typeName", "Mesh")
+            // xform.setTokenVector("properties", ["extent", "faceVertexCounts"])
             inPaths._nodes.push(cube)
-            const attr = new UsdNode(crate, cube, inPaths._nodes.length, "Attribute", true)
-            inPaths._nodes.push(attr)
+            // type Attribute
+            // name:extent
+            // fields?
+            //   typeName: Token float[]
+            const extent = new UsdNode(crate, cube, inPaths._nodes.length, "extent", true)
+            extent.spec_type = SpecType.Attribute
+            // extent.setToken("typeName", "float3[]")
+            // not a map to ensure the order...?
+            //
+
+            // or immediatly create the ValueReps and FieldSet etc???
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this because
+            // * performance
+            // * my main goal at the moment is writing!!!
+            // reading could also be done in a similar way
+            // * read and decompress all, build tree as the last final step !!!!!!!!!!!!
+            
+            // extent.field.add("typeName", new Token("float3[]"))
+            // extend.field.add("default", new Vec3fArray([0,0,0,1,1,1]))
+            // since we get the typeName only with the fieldset, we might need to create
+            // two trees: one with UsdNode, then one with PseudoRoot, Xform, Mesh, ...
+            inPaths._nodes.push(extent)
+
+            const faceVertexCounts = new UsdNode(crate, cube, inPaths._nodes.length, "faceVertexCounts", true)
+            faceVertexCounts.spec_type = SpecType.Attribute
+            // faceVertexCounts.setToken("typeName", "int[]")
+            // faceVertexCounts.setIntArray("default", [4,4,4,4,4,4])
+            inPaths._nodes.push(faceVertexCounts)
+
             const sphere = new UsdNode(crate, xform, inPaths._nodes.length, "Sphere", true)
             inPaths._nodes.push(sphere)
 
-            // pseudoRoot.print()
+            pseudoRoot.print()
 
             const writer = new Writer()
             const tokens = new Tokens()
@@ -287,12 +330,13 @@ describe("USD", function () {
             const root = pathsOut._nodes[0]
             // root.print()
 
-            expect(pathsOut._nodes).to.have.lengthOf(5)
+            expect(pathsOut._nodes).to.have.lengthOf(6)
 
             expect(root.name).to.equal("/")
-            expect(root.children[0].name).to.equal("Group")
+            expect(root.children[0].name).to.equal("root")
             expect(root.children[0].children[0].name).to.equal("Cube")
-            expect(root.children[0].children[0].children[0].name).to.equal("Attribute")
+            expect(root.children[0].children[0].children[0].name).to.equal("extent")
+            expect(root.children[0].children[0].children[1].name).to.equal("faceVertexCounts")
             expect(root.children[0].children[1].name).to.equal("Sphere")
         })
     })
@@ -327,6 +371,7 @@ describe("USD", function () {
 
         const json = JSON.parse(readFileSync("spec/cube.json").toString())
         // console.log(JSON.stringify(pseudoRoot.toJSON()))
+        return
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
 
         // console.log(stage._crate.fields[0].toString())

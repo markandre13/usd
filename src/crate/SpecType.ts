@@ -17,3 +17,15 @@ export enum SpecType {
     Invalid
 }
 
+export function isPrim(type: SpecType) {
+    switch (type) {
+        case SpecType.PseudoRoot:
+        case SpecType.Prim:
+            return true
+        case SpecType.Attribute:
+        case SpecType.Relationship:
+            return false
+        default:
+            throw Error(`yikes: not sure whether ${SpecType[type]} is a prim of not`)
+    }
+}

@@ -111,7 +111,8 @@ export class UsdNode {
     toJSON() {
         const result: any = {
             type: SpecType[this.getType()],
-            name: this.name
+            name: this.name,
+            prim: this.prim
         }
 
         const fields = this.getFields()
@@ -169,3 +170,18 @@ export class UsdNode {
         }
     }
 }
+
+    export class Mesh extends UsdNode {
+        faceVertexIndices?: ArrayLike<number>
+        faceVertexCounts?: ArrayLike<number>
+
+        override serialize(arg: UsdNodeSerializeArgs) {
+            super.serialize(arg)
+            // if (this.faceVertexIndices) {
+            //     out.writeIntArray("faceVertexIndices", this.faceVertexIndices)
+            // }
+            // if (this.faceVertexCounts) {
+            //     out.writeIntArray("faceVertexCounts", this.faceVertexCounts)
+            // }
+        }
+    }

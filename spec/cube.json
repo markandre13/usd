@@ -1,6 +1,7 @@
 {
     "type": "PseudoRoot",
     "name": "/",
+    "prim": true,
     "fields": {
         "metersPerUnit": {
             "type": "Double",
@@ -44,6 +45,7 @@
         {
             "type": "Prim",
             "name": "root",
+            "prim": true,
             "fields": {
                 "specifier": {
                     "type": "Specifier",
@@ -90,6 +92,7 @@
                 {
                     "type": "Prim",
                     "name": "Cube",
+                    "prim": true,
                     "fields": {
                         "specifier": {
                             "type": "Specifier",
@@ -128,6 +131,7 @@
                         {
                             "type": "Attribute",
                             "name": "userProperties:blender:object_name",
+                            "prim": false,
                             "fields": {
                                 "custom": {
                                     "type": "Bool",
@@ -155,6 +159,7 @@
                         {
                             "type": "Prim",
                             "name": "Cube_001",
+                            "prim": true,
                             "fields": {
                                 "specifier": {
                                     "type": "Specifier",
@@ -211,6 +216,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "doubleSided",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -238,6 +244,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "extent",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -265,6 +272,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "faceVertexCounts",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -292,6 +300,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "faceVertexIndices",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -337,6 +346,7 @@
                                 {
                                     "type": "Relationship",
                                     "name": "material:binding",
+                                    "prim": false,
                                     "fields": {
                                         "variability": {
                                             "type": "Variability",
@@ -361,6 +371,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "normals",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -461,6 +472,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "points",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -506,6 +518,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "primvars:st",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -582,6 +595,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "subdivisionScheme",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -609,6 +623,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "userProperties:blender:data_name",
+                                    "prim": false,
                                     "fields": {
                                         "custom": {
                                             "type": "Bool",
@@ -640,6 +655,7 @@
                 {
                     "type": "Prim",
                     "name": "_materials",
+                    "prim": true,
                     "fields": {
                         "specifier": {
                             "type": "Specifier",
@@ -669,6 +685,7 @@
                         {
                             "type": "Prim",
                             "name": "Material",
+                            "prim": true,
                             "fields": {
                                 "specifier": {
                                     "type": "Specifier",
@@ -708,6 +725,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "outputs:surface",
+                                    "prim": false,
                                     "fields": {
                                         "typeName": {
                                             "type": "Token",
@@ -732,6 +750,7 @@
                                 {
                                     "type": "Attribute",
                                     "name": "userProperties:blender:data_name",
+                                    "prim": false,
                                     "fields": {
                                         "custom": {
                                             "type": "Bool",
@@ -759,6 +778,7 @@
                                 {
                                     "type": "Prim",
                                     "name": "Principled_BSDF",
+                                    "prim": true,
                                     "fields": {
                                         "specifier": {
                                             "type": "Specifier",
@@ -797,6 +817,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "info:id",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -824,6 +845,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:clearcoat",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -844,6 +866,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:clearcoatRoughness",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -864,6 +887,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:diffuseColor",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -888,6 +912,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:ior",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -908,6 +933,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:metallic",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -928,6 +954,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:opacity",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -948,6 +975,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:roughness",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -968,6 +996,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "inputs:specular",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -988,6 +1017,7 @@
                                         {
                                             "type": "Attribute",
                                             "name": "outputs:surface",
+                                            "prim": false,
                                             "fields": {
                                                 "typeName": {
                                                     "type": "Token",
@@ -1007,6 +1037,7 @@
                 {
                     "type": "Prim",
                     "name": "env_light",
+                    "prim": true,
                     "fields": {
                         "specifier": {
                             "type": "Specifier",
@@ -1037,6 +1068,7 @@
                         {
                             "type": "Attribute",
                             "name": "inputs:intensity",
+                            "prim": false,
                             "fields": {
                                 "typeName": {
                                     "type": "Token",
@@ -1057,6 +1089,7 @@
                         {
                             "type": "Attribute",
                             "name": "inputs:texture:file",
+                            "prim": false,
                             "fields": {
                                 "typeName": {
                                     "type": "Token",
