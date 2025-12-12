@@ -5,11 +5,7 @@ import type { Tokens } from "./Tokens.ts"
 import { UsdNode, type UsdNodeSerializeArgs } from "./UsdNode.ts"
 import type { Writer } from "./Writer.ts"
 
-interface BuildNodeTreeArgs {
-    pathIndexes: number[]
-    tokenIndexes: number[]
-    jumps: number[]
-}
+
 
 // the meaning of jump (maybe?)
 // -2: has no child and no siblings
@@ -19,6 +15,12 @@ interface BuildNodeTreeArgs {
 export class Paths {
     _nodes!: UsdNode[]
     crate!: CrateFile
+
+    num_nodes!: number
+    pathIndexes!: number[]
+    tokenIndexes!: number[]
+    jumps!: number[]
+
     constructor(reader?: Reader, crate?: CrateFile) {
         if (reader instanceof Reader) {
             this.crate = crate!
@@ -28,12 +30,12 @@ export class Paths {
             }
             reader.offset = section.start
 
-            const num_nodes = reader.getUint64()
+            this.num_nodes = reader.getUint64()
             const numEncodedPaths = reader.getUint64()
             // console.log(`num_nodes = ${num_nodes}, numEncodedPaths=${numEncodedPaths}`)
-            const pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
-            const tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
-            const jumps = reader.getCompressedIntegers(numEncodedPaths)
+            this.pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
+            this.tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
+            this.jumps = reader.getCompressedIntegers(numEncodedPaths)
 
             // console.log(`pathIndices : ${pathIndexes}`)
             // console.log(`tokenIndexes: ${tokenIndexes}`)
@@ -42,13 +44,6 @@ export class Paths {
             // for(let i=0; i<numEncodedPaths; ++i) {
             //     console.log(`[${i}] = token ${tokenIndexes[i]} ${crate?.tokens[tokenIndexes[i]]}, jump ${jumps[i]}`)
             // }
-
-            this._nodes = new Array<UsdNode>(num_nodes)
-            const node = this.buildNodeTree({
-                pathIndexes,
-                tokenIndexes: tokenIndexes,
-                jumps
-            })
         } else {
 
         }
@@ -75,67 +70,5 @@ export class Paths {
         writer.writeCompressedIntWithoutSize(arg.pathIndexes)
         writer.writeCompressedIntWithoutSize(arg.tokenIndexes)
         writer.writeCompressedIntWithoutSize(arg.jumps)
-    }
-
-    private buildNodeTree(
-        arg: BuildNodeTreeArgs,
-        parentNode: UsdNode | undefined = undefined,
-        curIndex: number = 0
-    ) {
-        let hasChild = true, hasSibling = true
-        let root: UsdNode | undefined
-        while (hasChild || hasSibling) {
-            const thisIndex = curIndex++
-            const idx = arg.pathIndexes[thisIndex]
-            const jump = arg.jumps[thisIndex]
-                let tokenIndex = arg.tokenIndexes[thisIndex]
-                let isPrimPropertyPath: boolean
-                if (tokenIndex < 0) {
-                    tokenIndex = -tokenIndex
-                    isPrimPropertyPath = false
-                } else {
-                    isPrimPropertyPath = true
-                }
-
-            // console.log(`thisIndex = ${thisIndex}, pathIndexes.size = ${arg.pathIndexes.length}`)
-            if (parentNode === undefined) {
-                if (thisIndex >= arg.pathIndexes.length) {
-                    throw Error("yikes: Index exceeds pathIndexes.size()")
-                }
-                root = parentNode = new UsdNode(this.crate, undefined, idx, "/", true)
-                this._nodes![idx] = parentNode
-            } else {
-                if (thisIndex >= arg.tokenIndexes.length) {
-                    throw Error(`Index exceeds elementTokenIndexes.length`)
-                }
-
-                // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
-                if (tokenIndex >= this.crate.tokens!.length) {
-                    throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
-                }
-                const elemToken = this.crate.tokens![tokenIndex]
-                if (this._nodes![idx] !== undefined) {
-                    throw Error(`yikes: node[${idx}] is already set`)
-                }
-                this._nodes![idx] = new UsdNode(this.crate, parentNode, idx, elemToken, isPrimPropertyPath)
-            }
-            // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
-            if (this.crate.tokens[tokenIndex] === undefined) {
-                console.log(`BUMMER at tokenIndex ${tokenIndex}`)
-                console.log(this.crate.tokens)
-            }
-
-            hasChild = jump > 0 || jump === -1
-            hasSibling = jump >= 0
-
-            if (hasChild) {
-                if (hasSibling) {
-                    const siblingIndex = thisIndex + jump
-                    this.buildNodeTree(arg, parentNode, siblingIndex)
-                }
-                parentNode = this._nodes![idx] // reset parent path
-            }
-        }
-        return root
     }
 }
