@@ -373,9 +373,10 @@ describe("USD", function () {
         const json = JSON.parse(readFileSync("spec/cube.json").toString())
         // console.log(JSON.stringify(pseudoRoot.toJSON()))
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
-        return
+        // return
 
-        // console.log(stage._crate.fields[0].toString())
+        // console.log(stage._crate._nodes[0].getFields().get("documentation")?.getValue(stage._crate))
+        // console.log(stage._crate!fields[0].toString())
         // console.log(stage._crate.tokens[stage._crate.fields[0].tokenIndex])
         // console.log(stage._crate.fields[0].valueRep.getValue(stage._crate))
 

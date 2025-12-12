@@ -10,6 +10,7 @@ import { Paths } from "./Paths.ts"
 import { Specs } from "./Specs.ts"
 import { FieldSets } from "./FieldSets.ts"
 import { Strings } from "./Strings.ts"
+import type { ValueRep } from "./ValueRep.ts"
 
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
@@ -20,11 +21,17 @@ interface BuildNodeTreeArgs {
 export class CrateFile {
     bootstrap: BootStrap
     toc: TableOfContents
+    tokens: Tokens
+    strings: Strings
+    fields: Fields
+    fieldsets: FieldSets
+    paths: Paths
+    specs: Specs
 
-    tokens!: string[]
-    strings!: StringIndex[]
-    fields!: Field[]
-    fieldset_indices!: number[]
+    // tokens!: string[]
+    // strings!: StringIndex[]
+    // fields!: Field[]
+    // fieldset_indices!: number[]
     _nodes!: UsdNode[]
 
     reader: Reader
@@ -34,29 +41,34 @@ export class CrateFile {
         this.bootstrap = new BootStrap(reader)
         reader.offset = this.bootstrap.tocOffset
         this.toc = new TableOfContents(reader)
-        const tokens = new Tokens(reader, this.toc)
-        this.tokens = tokens.tokens
-        const strings = new Strings(reader, this.toc)
-        this.strings = strings.strings
-        const fields = new Fields(reader, this.toc)
-        this.fields = fields.fields!
-        const fieldsets = new FieldSets(reader, this.toc)
-        this.fieldset_indices = fieldsets.fieldset_indices
-        const paths = new Paths(reader, this)
-        const specs = new Specs(reader, this.toc)
+        this.tokens = new Tokens(reader, this.toc)
+        this.strings = new Strings(reader, this.toc)
+        this.fields = new Fields(reader, this.toc)
+        this.fieldsets = new FieldSets(reader, this.toc)
+        this.paths = new Paths(reader, this)
+        this.specs = new Specs(reader, this.toc)
 
         // build node tree
-        this._nodes = new Array<UsdNode>(paths.num_nodes)
+        this._nodes = new Array<UsdNode>(this.paths.num_nodes)
         const node = this.buildNodeTree({
-            pathIndexes: paths.pathIndexes,
-            tokenIndexes: paths.tokenIndexes,
-            jumps: paths.jumps
+            pathIndexes: this.paths.pathIndexes,
+            tokenIndexes: this.paths.tokenIndexes,
+            jumps: this.paths.jumps
         })
         // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
-        for (let i = 0; i < specs.pathIndexes.length; ++i) {
-            const idx = specs.pathIndexes[i]
-            this._nodes[i].fieldset_index = specs.fieldsetIndexes[idx]
-            this._nodes[i].spec_type = specs.specTypeIndexes[idx]
+        for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
+            const idx = this.specs.pathIndexes[i]
+            this._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
+            this._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
+        }
+    }
+
+    forEachField(fieldSetIndex: number, block: (name: string, value: ValueRep) => void) {
+        for (let i = fieldSetIndex; this.fieldsets.fieldset_indices[i] >= 0; ++i) {
+            const fieldIndex = this.fieldsets.fieldset_indices[i]
+            const field = this.fields.fields![fieldIndex]
+            const token = this.tokens.get(field.tokenIndex)
+            block(token, field.valueRep)
         }
     }
 
@@ -93,20 +105,17 @@ export class CrateFile {
                 }
 
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
-                if (tokenIndex >= this.tokens!.length) {
-                    throw Error(`Invalid tokenIndex in BuildDecompressedPathsImpl.`)
-                }
-                const elemToken = this.tokens![tokenIndex]
+                const elemToken = this.tokens.get(tokenIndex)
                 if (this._nodes![idx] !== undefined) {
                     throw Error(`yikes: node[${idx}] is already set`)
                 }
                 this._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
             }
             // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
-            if (this.tokens[tokenIndex] === undefined) {
-                console.log(`BUMMER at tokenIndex ${tokenIndex}`)
-                console.log(this.tokens)
-            }
+            // if (this.tokens[tokenIndex] === undefined) {
+            //     console.log(`BUMMER at tokenIndex ${tokenIndex}`)
+            //     console.log(this.tokens)
+            // }
 
             hasChild = jump > 0 || jump === -1
             hasSibling = jump >= 0

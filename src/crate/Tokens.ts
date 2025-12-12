@@ -96,6 +96,12 @@ export class Tokens {
             }
         }
     }
+    get(index: number) {
+        if (index >= this.tokens.length) {
+            throw Error(`token index ${index} is out of range`)
+        }
+        return this.tokens[index]
+    }
 
     add(value: string): number {
         if (this._tokens === undefined) {

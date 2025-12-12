@@ -62,21 +62,21 @@ export class ValueRep {
                 break
             case CrateDataType.Token:
                 if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
-                    return crate.tokens[this.getIndex()]
+                    return crate.tokens.get(this.getIndex())
                 }
                 if (!this.isInlined() && this.isArray() && !this.isCompressed()) {
                     crate.reader.offset = this.getIndex()
                     const n = crate.reader.getUint64()
                     const arr = new Array<string>(n)
                     for (let i = 0; i < n; ++i) {
-                        arr[i] = crate.tokens[crate.reader.getInt32()]
+                        arr[i] = crate.tokens.get(crate.reader.getInt32())
                     }
                     return arr
                 }
                 break
             case CrateDataType.String:
                 if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
-                    return crate.tokens[crate.strings[this.getIndex()]]
+                    return crate.tokens.get(crate.strings.strings[this.getIndex()])
                 }
                 break
             case CrateDataType.Specifier:
@@ -149,14 +149,14 @@ export class ValueRep {
                     const arr = new Array<string>(n)
                     for (let i = 0; i < n; ++i) {
                         const idx = crate.reader.getUint32()
-                        arr[i] = crate.tokens[idx]
+                        arr[i] = crate.tokens.get(idx)
                     }
                     return arr
                 }
                 break
             case CrateDataType.AssetPath:
                 if (!this.isArray() && this.isInlined() && !this.isCompressed()) {
-                    return crate.tokens[this.getIndex()]
+                    return crate.tokens.get(this.getIndex())
                 }
                 break
             case CrateDataType.Variability:
@@ -167,7 +167,7 @@ export class ValueRep {
             case CrateDataType.Dictionary:
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
-                    const key = crate.tokens[crate.strings[reader.getUint32()]]
+                    const key = crate.tokens.get(crate.strings.strings[reader.getUint32()])
                     const value = new ValueRep(this._buffer, reader.offset)
                     return { [key]: value.toJSON(crate, key) }
                 }
@@ -195,7 +195,7 @@ export class ValueRep {
                         const n = reader.getUint64()
                         const arr = new Array<string>(n)
                         for (let i = 0; i < n; ++i) {
-                            arr[i] = crate.tokens[reader.getUint32()]
+                            arr[i] = crate.tokens.get(reader.getUint32())
                         }
                         return arr
                     }

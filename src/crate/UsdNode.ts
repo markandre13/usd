@@ -96,13 +96,9 @@ export class UsdNode {
             return this.fields
         }
         this.fields = new Map<string, ValueRep>()
-        let fieldset_index = this.fieldset_index!
-        for (; this.crate.fieldset_indices[fieldset_index] >= 0; ++fieldset_index) {
-            const fieldIndex = this.crate.fieldset_indices[fieldset_index]
-            const field = this.crate.fields[fieldIndex]
-            const token = this.crate.tokens[field.tokenIndex]
-            this.fields.set(token, field.valueRep)
-        }
+        this.crate.forEachField(this.fieldset_index!, (name, valueRep) => {
+            this.fields!.set(name, valueRep)
+        })
         return this.fields
     }
     getField(name: string): ValueRep | undefined {
