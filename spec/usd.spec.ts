@@ -17,6 +17,7 @@ import { CrateFile } from "../src/crate/CrateFile.ts"
 import { Paths } from "../src/crate/Paths.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 import { Strings } from "../src/crate/Strings.ts"
+import { FieldSets } from "../src/crate/FieldSets.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -299,7 +300,18 @@ describe("USD", () => {
             // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
             expect(fieldsIn.fields![0].valueRep.getValue(crate)).to.equal(1)
         })
-        it(SectionName.FIELDSETS)
+        it(SectionName.FIELDSETS, () => {
+            const fieldsetsOut = new FieldSets()
+            fieldsetsOut.fieldset_indices = [0, 1, 2, -1, 3, 4, 5, -1]
+
+            const writer = new Writer()
+            fieldsetsOut.serialize(writer)
+
+            const reader = new Reader(writer.buffer)
+            const fieldssetIn = new FieldSets(reader)
+
+            expect(fieldssetIn.fieldset_indices).to.deep.equal(fieldsetsOut.fieldset_indices)
+        })
         it(SectionName.PATHS, () => {
             const pathsOut = new Paths()
             pathsOut._nodes = []
@@ -434,7 +446,7 @@ describe("USD", () => {
                     69, 11, 56, 11, 56, 56, 73, 11, 56, 56, 56, 11, 56, 11, 56,]
 
                 const writer = new Writer()
-                writer.writeCompressedInt(uncompressed)
+                writer.writeCompressedIntegers(uncompressed)
 
                 const compressed = parseHexDump(`
                     0000 3f 00 00 00 00 00 00 00 47 00 00 00 00 00 00 00 ?.......G.......

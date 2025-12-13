@@ -71,7 +71,7 @@ export class Fields {
         // const numFields = this.tokenIndices.length
         // writer.writeUint64(numFields) // done in writeCompresedInt
 
-        writer.writeCompressedInt(this.tokenIndices)
+        writer.writeCompressedIntegers(this.tokenIndices)
 
         const compressed = new Uint8Array(compressBound(this.valueReps.buffer.byteLength)+1)
         const compresedSize = compressToBuffer(new Uint8Array(this.valueReps.buffer), compressed)

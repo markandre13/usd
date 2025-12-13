@@ -175,7 +175,7 @@ export class Writer {
     }
 
     // higher order, maybe to be placed elsewhere
-    writeCompressedInt(value: number[]) {
+    writeCompressedIntegers(value: number[]) {
         this.writeUint64(value.length)
         this.writeCompressedIntWithoutSize(value)
     }
