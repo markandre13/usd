@@ -1,7 +1,5 @@
 import { compressToBuffer, decompressFromBuffer } from "../index.ts"
 import type { Reader } from "./Reader.ts"
-import { SectionName } from "./SectionName.ts"
-import type { TableOfContents } from "./TableOfContents.ts"
 import type { Writer } from "./Writer.ts"
 
 // https://docs.nvidia.com/learn-openusd/latest/stage-setting/index.html
@@ -49,23 +47,15 @@ export class Tokens {
     tokens: string[] = []
     _tokens?: Map<string, number>
 
-    constructor()
-    constructor(reader: Reader, toc: TableOfContents)
-    constructor(reader?: Reader, toc?: TableOfContents) {
+    constructor(reader?: Reader) {
         if (reader !== undefined) {
-            const section = toc!.sections.get(SectionName.TOKENS)
-            if (section === undefined) {
-                return
-            }
-            reader.offset = section.start
-
             const numTokens = reader.getUint64()
             const uncompressedSize = reader.getUint64()
             const compressedSize = reader.getUint64()
 
-            if (compressedSize > section.size - 24) {
-                throw Error(`TOKENS section: compressed size exceeds section`)
-            }
+            // if (compressedSize > section.size - 24) {
+            //     throw Error(`TOKENS section: compressed size exceeds section`)
+            // }
 
             const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
             const uncompressed = new Uint8Array(uncompressedSize)

@@ -14,22 +14,14 @@ import type { Writer } from "./Writer.ts"
 //  x: next is child, sibling at +x
 export class Paths {
     _nodes!: UsdNode[]
-    crate!: CrateFile
 
     num_nodes!: number
     pathIndexes!: number[]
     tokenIndexes!: number[]
     jumps!: number[]
 
-    constructor(reader?: Reader, crate?: CrateFile) {
+    constructor(reader?: Reader) {
         if (reader instanceof Reader) {
-            this.crate = crate!
-            const section = crate!.toc.sections.get(SectionName.PATHS)
-            if (section === undefined) {
-                return
-            }
-            reader.offset = section.start
-
             this.num_nodes = reader.getUint64()
             const numEncodedPaths = reader.getUint64()
             // console.log(`num_nodes = ${num_nodes}, numEncodedPaths=${numEncodedPaths}`)

@@ -16,6 +16,7 @@ import { Fields } from "../src/crate/Fields.ts"
 import { CrateFile } from "../src/crate/CrateFile.ts"
 import { Paths } from "../src/crate/Paths.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
+import { Strings } from "../src/crate/Strings.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -42,251 +43,7 @@ import { UsdNode } from "../src/crate/UsdNode.ts"
 //     might be more efficient
 
 describe("USD", () => {
-    it("write CrateFile", () => {
-        const stage = new UsdStage()
-        const form = new UsdGeom.Xform()
-
-        const mesh = new UsdGeom.Mesh()
-        mesh.points = [
-            -1, -1, -1,
-            -1, -1, 1,
-            -1, 1, -1,
-            -1, 1, 1,
-            1, -1, -1,
-            1, -1, 1,
-            1, 1, -1,
-            1, 1, 1
-        ]
-        mesh.normals = [
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
-
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
-
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
-
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
-
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
-
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1
-        ]
-        mesh.faceVertexIndices = [
-            0, 1, 3, 2,
-            2, 3, 7, 6,
-            6, 7, 5, 4,
-            4, 5, 1, 0,
-            2, 6, 4, 0,
-            7, 3, 1, 5]
-        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
-
-        const writer = new Writer()
-        mesh.serialize(writer)
-    })
-    describe("Crate parts", () => {
-        it("BootStrap", () => {
-            const writer = new Writer()
-            const headerOut = new BootStrap(writer)
-
-            const reader = new Reader(writer.buffer)
-            const headerIn = new BootStrap(reader)
-
-            expect(headerOut.indent).to.equal(headerIn.indent)
-            expect(headerOut.version).to.deep.equal(headerIn.version)
-            expect(headerOut.tocOffset).to.equal(headerIn.tocOffset)
-        })
-        it("TableOfContents & Section", () => {
-            const tocOut = new TableOfContents()
-            tocOut.addSection(new Section({ name: "A", start: 1, size: 2 }))
-            tocOut.addSection(new Section({ name: "B", start: 3, size: 4 }))
-
-            const writer = new Writer()
-            tocOut.serialize(writer)
-
-            const reader = new Reader(writer.buffer)
-            const tocIn = new TableOfContents(reader)
-
-            // expect(tocOut).to.deep.equal(tocIn)
-            expect(tocIn.sections.size).to.equal(tocOut.sections.size)
-            expect(tocIn.sections.get("A")).to.deep.equal(tocOut.sections.get("A"))
-            expect(tocIn.sections.get("B")).to.deep.equal(tocOut.sections.get("B"))
-        })
-        describe(SectionName.TOKENS, () => {
-            const tokensOut = new Tokens()
-            tokensOut.add("Mesh")
-            tokensOut.add("Cylinder")
-
-            const writer = new Writer()
-            tokensOut.serialize(writer)
-            const toc = new TableOfContents()
-            toc.addSection(new Section({ name: SectionName.TOKENS, start: 0, size: writer.tell() }))
-
-            const reader = new Reader(writer.buffer)
-            const tokensIn = new Tokens(reader, toc)
-
-            expect(tokensIn.tokens).to.deep.equal(tokensOut.tokens)
-        })
-        xit(SectionName.STRINGS, () => {
-
-        })
-        it(SectionName.FIELDS, () => {
-            const tokens = new Tokens()
-            const fieldsOut = new Fields(tokens)
-            fieldsOut.setFloat("metersPerUnit", 1)
-
-            const writer = new Writer()
-            fieldsOut.serialize(writer)
-
-            // console.log(`ENCODED VALUE REP`)
-            // hexdump(new Uint8Array(fieldsIn.valueReps.buffer))
-
-            const toc = new TableOfContents()
-            toc.addSection(new Section({ name: SectionName.FIELDS, start: 0, size: writer.tell() }))
-
-            const reader = new Reader(writer.buffer)
-            const fieldsIn = new Fields(reader, toc)
-
-            // console.log(fieldsOut.fields)
-
-            expect(fieldsIn.fields).to.have.lengthOf(1)
-
-            // console.log(`DECODED VALUE REP`)
-            // fieldsOut.fields![0].valueRep.hexdump()
-
-            expect(fieldsIn.fields![0].valueRep.getType()).to.equal(CrateDataType.Float)
-            expect(fieldsIn.fields![0].valueRep.isInlined()).to.be.true
-            expect(fieldsIn.fields![0].valueRep.isArray()).to.be.false
-            expect(fieldsIn.fields![0].valueRep.isCompressed()).to.be.false
-
-            // console.log(`${fieldsOut.fields![0]}`)
-
-            const crate = {
-                tokens,
-                reader
-            } as any as CrateFile
-
-            // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
-            expect(fieldsIn.fields![0].valueRep.getValue(crate)).to.equal(1)
-        })
-        it(SectionName.FIELDSETS)
-        it(SectionName.PATHS, () => {
-            const pathsOut = new Paths()
-            pathsOut._nodes = []
-
-            const crate = {} as any as CrateFile
-
-            const pseudoRoot = new UsdNode(crate, undefined, pathsOut._nodes.length, "/", true)
-            pseudoRoot.spec_type = SpecType.PseudoRoot
-            // pseudoRoot.setDouble("metersPerUnit", 1.0)
-            // pseudoRoot.setString("documentation", "Blender v5.0.0")
-            // pseudoRoot.setToken("upAxis", "Z")
-            // pseudoRoot.setTokenVector("primChildren", ["root"])
-            // pseudoRoot.setToken("defaultPrim", "root")
-            pathsOut._nodes.push(pseudoRoot)
-
-            const xform = new UsdNode(crate, pseudoRoot, pathsOut._nodes.length, "root", true)
-            xform.spec_type = SpecType.Prim
-            // xform.setSpecifier("specifier", "Def")
-            // xform.setToken("typeName", "Xform")
-            // xform.setTokenVector("primChildren", ["Cube", "Sphere"])
-            pathsOut._nodes.push(xform)
-
-            const cube = new UsdNode(crate, xform, pathsOut._nodes.length, "Cube", true)
-            cube.spec_type = SpecType.Prim
-            // cube.setSpecifier("specifier", "Def")
-            // xform.setToken("typeName", "Mesh")
-            // xform.setTokenVector("properties", ["extent", "faceVertexCounts"])
-            pathsOut._nodes.push(cube)
-            // type Attribute
-            // name:extent
-            // fields?
-            //   typeName: Token float[]
-            const extent = new UsdNode(crate, cube, pathsOut._nodes.length, "extent", true)
-            extent.spec_type = SpecType.Attribute
-            // extent.setToken("typeName", "float3[]")
-            // not a map to ensure the order...?
-            //
-
-            // or immediatly create the ValueReps and FieldSet etc???
-            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this because
-            // * performance
-            // * my main goal at the moment is writing!!!
-            // reading could also be done in a similar way
-            // * read and decompress all, build tree as the last final step !!!!!!!!!!!!
-
-            // extent.field.add("typeName", new Token("float3[]"))
-            // extend.field.add("default", new Vec3fArray([0,0,0,1,1,1]))
-            // since we get the typeName only with the fieldset, we might need to create
-            // two trees: one with UsdNode, then one with PseudoRoot, Xform, Mesh, ...
-            pathsOut._nodes.push(extent)
-
-            const faceVertexCounts = new UsdNode(crate, cube, pathsOut._nodes.length, "faceVertexCounts", true)
-            faceVertexCounts.spec_type = SpecType.Attribute
-            // faceVertexCounts.setToken("typeName", "int[]")
-            // faceVertexCounts.setIntArray("default", [4,4,4,4,4,4])
-            pathsOut._nodes.push(faceVertexCounts)
-
-            const sphere = new UsdNode(crate, xform, pathsOut._nodes.length, "Sphere", true)
-            pathsOut._nodes.push(sphere)
-
-            // pseudoRoot.print()
-
-            const writer = new Writer()
-            const tokens = new Tokens()
-            // console.log("------------------------------------------ serialize")
-            pathsOut.serialize(writer, tokens)
-            // console.log("------------------------------------------")
-
-            const toc = new TableOfContents()
-            toc.addSection(new Section({ name: SectionName.PATHS, start: 0, size: writer.tell() }))
-
-            // console.log("------------------------------------------ deserialize")
-            const reader = new Reader(writer.buffer)
-            const crateOut = {
-                toc: toc,
-                tokens: tokens.tokens,
-                reader
-            } as any as CrateFile
-            const pathsIn = new Paths(reader, crateOut)
-            // console.log("------------------------------------------ dump")
-            // for(let i=0; i<pathsOut._nodes.length; ++i) {
-            //     const n = pathsOut._nodes[i]
-            //     console.log(`[${i}] = ${n.name} ${n.index}`)
-            // }
-
-            // THIS FAILS BECAUSE NOW THE CRATE BUILDS THE NODES
-            // const root = pathsOut._nodes[0]
-            // // root.print()
-
-            // expect(pathsOut._nodes).to.have.lengthOf(6)
-
-            // expect(root.name).to.equal("/")
-            // expect(root.children[0].name).to.equal("root")
-            // expect(root.children[0].children[0].name).to.equal("Cube")
-            // expect(root.children[0].children[0].children[0].name).to.equal("extent")
-            // expect(root.children[0].children[0].children[1].name).to.equal("faceVertexCounts")
-            // expect(root.children[0].children[1].name).to.equal("Sphere")
-        })
-        it(SectionName.SPECS)
-    })
-    it("read spec/cube.usdc", () => {
+    it("read cube.usdc", () => {
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
 
@@ -389,6 +146,246 @@ describe("USD", () => {
          */
 
         // ( ... ) : field set
+    })
+    it("write CrateFile", () => {
+        const stage = new UsdStage()
+        const form = new UsdGeom.Xform()
+
+        const mesh = new UsdGeom.Mesh()
+        mesh.points = [
+            -1, -1, -1,
+            -1, -1, 1,
+            -1, 1, -1,
+            -1, 1, 1,
+            1, -1, -1,
+            1, -1, 1,
+            1, 1, -1,
+            1, 1, 1
+        ]
+        mesh.normals = [
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0,
+
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0,
+
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0,
+
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1,
+
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1
+        ]
+        mesh.faceVertexIndices = [
+            0, 1, 3, 2,
+            2, 3, 7, 6,
+            6, 7, 5, 4,
+            4, 5, 1, 0,
+            2, 6, 4, 0,
+            7, 3, 1, 5]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+
+        const writer = new Writer()
+        mesh.serialize(writer)
+    })
+    describe("Crate parts", () => {
+        it("BootStrap", () => {
+            const writer = new Writer()
+            const headerOut = new BootStrap(writer)
+
+            const reader = new Reader(writer.buffer)
+            const headerIn = new BootStrap(reader)
+
+            expect(headerOut.indent).to.equal(headerIn.indent)
+            expect(headerOut.version).to.deep.equal(headerIn.version)
+            expect(headerOut.tocOffset).to.equal(headerIn.tocOffset)
+        })
+        it("TableOfContents & Section", () => {
+            const tocOut = new TableOfContents()
+            tocOut.addSection(new Section({ name: "A", start: 1, size: 2 }))
+            tocOut.addSection(new Section({ name: "B", start: 3, size: 4 }))
+
+            const writer = new Writer()
+            tocOut.serialize(writer)
+
+            const reader = new Reader(writer.buffer)
+            const tocIn = new TableOfContents(reader)
+
+            // expect(tocOut).to.deep.equal(tocIn)
+            expect(tocIn.sections.size).to.equal(tocOut.sections.size)
+            expect(tocIn.sections.get("A")).to.deep.equal(tocOut.sections.get("A"))
+            expect(tocIn.sections.get("B")).to.deep.equal(tocOut.sections.get("B"))
+        })
+        describe(SectionName.TOKENS, () => {
+            const tokensOut = new Tokens()
+            tokensOut.add("Mesh")
+            tokensOut.add("Cylinder")
+
+            const writer = new Writer()
+            tokensOut.serialize(writer)
+
+            const reader = new Reader(writer.buffer)
+            const tokensIn = new Tokens(reader)
+
+            expect(tokensIn.tokens).to.deep.equal(tokensOut.tokens)
+        })
+        xit(SectionName.STRINGS, () => {
+            const tokens = new Tokens()
+            // const stringsOut = new Strings()
+        })
+        it(SectionName.FIELDS, () => {
+            const tokens = new Tokens()
+            const fieldsOut = new Fields(tokens)
+            fieldsOut.setFloat("metersPerUnit", 1)
+
+            const writer = new Writer()
+            fieldsOut.serialize(writer)
+
+            // console.log(`ENCODED VALUE REP`)
+            // hexdump(new Uint8Array(fieldsIn.valueReps.buffer))
+
+            const reader = new Reader(writer.buffer)
+            const fieldsIn = new Fields(reader)
+
+            // console.log(fieldsOut.fields)
+
+            expect(fieldsIn.fields).to.have.lengthOf(1)
+
+            // console.log(`DECODED VALUE REP`)
+            // fieldsOut.fields![0].valueRep.hexdump()
+
+            expect(fieldsIn.fields![0].valueRep.getType()).to.equal(CrateDataType.Float)
+            expect(fieldsIn.fields![0].valueRep.isInlined()).to.be.true
+            expect(fieldsIn.fields![0].valueRep.isArray()).to.be.false
+            expect(fieldsIn.fields![0].valueRep.isCompressed()).to.be.false
+
+            // console.log(`${fieldsOut.fields![0]}`)
+
+            const crate = {
+                tokens,
+                reader
+            } as any as CrateFile
+
+            // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
+            expect(fieldsIn.fields![0].valueRep.getValue(crate)).to.equal(1)
+        })
+        it(SectionName.FIELDSETS)
+        it(SectionName.PATHS, () => {
+            const pathsOut = new Paths()
+            pathsOut._nodes = []
+
+            const crate = {} as any as CrateFile
+
+            const pseudoRoot = new UsdNode(crate, undefined, pathsOut._nodes.length, "/", true)
+            pseudoRoot.spec_type = SpecType.PseudoRoot
+            // pseudoRoot.setDouble("metersPerUnit", 1.0)
+            // pseudoRoot.setString("documentation", "Blender v5.0.0")
+            // pseudoRoot.setToken("upAxis", "Z")
+            // pseudoRoot.setTokenVector("primChildren", ["root"])
+            // pseudoRoot.setToken("defaultPrim", "root")
+            pathsOut._nodes.push(pseudoRoot)
+
+            const xform = new UsdNode(crate, pseudoRoot, pathsOut._nodes.length, "root", true)
+            xform.spec_type = SpecType.Prim
+            // xform.setSpecifier("specifier", "Def")
+            // xform.setToken("typeName", "Xform")
+            // xform.setTokenVector("primChildren", ["Cube", "Sphere"])
+            pathsOut._nodes.push(xform)
+
+            const cube = new UsdNode(crate, xform, pathsOut._nodes.length, "Cube", true)
+            cube.spec_type = SpecType.Prim
+            // cube.setSpecifier("specifier", "Def")
+            // xform.setToken("typeName", "Mesh")
+            // xform.setTokenVector("properties", ["extent", "faceVertexCounts"])
+            pathsOut._nodes.push(cube)
+            // type Attribute
+            // name:extent
+            // fields?
+            //   typeName: Token float[]
+            const extent = new UsdNode(crate, cube, pathsOut._nodes.length, "extent", true)
+            extent.spec_type = SpecType.Attribute
+            // extent.setToken("typeName", "float3[]")
+            // not a map to ensure the order...?
+            //
+
+            // or immediatly create the ValueReps and FieldSet etc???
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this because
+            // * performance
+            // * my main goal at the moment is writing!!!
+            // reading could also be done in a similar way
+            // * read and decompress all, build tree as the last final step !!!!!!!!!!!!
+
+            // extent.field.add("typeName", new Token("float3[]"))
+            // extend.field.add("default", new Vec3fArray([0,0,0,1,1,1]))
+            // since we get the typeName only with the fieldset, we might need to create
+            // two trees: one with UsdNode, then one with PseudoRoot, Xform, Mesh, ...
+            pathsOut._nodes.push(extent)
+
+            const faceVertexCounts = new UsdNode(crate, cube, pathsOut._nodes.length, "faceVertexCounts", true)
+            faceVertexCounts.spec_type = SpecType.Attribute
+            // faceVertexCounts.setToken("typeName", "int[]")
+            // faceVertexCounts.setIntArray("default", [4,4,4,4,4,4])
+            pathsOut._nodes.push(faceVertexCounts)
+
+            const sphere = new UsdNode(crate, xform, pathsOut._nodes.length, "Sphere", true)
+            pathsOut._nodes.push(sphere)
+
+            // pseudoRoot.print()
+
+            const writer = new Writer()
+            const tokens = new Tokens()
+            // console.log("------------------------------------------ serialize")
+            pathsOut.serialize(writer, tokens)
+            // console.log("------------------------------------------")
+
+            const toc = new TableOfContents()
+            toc.addSection(new Section({ name: SectionName.PATHS, start: 0, size: writer.tell() }))
+
+            // console.log("------------------------------------------ deserialize")
+            const reader = new Reader(writer.buffer)
+            const crateOut = {
+                toc: toc,
+                tokens: tokens.tokens,
+                reader
+            } as any as CrateFile
+            const pathsIn = new Paths(reader)
+            // console.log("------------------------------------------ dump")
+            // for(let i=0; i<pathsOut._nodes.length; ++i) {
+            //     const n = pathsOut._nodes[i]
+            //     console.log(`[${i}] = ${n.name} ${n.index}`)
+            // }
+
+            // THIS FAILS BECAUSE NOW THE CRATE BUILDS THE NODES
+            // const root = pathsOut._nodes[0]
+            // // root.print()
+
+            // expect(pathsOut._nodes).to.have.lengthOf(6)
+
+            // expect(root.name).to.equal("/")
+            // expect(root.children[0].name).to.equal("root")
+            // expect(root.children[0].children[0].name).to.equal("Cube")
+            // expect(root.children[0].children[0].children[0].name).to.equal("extent")
+            // expect(root.children[0].children[0].children[1].name).to.equal("faceVertexCounts")
+            // expect(root.children[0].children[1].name).to.equal("Sphere")
+        })
+        it(SectionName.SPECS)
     })
     describe("Reader & Writer", () => {
         it("grows on demand", () => {

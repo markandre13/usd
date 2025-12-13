@@ -9,9 +9,11 @@ export class BootStrap {
         patch: number
     }
     tocOffset: number
+    private reader?: Reader
 
     constructor(io: Reader | Writer) {
         if (io instanceof Reader) {
+            this.reader = io
             this.indent = io.getString(8)
             if (this.indent !== "PXR-USDC") {
                 throw Error("Not a Pixar Universal Screen Description Crate (USDC) file")
@@ -41,4 +43,9 @@ export class BootStrap {
             io.writeUint64(this.tocOffset)
         }
     }
+
+    seekTOC() {
+        this.reader!.offset = this.tocOffset
+    }
+
 }

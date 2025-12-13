@@ -20,14 +20,9 @@ export class Fields {
 
     // constructor(reader: Reader)
     // constructor(tokens: Tokens, toc: TableOfContents)
-    constructor(tokensOrReader: Tokens | Reader, toc: TableOfContents | undefined = undefined) {
+    constructor(tokensOrReader: Tokens | Reader) {
         if (tokensOrReader instanceof Reader) {
             const reader = tokensOrReader
-            const section = toc!.sections.get(SectionName.FIELDS)
-            if (section === undefined) {
-                return
-            }
-            reader.offset = section.start
             const numFields = reader.getUint64()
 
             const indices = reader.getCompressedIntegers(numFields)

@@ -11,6 +11,7 @@ import { Specs } from "./Specs.ts"
 import { FieldSets } from "./FieldSets.ts"
 import { Strings } from "./Strings.ts"
 import type { ValueRep } from "./ValueRep.ts"
+import { SectionName } from "./SectionName.ts"
 
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
@@ -39,14 +40,20 @@ export class CrateFile {
     constructor(reader: Reader) {
         this.reader = reader
         this.bootstrap = new BootStrap(reader)
-        reader.offset = this.bootstrap.tocOffset
+        this.bootstrap.seekTOC()
         this.toc = new TableOfContents(reader)
-        this.tokens = new Tokens(reader, this.toc)
-        this.strings = new Strings(reader, this.toc)
-        this.fields = new Fields(reader, this.toc)
-        this.fieldsets = new FieldSets(reader, this.toc)
-        this.paths = new Paths(reader, this)
-        this.specs = new Specs(reader, this.toc)
+        this.toc.seek(SectionName.TOKENS)
+        this.tokens = new Tokens(reader)
+        this.toc.seek(SectionName.STRINGS)
+        this.strings = new Strings(reader)
+        this.toc.seek(SectionName.FIELDS)
+        this.fields = new Fields(reader)
+        this.toc.seek(SectionName.FIELDSETS)
+        this.fieldsets = new FieldSets(reader)
+        this.toc.seek(SectionName.PATHS)
+        this.paths = new Paths(reader)
+        this.toc.seek(SectionName.SPECS)
+        this.specs = new Specs(reader)
 
         // build node tree
         this._nodes = new Array<UsdNode>(this.paths.num_nodes)
