@@ -92,7 +92,6 @@ export class Tokens {
         }
         return this.tokens[index]
     }
-
     add(value: string): number {
         if (this._tokens === undefined) {
             this._tokens = new Map<string, number>()

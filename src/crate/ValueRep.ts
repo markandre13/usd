@@ -76,7 +76,7 @@ export class ValueRep {
                 break
             case CrateDataType.String:
                 if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
-                    return crate.tokens.get(crate.strings.strings[this.getIndex()])
+                    return crate.strings.get(this.getIndex())
                 }
                 break
             case CrateDataType.Specifier:
@@ -167,7 +167,7 @@ export class ValueRep {
             case CrateDataType.Dictionary:
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
-                    const key = crate.tokens.get(crate.strings.strings[reader.getUint32()])
+                    const key = crate.strings.get(reader.getUint32())
                     const value = new ValueRep(this._buffer, reader.offset)
                     return { [key]: value.toJSON(crate, key) }
                 }

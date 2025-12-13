@@ -45,7 +45,7 @@ export class CrateFile {
         this.toc.seek(SectionName.TOKENS)
         this.tokens = new Tokens(reader)
         this.toc.seek(SectionName.STRINGS)
-        this.strings = new Strings(reader)
+        this.strings = new Strings(reader, this.tokens)
         this.toc.seek(SectionName.FIELDS)
         this.fields = new Fields(reader)
         this.toc.seek(SectionName.FIELDSETS)
