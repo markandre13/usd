@@ -246,9 +246,22 @@ describe("USD", () => {
 
             expect(tokensIn.tokens).to.deep.equal(tokensOut.tokens)
         })
-        xit(SectionName.STRINGS, () => {
+        it(SectionName.STRINGS, () => {
             const tokens = new Tokens()
-            // const stringsOut = new Strings()
+            const stringsOut = new Strings(tokens)
+            tokens.add("Xform")
+            expect(stringsOut.add("hello")).to.equal(0)
+            tokens.add("Mesh")
+            expect(stringsOut.add("world")).to.equal(1)
+
+            const writer = new Writer()
+            stringsOut.serialize(writer)
+
+            const reader = new Reader(writer.buffer)
+            const stringsIn = new Strings(reader, tokens)
+
+            expect(stringsIn.get(0)).to.equal("hello")
+            expect(stringsIn.get(1)).to.equal("world")
         })
         it(SectionName.FIELDS, () => {
             const tokens = new Tokens()
