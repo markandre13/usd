@@ -18,6 +18,7 @@ import { Paths } from "../src/crate/Paths.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 import { Strings } from "../src/crate/Strings.ts"
 import { FieldSets } from "../src/crate/FieldSets.ts"
+import { Specs } from "../src/crate/Specs.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -410,7 +411,20 @@ describe("USD", () => {
             // expect(root.children[0].children[0].children[1].name).to.equal("faceVertexCounts")
             // expect(root.children[0].children[1].name).to.equal("Sphere")
         })
-        it(SectionName.SPECS)
+        it(SectionName.SPECS, () => {
+            const specsOut = new Specs()
+            specsOut.pathIndexes = [0,1,2]
+            specsOut.fieldsetIndexes = [3,4,5]
+            specsOut.specTypeIndexes = [6,7,8]
+
+            const writer = new Writer()
+            specsOut.serialize(writer)
+
+            const reader = new Reader(writer.buffer)
+            const specsIn = new Specs(reader)
+
+            expect(specsIn).to.deep.equal(specsOut)
+        })
     })
     describe("Reader & Writer", () => {
         it("grows on demand", () => {
