@@ -4,6 +4,8 @@ import { Field } from "./Field.ts"
 import { compressBound } from "./lz4.ts"
 import { Reader } from "./Reader.js"
 import { SectionName } from "./SectionName.ts"
+import type { Specifier } from "./Specifier.ts"
+import type { Strings } from "./Strings.ts"
 import type { TableOfContents } from "./TableOfContents.ts"
 import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.ts"
@@ -17,10 +19,11 @@ export class Fields {
     offset = 0
 
     private tokens!: Tokens
+    private strings!: Strings
 
     // constructor(reader: Reader)
     // constructor(tokens: Tokens, toc: TableOfContents)
-    constructor(tokensOrReader: Tokens | Reader) {
+    constructor(tokensOrReader: Tokens | Reader, strings?: Strings) {
         if (tokensOrReader instanceof Reader) {
             const reader = tokensOrReader
             const numFields = reader.getUint64()
@@ -51,9 +54,11 @@ export class Fields {
             // }
         } else {
             this.tokens = tokensOrReader
+            this.strings = strings!
         }
     }
     setFloat(name: string, value: number) {
+        const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
         // ValueRep
 
@@ -61,11 +66,39 @@ export class Fields {
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Float)
         this.valueReps.writeUint8(64)
+        return idx
 
         // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
         // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
         // isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
         // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
+    }
+    setToken(name: string, value: string) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.tokens.add(value))
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Token)
+        this.valueReps.writeUint8(64)
+        return idx
+    }
+    setSpecifier(name: string, value: Specifier) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Specifier)
+        this.valueReps.writeUint8(64)
+        return idx
+    }
+    setString(name: string, value: string) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.strings.add(value))
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.String)
+        this.valueReps.writeUint8(64)
+        return idx
     }
     serialize(writer: Writer) {
         // const numFields = this.tokenIndices.length
@@ -73,7 +106,7 @@ export class Fields {
 
         writer.writeCompressedIntegers(this.tokenIndices)
 
-        const compressed = new Uint8Array(compressBound(this.valueReps.buffer.byteLength)+1)
+        const compressed = new Uint8Array(compressBound(this.valueReps.buffer.byteLength) + 1)
         const compresedSize = compressToBuffer(new Uint8Array(this.valueReps.buffer), compressed)
         writer.writeUint64(compresedSize)
         writer.writeBuffer(compressed, 0, compresedSize)

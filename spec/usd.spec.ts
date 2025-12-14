@@ -1,7 +1,7 @@
 import { hexdump, parseHexDump } from "../src/detail/hexdump.ts"
 import { expect } from "chai"
 import { compressToBuffer, decodeIntegers, decompressFromBuffer, encodeIntegers, UsdStage } from "../src/index.ts"
-import { readFileSync } from "fs"
+import { readFileSync, writeFileSync } from "fs"
 import { Reader } from "../src/crate/Reader.ts"
 import { SpecType } from "../src/crate/SpecType.ts"
 import { CrateDataType } from "../src/crate/CrateDataType.ts"
@@ -19,6 +19,7 @@ import { UsdNode } from "../src/crate/UsdNode.ts"
 import { Strings } from "../src/crate/Strings.ts"
 import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
+import { Specifier } from "../src/crate/Specifier.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -43,6 +44,21 @@ import { Specs } from "../src/crate/Specs.ts"
 //     this would suggest to place strings at the end of TOKENS
 //   * the actual string values are within TOKENS might be there as compressing them together
 //     might be more efficient
+
+class PseudoRoot extends UsdNode {
+    metersPerUnit: number = 3.1415
+    documentation = "Blender v5.0.0"
+    upAxis = "Z"
+    // defaultPrim = "root"
+
+    save(crate: CrateFile): void {
+        crate.fields.setFloat("metersPerUnit", this.metersPerUnit) // this one's going to be inlined
+    }
+}
+
+class Xform extends UsdNode {
+
+}
 
 describe("USD", () => {
     it("read cube.usdc", () => {
@@ -149,7 +165,7 @@ describe("USD", () => {
 
         // ( ... ) : field set
     })
-    it.only("write CrateFile", () => {
+    it("write CrateFile", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
@@ -206,36 +222,61 @@ describe("USD", () => {
 
         // const writer = new Writer()
         // mesh.serialize(writer)
-
         const crate = new CrateFile()
-        crate._nodes = []
-        crate.paths._nodes = crate._nodes
-        const node = new UsdNode(crate, undefined, crate._nodes.length, "/", true)
-        crate._nodes.push(node)
-        node.spec_type = SpecType.PseudoRoot
-        node.fieldset_index = 0
-        crate.fieldsets.fieldset_indices.push(0)
-        crate.fieldsets.fieldset_indices.push(-1)
+        crate.strings.add(";-)")
 
-        crate.specs.fieldsetIndexes.push(0)
-        crate.specs.pathIndexes.push(0)
-        crate.specs.specTypeIndexes.push(node.spec_type)
+        // HACK: add token the code adds after writing the tokens section
+        // crate.tokens.add("/")
+        // crate.tokens.add("Cube")
 
         const writer = new Writer()
         crate.bootstrap.skip(writer) // leave room for bootstrap
 
-        // this is the place for the non-inlined values
+        crate._nodes = []
+        crate.paths._nodes = crate._nodes
+        const root = new PseudoRoot(crate, undefined, crate._nodes.length, "/", true)
+        crate._nodes.push(root)
+        root.spec_type = SpecType.PseudoRoot
 
-        crate.fields.setFloat("pi", 3.1415) // this one's going to be inlined
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(0)
+        crate.specs.specTypeIndexes.push(root.spec_type)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setString("documentation", root.documentation)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setFloat("metersPerUnit", root.metersPerUnit)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("upAxis", root.upAxis)
+        )
+        crate.fieldsets.fieldset_indices.push(-1)
+        // crate.fieldsets.fieldset_indices.push(-1) // last one is a required empty fieldset? or tinyusdz needs at least two fieldsets??
+
+        // XFORM
+        const xform = new Xform(crate, root, crate._nodes.length, "Cube", true)
+        crate._nodes.push(xform)
+        xform.spec_type = SpecType.Prim
+
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(1)
+        crate.specs.specTypeIndexes.push(xform.spec_type)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Xform")
+        )
+
+        // crate.fieldsets.fieldset_indices.push(-1)
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        // WRITE SECTIONS
 
         let start: number, size: number
 
-        start = writer.tell()
-        crate.tokens.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
-
-        crate.strings.add(";-)")
         start = writer.tell()
         crate.strings.serialize(writer)
         size = writer.tell() - start
@@ -256,6 +297,13 @@ describe("USD", () => {
         size = writer.tell() - start
         crate.toc.addSection(new Section({ name: SectionName.PATHS, start, size }))
 
+        // crate.paths.serialize() adds tokens, hence write tokens section now (OpenUSD writes it 1st)
+        // TODO: write in the same order by running a prepare() method, which also populates _nodes.
+        start = writer.tell()
+        crate.tokens.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
+
         start = writer.tell()
         crate.specs.serialize(writer)
         size = writer.tell() - start
@@ -268,27 +316,69 @@ describe("USD", () => {
         crate.bootstrap.tocOffset = start
         crate.bootstrap.serialize(writer)
 
+        writeFileSync("test.usdc", Buffer.from(writer.buffer))
+
+        //
+        // READ
+        //
 
         const stage = new UsdStage(Buffer.from(writer.buffer))
         const pseudoRoot = stage.getPrimAtPath("/")!
+        // console.log(JSON.stringify(pseudoRoot, undefined, 2))
+
         expect(pseudoRoot).to.not.be.undefined
         expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
 
-        console.log(pseudoRoot.toJSON())
-
         const x = {
-            type: "PseudoRoot",
-            name: "/",
-            prim: true,
-            fields: {
-                pi: {
-                    type: "Float",
-                    inline: true,
-                    array: false,
-                    compressed: false,
-                    value: 3.1414999961853027,
+            "type": "PseudoRoot",
+            "name": "/",
+            "prim": true,
+            "fields": {
+                "documentation": {
+                    "type": "String",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Blender v5.0.0"
                 },
+                "metersPerUnit": {
+                    "type": "Float",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": 3.1414999961853027
+                },
+                "upAxis": {
+                    "type": "Token",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Z"
+                }
             },
+            "children": [
+                {
+                    "type": "Prim",
+                    "name": "Cube",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Xform"
+                        }
+                    }
+                }
+            ]
         }
         expect(pseudoRoot.toJSON()).to.deep.equal(x)
     })

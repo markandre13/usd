@@ -53,6 +53,8 @@ export class Tokens {
             const uncompressedSize = reader.getUint64()
             const compressedSize = reader.getUint64()
 
+            // console.log(`TOKENS: numTokens = ${numTokens}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
+
             // if (compressedSize > section.size - 24) {
             //     throw Error(`TOKENS section: compressed size exceeds section`)
             // }
@@ -74,6 +76,7 @@ export class Tokens {
                     if (tokenIndex >= numTokens) {
                         throw Error(`too many tokens`)
                     }
+                    // console.log(`TOKEN ${tokenIndex} = '${name}'`)
                     this.tokens[tokenIndex] = name
                     ++tokenIndex
                     name = ""

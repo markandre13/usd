@@ -74,7 +74,7 @@ export class CrateFile {
             this.toc = new TableOfContents()
             this.tokens = new Tokens()
             this.strings = new Strings(this.tokens)
-            this.fields = new Fields(this.tokens)
+            this.fields = new Fields(this.tokens, this.strings)
             this.fieldsets = new FieldSets()
             this.paths = new Paths()
             this.specs = new Specs()
