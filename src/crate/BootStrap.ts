@@ -11,20 +11,20 @@ export class BootStrap {
     tocOffset: number
     private reader?: Reader
 
-    constructor(io: Reader | Writer) {
-        if (io instanceof Reader) {
-            this.reader = io
-            this.indent = io.getString(8)
+    constructor(reader?: Reader) {
+        if (reader !== undefined) {
+            this.reader = reader
+            this.indent = reader.getString(8)
             if (this.indent !== "PXR-USDC") {
                 throw Error("Not a Pixar Universal Screen Description Crate (USDC) file")
             }
             this.version = {
-                major: io.getUint8(),
-                minor: io.getUint8(),
-                patch: io.getUint8()
+                major: reader.getUint8(),
+                minor: reader.getUint8(),
+                patch: reader.getUint8()
             }
-            io.offset += 5
-            this.tocOffset = io.getUint64()
+            reader.offset += 5
+            this.tocOffset = reader.getUint64()
             // console.log(`tocOffset: ${this.tocOffset}`)
             // console.log(`VERSION %o`, this.version)
         } else {
@@ -35,13 +35,18 @@ export class BootStrap {
                 patch: 0
             }
             this.tocOffset = 8 + 3 + 5 + 8
-            io.writeString(this.indent)
-            io.writeUint8(this.version.major)
-            io.writeUint8(this.version.minor)
-            io.writeUint8(this.version.patch)
-            io.writeString("\0\0\0\0\0")
-            io.writeUint64(this.tocOffset)
         }
+    }
+    skip(writer: Writer) {
+        writer.skip(24)
+    }
+    serialize(writer: Writer) {
+        writer.writeString(this.indent)
+        writer.writeUint8(this.version.major)
+        writer.writeUint8(this.version.minor)
+        writer.writeUint8(this.version.patch)
+        writer.writeString("\0\0\0\0\0")
+        writer.writeUint64(this.tocOffset)
     }
 
     seekTOC() {

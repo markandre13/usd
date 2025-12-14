@@ -35,38 +35,49 @@ export class CrateFile {
     // fieldset_indices!: number[]
     _nodes!: UsdNode[]
 
-    reader: Reader
+    reader!: Reader
 
-    constructor(reader: Reader) {
-        this.reader = reader
-        this.bootstrap = new BootStrap(reader)
-        this.bootstrap.seekTOC()
-        this.toc = new TableOfContents(reader)
-        this.toc.seek(SectionName.TOKENS)
-        this.tokens = new Tokens(reader)
-        this.toc.seek(SectionName.STRINGS)
-        this.strings = new Strings(reader, this.tokens)
-        this.toc.seek(SectionName.FIELDS)
-        this.fields = new Fields(reader)
-        this.toc.seek(SectionName.FIELDSETS)
-        this.fieldsets = new FieldSets(reader)
-        this.toc.seek(SectionName.PATHS)
-        this.paths = new Paths(reader)
-        this.toc.seek(SectionName.SPECS)
-        this.specs = new Specs(reader)
+    constructor(reader?: Reader) {
+        if (reader) {
+            this.reader = reader
+            this.bootstrap = new BootStrap(reader)
+            this.bootstrap.seekTOC()
+            this.toc = new TableOfContents(reader)
+            this.toc.seek(SectionName.TOKENS)
+            this.tokens = new Tokens(reader)
+            this.toc.seek(SectionName.STRINGS)
+            this.strings = new Strings(reader, this.tokens)
+            this.toc.seek(SectionName.FIELDS)
+            this.fields = new Fields(reader)
+            this.toc.seek(SectionName.FIELDSETS)
+            this.fieldsets = new FieldSets(reader)
+            this.toc.seek(SectionName.PATHS)
+            this.paths = new Paths(reader)
+            this.toc.seek(SectionName.SPECS)
+            this.specs = new Specs(reader)
 
-        // build node tree
-        this._nodes = new Array<UsdNode>(this.paths.num_nodes)
-        const node = this.buildNodeTree({
-            pathIndexes: this.paths.pathIndexes,
-            tokenIndexes: this.paths.tokenIndexes,
-            jumps: this.paths.jumps
-        })
-        // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
-        for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
-            const idx = this.specs.pathIndexes[i]
-            this._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
-            this._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
+            // build node tree
+            this._nodes = new Array<UsdNode>(this.paths.num_nodes)
+            const node = this.buildNodeTree({
+                pathIndexes: this.paths.pathIndexes,
+                tokenIndexes: this.paths.tokenIndexes,
+                jumps: this.paths.jumps
+            })
+            // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
+            for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
+                const idx = this.specs.pathIndexes[i]
+                this._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
+                this._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
+            }
+        } else {
+            this.bootstrap = new BootStrap()
+            this.toc = new TableOfContents()
+            this.tokens = new Tokens()
+            this.strings = new Strings(this.tokens)
+            this.fields = new Fields(this.tokens)
+            this.fieldsets = new FieldSets()
+            this.paths = new Paths()
+            this.specs = new Specs()
         }
     }
 

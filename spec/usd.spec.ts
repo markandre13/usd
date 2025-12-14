@@ -149,68 +149,154 @@ describe("USD", () => {
 
         // ( ... ) : field set
     })
-    it("write CrateFile", () => {
-        const stage = new UsdStage()
-        const form = new UsdGeom.Xform()
+    it.only("write CrateFile", () => {
+        // const stage = new UsdStage()
+        // const form = new UsdGeom.Xform()
 
-        const mesh = new UsdGeom.Mesh()
-        mesh.points = [
-            -1, -1, -1,
-            -1, -1, 1,
-            -1, 1, -1,
-            -1, 1, 1,
-            1, -1, -1,
-            1, -1, 1,
-            1, 1, -1,
-            1, 1, 1
-        ]
-        mesh.normals = [
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
+        // const mesh = new UsdGeom.Mesh()
+        // mesh.points = [
+        //     -1, -1, -1,
+        //     -1, -1, 1,
+        //     -1, 1, -1,
+        //     -1, 1, 1,
+        //     1, -1, -1,
+        //     1, -1, 1,
+        //     1, 1, -1,
+        //     1, 1, 1
+        // ]
+        // mesh.normals = [
+        //     -1, 0, 0,
+        //     -1, 0, 0,
+        //     -1, 0, 0,
+        //     -1, 0, 0,
 
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
+        //     0, 1, 0,
+        //     0, 1, 0,
+        //     0, 1, 0,
+        //     0, 1, 0,
 
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
+        //     1, 0, 0,
+        //     1, 0, 0,
+        //     1, 0, 0,
+        //     1, 0, 0,
 
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
+        //     0, -1, 0,
+        //     0, -1, 0,
+        //     0, -1, 0,
+        //     0, -1, 0,
 
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
+        //     0, 0, -1,
+        //     0, 0, -1,
+        //     0, 0, -1,
+        //     0, 0, -1,
 
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1
-        ]
-        mesh.faceVertexIndices = [
-            0, 1, 3, 2,
-            2, 3, 7, 6,
-            6, 7, 5, 4,
-            4, 5, 1, 0,
-            2, 6, 4, 0,
-            7, 3, 1, 5]
-        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        //     0, 0, 1,
+        //     0, 0, 1,
+        //     0, 0, 1,
+        //     0, 0, 1
+        // ]
+        // mesh.faceVertexIndices = [
+        //     0, 1, 3, 2,
+        //     2, 3, 7, 6,
+        //     6, 7, 5, 4,
+        //     4, 5, 1, 0,
+        //     2, 6, 4, 0,
+        //     7, 3, 1, 5]
+        // mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+
+        // const writer = new Writer()
+        // mesh.serialize(writer)
+
+        const crate = new CrateFile()
+        crate._nodes = []
+        crate.paths._nodes = crate._nodes
+        const node = new UsdNode(crate, undefined, crate._nodes.length, "/", true)
+        crate._nodes.push(node)
+        node.spec_type = SpecType.PseudoRoot
+        node.fieldset_index = 0
+        crate.fieldsets.fieldset_indices.push(0)
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        crate.specs.fieldsetIndexes.push(0)
+        crate.specs.pathIndexes.push(0)
+        crate.specs.specTypeIndexes.push(node.spec_type)
 
         const writer = new Writer()
-        mesh.serialize(writer)
+        crate.bootstrap.skip(writer) // leave room for bootstrap
+
+        // this is the place for the non-inlined values
+
+        crate.fields.setFloat("pi", 3.1415) // this one's going to be inlined
+
+        let start: number, size: number
+
+        start = writer.tell()
+        crate.tokens.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
+
+        crate.strings.add(";-)")
+        start = writer.tell()
+        crate.strings.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.STRINGS, start, size }))
+
+        start = writer.tell()
+        crate.fields.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.FIELDS, start, size }))
+
+        start = writer.tell()
+        crate.fieldsets.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.FIELDSETS, start, size }))
+
+        start = writer.tell()
+        crate.paths.serialize(writer, crate.tokens) // tokens???? this comes too late!!!
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.PATHS, start, size }))
+
+        start = writer.tell()
+        crate.specs.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.SPECS, start, size }))
+
+        start = writer.tell()
+        crate.toc.serialize(writer)
+
+        writer.seek(0)
+        crate.bootstrap.tocOffset = start
+        crate.bootstrap.serialize(writer)
+
+
+        const stage = new UsdStage(Buffer.from(writer.buffer))
+        const pseudoRoot = stage.getPrimAtPath("/")!
+        expect(pseudoRoot).to.not.be.undefined
+        expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
+
+        console.log(pseudoRoot.toJSON())
+
+        const x = {
+            type: "PseudoRoot",
+            name: "/",
+            prim: true,
+            fields: {
+                pi: {
+                    type: "Float",
+                    inline: true,
+                    array: false,
+                    compressed: false,
+                    value: 3.1414999961853027,
+                },
+            },
+        }
+        expect(pseudoRoot.toJSON()).to.deep.equal(x)
     })
     describe("Crate parts", () => {
         it("BootStrap", () => {
             const writer = new Writer()
-            const headerOut = new BootStrap(writer)
+            const headerOut = new BootStrap()
+            headerOut.serialize(writer)
 
             const reader = new Reader(writer.buffer)
             const headerIn = new BootStrap(reader)
@@ -413,9 +499,9 @@ describe("USD", () => {
         })
         it(SectionName.SPECS, () => {
             const specsOut = new Specs()
-            specsOut.pathIndexes = [0,1,2]
-            specsOut.fieldsetIndexes = [3,4,5]
-            specsOut.specTypeIndexes = [6,7,8]
+            specsOut.pathIndexes = [0, 1, 2]
+            specsOut.fieldsetIndexes = [3, 4, 5]
+            specsOut.specTypeIndexes = [6, 7, 8]
 
             const writer = new Writer()
             specsOut.serialize(writer)

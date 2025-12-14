@@ -93,6 +93,9 @@ export class Writer {
         this.view = new DataView(this.buffer)
         this.offset = 0
     }
+    seek(n: number) {
+        this.offset = n
+    }
     skip(n: number) {
         this.reserve(n)
         this.offset += n
