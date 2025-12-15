@@ -13,7 +13,7 @@ import type { Writer } from "./Writer.ts"
 //  0: no child, next is sibling
 //  x: next is child, sibling at +x
 export class Paths {
-    _nodes!: UsdNode[]
+    _nodes: UsdNode[] = []
 
     num_nodes!: number
     pathIndexes!: number[]
@@ -39,8 +39,6 @@ export class Paths {
             // for(let i=0; i<numEncodedPaths; ++i) {
             //     console.log(`[${i}] = token ${tokenIndexes[i]} ${crate?.tokens[tokenIndexes[i]]}, jump ${jumps[i]}`)
             // }
-        } else {
-
         }
     }
 

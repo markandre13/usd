@@ -57,10 +57,10 @@ class PseudoRoot extends UsdNode {
 
     // defaultPrim = "root"
 
-    override save() {
+    override encode() {
         const crate = this.crate
-        this.index = crate._nodes.length
-        crate._nodes.push(this)
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
 
         crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
         crate.specs.pathIndexes.push(this.index)
@@ -78,7 +78,7 @@ class PseudoRoot extends UsdNode {
         crate.fieldsets.fieldset_indices.push(-1)
 
         for (const child of this.children) {
-            child.save()
+            child.encode()
         }
     }
 }
@@ -89,10 +89,10 @@ class Xform extends UsdNode {
         this.spec_type = SpecType.Prim
     }
 
-    override save() {
+    override encode() {
         const crate = this.crate
-        this.index = crate._nodes.length
-        crate._nodes.push(this)
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
         crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
@@ -108,7 +108,7 @@ class Xform extends UsdNode {
         crate.fieldsets.fieldset_indices.push(-1)
 
         for (const child of this.children) {
-            child.save()
+            child.encode()
         }
     }
 }
@@ -119,10 +119,10 @@ class Mesh extends UsdNode {
         this.spec_type = SpecType.Prim
     }
 
-    override save() {
+    override encode() {
         const crate = this.crate
-        this.index = crate._nodes.length
-        crate._nodes.push(this)
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
         crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
@@ -147,10 +147,10 @@ class IntArrayAttr extends UsdNode {
         this.spec_type = SpecType.Attribute
     }
 
-    override save() {
+    override encode() {
         const crate = this.crate
-        this.index = crate._nodes.length
-        crate._nodes.push(this)
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
         crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
@@ -338,8 +338,7 @@ describe("USD", () => {
         const writer = new Writer()
         crate.bootstrap.skip(writer) // leave room for bootstrap
 
-        crate._nodes = []
-        crate.paths._nodes = crate._nodes
+        crate.paths._nodes = []
 
         const root = new PseudoRoot(crate)
         root.documentation = "Blender v5.0.0"
@@ -348,7 +347,7 @@ describe("USD", () => {
         const xform = new Xform(crate, root, "Cube")
         const mesh = new Mesh(crate, xform, "Cube_001")
 
-        root.save()
+        root.encode()
         crate.paths.encode(crate.tokens, root)
 
         // WRITE SECTIONS
@@ -542,7 +541,8 @@ describe("USD", () => {
         })
         it(SectionName.FIELDS, () => {
             const tokens = new Tokens()
-            const fieldsOut = new Fields(tokens)
+            const strings = new Strings(tokens)
+            const fieldsOut = new Fields(tokens, strings)
             fieldsOut.setFloat("metersPerUnit", 1)
 
             const writer = new Writer()

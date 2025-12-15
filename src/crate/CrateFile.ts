@@ -29,12 +29,6 @@ export class CrateFile {
     paths: Paths
     specs: Specs
 
-    // tokens!: string[]
-    // strings!: StringIndex[]
-    // fields!: Field[]
-    // fieldset_indices!: number[]
-    _nodes!: UsdNode[]
-
     reader!: Reader
 
     constructor(reader?: Reader) {
@@ -57,7 +51,7 @@ export class CrateFile {
             this.specs = new Specs(reader)
 
             // build node tree
-            this._nodes = new Array<UsdNode>(this.paths.num_nodes)
+            this.paths._nodes = new Array<UsdNode>(this.paths.num_nodes)
             const node = this.buildNodeTree({
                 pathIndexes: this.paths.pathIndexes,
                 tokenIndexes: this.paths.tokenIndexes,
@@ -66,8 +60,8 @@ export class CrateFile {
             // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
             for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
                 const idx = this.specs.pathIndexes[i]
-                this._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
-                this._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
+                this.paths._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
+                this.paths._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
             }
         } else {
             this.bootstrap = new BootStrap()
@@ -116,17 +110,17 @@ export class CrateFile {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
                 root = parentNode = new UsdNode(this, undefined, idx, "/", true)
-                this._nodes![idx] = parentNode
+                this.paths._nodes![idx] = parentNode
             } else {
                 if (thisIndex >= arg.tokenIndexes.length) {
                     throw Error(`Index ${thisIndex} exceeds tokenIndexes.length = ${arg.tokenIndexes.length}`)
                 }
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
                 const elemToken = this.tokens.get(tokenIndex)
-                if (this._nodes![idx] !== undefined) {
+                if (this.paths._nodes![idx] !== undefined) {
                     throw Error(`yikes: node[${idx}] is already set`)
                 }
-                this._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
+                this.paths._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
             }
             // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
             // if (this.tokens[tokenIndex] === undefined) {
@@ -142,7 +136,7 @@ export class CrateFile {
                     const siblingIndex = thisIndex + jump
                     this.buildNodeTree(arg, parentNode, siblingIndex)
                 }
-                parentNode = this._nodes![idx] // reset parent path
+                parentNode = this.paths._nodes![idx] // reset parent path
             }
         }
         return root

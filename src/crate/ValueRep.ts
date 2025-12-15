@@ -229,7 +229,7 @@ export class ValueRep {
                         const n = reader.getUint64()
                         const arr = new Array<string>(n)
                         for (let i = 0; i < n; ++i) {
-                            arr[i] = crate._nodes[reader.getUint32()].getFullPathName()
+                            arr[i] = crate.paths._nodes[reader.getUint32()].getFullPathName()
                         }
                         return arr
                     }

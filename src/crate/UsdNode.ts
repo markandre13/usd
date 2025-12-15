@@ -36,7 +36,10 @@ export class UsdNode {
         this.name = name
         this.prim = prim
     }
-    save() {}
+    /**
+     * encode node into the various sections of the crate
+     */
+    encode() {}
     getType(): SpecType {
         return this.spec_type!
     }

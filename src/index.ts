@@ -240,7 +240,7 @@ export class UsdStage {
         const pathSegments = path.split('/').splice(1)
         // console.log(`TRAVERSE %o (${path})`, s)
         let parent: UsdNode | undefined
-        let node: UsdNode | undefined = this._crate._nodes[0]
+        let node: UsdNode | undefined = this._crate.paths._nodes[0]
         for (const segment of pathSegments) {
             if (node === undefined) {
                 break
