@@ -29,9 +29,12 @@ export class Paths {
             this.tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
             this.jumps = reader.getCompressedIntegers(numEncodedPaths)
 
-            // console.log(`pathIndices : ${pathIndexes}`)
-            // console.log(`tokenIndexes: ${tokenIndexes}`)
-            // console.log(`jumps       : ${jumps}`)
+            // console.log('PATH READ')
+            // console.log(`numNodes       : ${this.num_nodes}`)
+            // console.log(`numEncodedPaths: ${numEncodedPaths}`)
+            // console.log(`pathIndices    : ${this.pathIndexes}`)
+            // console.log(`tokenIndexes   : ${this.tokenIndexes}`)
+            // console.log(`jumps          : ${this.jumps}`)
 
             // for(let i=0; i<numEncodedPaths; ++i) {
             //     console.log(`[${i}] = token ${tokenIndexes[i]} ${crate?.tokens[tokenIndexes[i]]}, jump ${jumps[i]}`)
@@ -41,26 +44,41 @@ export class Paths {
         }
     }
 
-    serialize(writer: Writer, tokens: Tokens) {
+    encode(tokens: Tokens, root: UsdNode) {
         const numEncodedPaths = this._nodes.length
+
+        this.pathIndexes = new Array<number>(numEncodedPaths)
+        this.tokenIndexes = new Array<number>(numEncodedPaths)
+        this.jumps = new Array<number>(numEncodedPaths)
+
+        // TODO: do this earlier to fill up the tokens
         const arg: UsdNodeSerializeArgs = {
             tokens,
             thisIndex: 0,
-            pathIndexes: new Array<number>(numEncodedPaths),
-            tokenIndexes : new Array<number>(numEncodedPaths),
-            jumps : new Array<number>(numEncodedPaths)
+            pathIndexes: this.pathIndexes,
+            tokenIndexes: this.tokenIndexes,
+            jumps: this.jumps
         }
-        this._nodes[0].serialize(arg)
+        root.serialize(arg)
+    }
 
+    serialize(writer: Writer) {
         // for(let i=0; i<numEncodedPaths; ++i) {
         //     const n = this._nodes[i]
         //     console.log(`[${i}] = token ${arg.tokenIndexes[i]} ${n.name}, jump ${arg.jumps[i]}`)
         // }
 
+        // console.log('PATH WRITE')
+        // console.log(`numNodes       : ${this._nodes.length}`)
+        // console.log(`numEncodedPaths: ${numEncodedPaths}`)
+        // console.log(`pathIndices    : ${arg.pathIndexes}`)
+        // console.log(`tokenIndexes   : ${arg.tokenIndexes}`)
+        // console.log(`jumps          : ${arg.jumps}`)
+
         writer.writeUint64(this._nodes.length) // number of nodes
         writer.writeUint64(this._nodes.length) // number of paths
-        writer.writeCompressedIntWithoutSize(arg.pathIndexes)
-        writer.writeCompressedIntWithoutSize(arg.tokenIndexes)
-        writer.writeCompressedIntWithoutSize(arg.jumps)
+        writer.writeCompressedIntWithoutSize(this.pathIndexes)
+        writer.writeCompressedIntWithoutSize(this.tokenIndexes)
+        writer.writeCompressedIntWithoutSize(this.jumps)
     }
 }

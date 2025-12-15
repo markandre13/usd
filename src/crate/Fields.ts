@@ -21,8 +21,8 @@ export class Fields {
     private tokens!: Tokens
     private strings!: Strings
 
-    // constructor(reader: Reader)
-    // constructor(tokens: Tokens, toc: TableOfContents)
+    constructor(reader: Reader)
+    constructor(tokens: Tokens, strings: Strings)
     constructor(tokensOrReader: Tokens | Reader, strings?: Strings) {
         if (tokensOrReader instanceof Reader) {
             const reader = tokensOrReader
@@ -99,6 +99,9 @@ export class Fields {
         this.valueReps.writeUint8(CrateDataType.String)
         this.valueReps.writeUint8(64)
         return idx
+    }
+    setIntArray(name: string, value: number[]): number {
+        throw Error(`TBD`)
     }
     serialize(writer: Writer) {
         // const numFields = this.tokenIndices.length

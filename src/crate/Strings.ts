@@ -44,6 +44,7 @@ export class Strings {
         let index = this._strings.get(value)
         if (index === undefined) {
             index = this.strings.length
+            // TODO: do this during serialize to place strings at the end
             const token = this.tokens.add(value)
             this.strings.push(token)
         }

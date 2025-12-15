@@ -119,9 +119,8 @@ export class CrateFile {
                 this._nodes![idx] = parentNode
             } else {
                 if (thisIndex >= arg.tokenIndexes.length) {
-                    throw Error(`Index exceeds elementTokenIndexes.length`)
+                    throw Error(`Index ${thisIndex} exceeds tokenIndexes.length = ${arg.tokenIndexes.length}`)
                 }
-
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
                 const elemToken = this.tokens.get(tokenIndex)
                 if (this._nodes![idx] !== undefined) {

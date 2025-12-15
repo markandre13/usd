@@ -49,15 +49,121 @@ class PseudoRoot extends UsdNode {
     metersPerUnit: number = 3.1415
     documentation = "Blender v5.0.0"
     upAxis = "Z"
+
+    constructor(crate: CrateFile) {
+        super(crate, undefined, -1, "/", true)
+        this.spec_type = SpecType.PseudoRoot
+    }
+
     // defaultPrim = "root"
 
-    save(crate: CrateFile): void {
-        crate.fields.setFloat("metersPerUnit", this.metersPerUnit) // this one's going to be inlined
+    override save() {
+        const crate = this.crate
+        this.index = crate._nodes.length
+        crate._nodes.push(this)
+
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setString("documentation", this.documentation)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setFloat("metersPerUnit", this.metersPerUnit)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("upAxis", this.upAxis)
+        )
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        for (const child of this.children) {
+            child.save()
+        }
     }
 }
 
 class Xform extends UsdNode {
+    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+    }
 
+    override save() {
+        const crate = this.crate
+        this.index = crate._nodes.length
+        crate._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Xform")
+        )
+
+        // crate.fieldsets.fieldset_indices.push(-1)
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        for (const child of this.children) {
+            child.save()
+        }
+    }
+}
+
+class Mesh extends UsdNode {
+    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+    }
+
+    override save() {
+        const crate = this.crate
+        this.index = crate._nodes.length
+        crate._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Mesh")
+        )
+
+        // crate.fieldsets.fieldset_indices.push(-1)
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        // TODO: attributes...
+    }
+}
+
+class IntArrayAttr extends UsdNode {
+    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+    }
+
+    override save() {
+        const crate = this.crate
+        this.index = crate._nodes.length
+        crate._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "int[]")
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setIntArray("default", [4, 4, 4, 4, 4, 4])
+        )
+
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
 }
 
 describe("USD", () => {
@@ -234,48 +340,25 @@ describe("USD", () => {
 
         crate._nodes = []
         crate.paths._nodes = crate._nodes
-        const root = new PseudoRoot(crate, undefined, crate._nodes.length, "/", true)
-        crate._nodes.push(root)
-        root.spec_type = SpecType.PseudoRoot
 
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(0)
-        crate.specs.specTypeIndexes.push(root.spec_type)
+        const root = new PseudoRoot(crate)
+        root.documentation = "Blender v5.0.0"
+        root.metersPerUnit = 3.1415
+        root.upAxis = "Z"
+        const xform = new Xform(crate, root, "Cube")
+        const mesh = new Mesh(crate, xform, "Cube_001")
 
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setString("documentation", root.documentation)
-        )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setFloat("metersPerUnit", root.metersPerUnit)
-        )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setToken("upAxis", root.upAxis)
-        )
-        crate.fieldsets.fieldset_indices.push(-1)
-        // crate.fieldsets.fieldset_indices.push(-1) // last one is a required empty fieldset? or tinyusdz needs at least two fieldsets??
-
-        // XFORM
-        const xform = new Xform(crate, root, crate._nodes.length, "Cube", true)
-        crate._nodes.push(xform)
-        xform.spec_type = SpecType.Prim
-
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(1)
-        crate.specs.specTypeIndexes.push(xform.spec_type)
-
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setSpecifier("specifier", Specifier.Def)
-        )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setToken("typeName", "Xform")
-        )
-
-        // crate.fieldsets.fieldset_indices.push(-1)
-        crate.fieldsets.fieldset_indices.push(-1)
+        root.save()
+        crate.paths.encode(crate.tokens, root)
 
         // WRITE SECTIONS
 
         let start: number, size: number
+
+        start = writer.tell()
+        crate.tokens.serialize(writer)
+        size = writer.tell() - start
+        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
 
         start = writer.tell()
         crate.strings.serialize(writer)
@@ -293,16 +376,9 @@ describe("USD", () => {
         crate.toc.addSection(new Section({ name: SectionName.FIELDSETS, start, size }))
 
         start = writer.tell()
-        crate.paths.serialize(writer, crate.tokens) // tokens???? this comes too late!!!
+        crate.paths.serialize(writer)
         size = writer.tell() - start
         crate.toc.addSection(new Section({ name: SectionName.PATHS, start, size }))
-
-        // crate.paths.serialize() adds tokens, hence write tokens section now (OpenUSD writes it 1st)
-        // TODO: write in the same order by running a prepare() method, which also populates _nodes.
-        start = writer.tell()
-        crate.tokens.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
 
         start = writer.tell()
         crate.specs.serialize(writer)
@@ -376,7 +452,30 @@ describe("USD", () => {
                             "compressed": false,
                             "value": "Xform"
                         }
-                    }
+                    },
+                    "children": [
+                        {
+                            "type": "Prim",
+                            "name": "Cube_001",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Mesh"
+                                }
+                            }
+                        }
+                    ]
                 }
             ]
         }
@@ -554,7 +653,8 @@ describe("USD", () => {
             const writer = new Writer()
             const tokens = new Tokens()
             // console.log("------------------------------------------ serialize")
-            pathsOut.serialize(writer, tokens)
+            pathsOut.encode(tokens, pseudoRoot)
+            pathsOut.serialize(writer)
             // console.log("------------------------------------------")
 
             const toc = new TableOfContents()

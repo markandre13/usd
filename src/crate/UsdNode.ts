@@ -36,6 +36,7 @@ export class UsdNode {
         this.name = name
         this.prim = prim
     }
+    save() {}
     getType(): SpecType {
         return this.spec_type!
     }
