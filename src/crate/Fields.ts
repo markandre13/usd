@@ -11,8 +11,13 @@ import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.ts"
 import { Writer } from "./Writer.js"
 
+const IsArrayBit_ = 128
+const IsInlinedBit = 64
+const IsCompressedBit = 32
+
 export class Fields {
     tokenIndices: number[] = []
+    data!: Writer
     fields?: Field[]
 
     valueReps = new Writer()
@@ -22,8 +27,8 @@ export class Fields {
     private strings!: Strings
 
     constructor(reader: Reader)
-    constructor(tokens: Tokens, strings: Strings)
-    constructor(tokensOrReader: Tokens | Reader, strings?: Strings) {
+    constructor(tokens: Tokens, strings: Strings, data: Writer)
+    constructor(tokensOrReader: Tokens | Reader, strings?: Strings, data?: Writer) {
         if (tokensOrReader instanceof Reader) {
             const reader = tokensOrReader
             const numFields = reader.getUint64()
@@ -55,6 +60,7 @@ export class Fields {
         } else {
             this.tokens = tokensOrReader
             this.strings = strings!
+            this.data = data!
         }
     }
     setFloat(name: string, value: number) {
@@ -65,13 +71,8 @@ export class Fields {
         this.valueReps.writeFloat32(value)
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Float)
-        this.valueReps.writeUint8(64)
+        this.valueReps.writeUint8(IsInlinedBit)
         return idx
-
-        // getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
-        // isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
-        // isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
-        // isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
     }
     setToken(name: string, value: string) {
         const idx = this.valueReps.tell() / 8
@@ -79,7 +80,21 @@ export class Fields {
         this.valueReps.writeUint32(this.tokens.add(value))
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Token)
-        this.valueReps.writeUint8(64)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
+    setTokenVector(name: string, value: string[]) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Token)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length)
+        for (const v of value) {
+            this.data.writeInt32(this.tokens.add(v))
+        }
         return idx
     }
     setSpecifier(name: string, value: Specifier) {
@@ -88,7 +103,7 @@ export class Fields {
         this.valueReps.writeUint32(value)
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Specifier)
-        this.valueReps.writeUint8(64)
+        this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
     setString(name: string, value: string) {
@@ -97,11 +112,22 @@ export class Fields {
         this.valueReps.writeUint32(this.strings.add(value))
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.String)
-        this.valueReps.writeUint8(64)
+        this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
-    setIntArray(name: string, value: number[]): number {
-        throw Error(`TBD`)
+    setIntVector(name: string, value: number[]): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Int)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length)
+        for (const v of value) {
+            this.data.writeInt32(v)
+        }
+        return idx
     }
     serialize(writer: Writer) {
         // const numFields = this.tokenIndices.length

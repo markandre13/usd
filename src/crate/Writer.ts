@@ -156,7 +156,12 @@ export class Writer {
     }
     writeUint32(value: number) {
         this.reserve(4)
-        this.view.setUint16(this.offset, value, true)
+        this.view.setUint32(this.offset, value, true)
+        this.offset += 4
+    }
+    writeInt32(value: number) {
+        this.reserve(4)
+        this.view.setInt32(this.offset, value, true)
         this.offset += 4
     }
     writeFloat32(value: number) {

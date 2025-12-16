@@ -67,11 +67,12 @@ export class CrateFile {
                 this.paths._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
             }
         } else {
+            this.writer = new Writer()
             this.bootstrap = new BootStrap()
             this.toc = new TableOfContents()
             this.tokens = new Tokens()
             this.strings = new Strings(this.tokens)
-            this.fields = new Fields(this.tokens, this.strings)
+            this.fields = new Fields(this.tokens, this.strings, this.writer)
             this.fieldsets = new FieldSets()
             this.paths = new Paths()
             this.specs = new Specs()
@@ -81,7 +82,6 @@ export class CrateFile {
     serialize(root: UsdNode) {
         this.strings.add(";-)") // this seems to be by convention
 
-        this.writer = new Writer()
         const writer = this.writer
         this.bootstrap.skip(writer) // leave room for bootstrap
         root.encode()

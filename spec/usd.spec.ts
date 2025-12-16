@@ -114,6 +114,9 @@ class Xform extends UsdNode {
 }
 
 class Mesh extends UsdNode {
+    faceVertexIndices?: number[]
+    faceVertexCounts?: number[]
+
     constructor(crate: CrateFile, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
@@ -134,17 +137,36 @@ class Mesh extends UsdNode {
             crate.fields.setToken("typeName", "Mesh")
         )
 
-        // crate.fieldsets.fieldset_indices.push(-1)
+        const properties: string[] = []
+
+        if (this.faceVertexIndices !== undefined) {
+            properties.push("faceVertexIndices")
+            new IntArrayAttr(crate, this, "faceVertexIndices", this.faceVertexIndices)
+        }
+        if (this.faceVertexCounts !== undefined) {
+            properties.push("faceVertexCounts")
+            new IntArrayAttr(crate, this, "faceVertexCounts", this.faceVertexCounts)
+        }
+
+        // crate.fieldsets.fieldset_indices.push(
+        //     crate.fields.setTokenVector("properties", properties)
+        // )
+
         crate.fieldsets.fieldset_indices.push(-1)
 
-        // TODO: attributes...
+
+        for (const child of this.children) {
+            child.encode()
+        }
     }
 }
 
 class IntArrayAttr extends UsdNode {
-    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+    value: number[]
+    constructor(crate: CrateFile, parent: UsdNode, name: string, value: number[]) {
         super(crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
+        this.value = value
     }
 
     override encode() {
@@ -159,7 +181,7 @@ class IntArrayAttr extends UsdNode {
             crate.fields.setToken("typeName", "int[]")
         )
         crate.fieldsets.fieldset_indices.push(
-            crate.fields.setIntArray("default", [4, 4, 4, 4, 4, 4])
+            crate.fields.setIntVector("default", this.value)
         )
 
         crate.fieldsets.fieldset_indices.push(-1)
@@ -275,7 +297,16 @@ describe("USD", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
-        // const mesh = new UsdGeom.Mesh()
+        const crate = new CrateFile()
+
+        crate.paths._nodes = []
+
+        const root = new PseudoRoot(crate)
+        root.documentation = "Blender v5.0.0"
+        root.metersPerUnit = 3.1415
+        root.upAxis = "Z"
+        const xform = new Xform(crate, root, "Cube")
+        const mesh = new Mesh(crate, xform, "Cube_001")
         // mesh.points = [
         //     -1, -1, -1,
         //     -1, -1, 1,
@@ -317,27 +348,14 @@ describe("USD", () => {
         //     0, 0, 1,
         //     0, 0, 1
         // ]
-        // mesh.faceVertexIndices = [
-        //     0, 1, 3, 2,
-        //     2, 3, 7, 6,
-        //     6, 7, 5, 4,
-        //     4, 5, 1, 0,
-        //     2, 6, 4, 0,
-        //     7, 3, 1, 5]
-        // mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
-
-        // const writer = new Writer()
-        // mesh.serialize(writer)
-        const crate = new CrateFile()
-
-        crate.paths._nodes = []
-
-        const root = new PseudoRoot(crate)
-        root.documentation = "Blender v5.0.0"
-        root.metersPerUnit = 3.1415
-        root.upAxis = "Z"
-        const xform = new Xform(crate, root, "Cube")
-        const mesh = new Mesh(crate, xform, "Cube_001")
+        mesh.faceVertexIndices = [
+            0, 1, 3, 2,
+            2, 3, 7, 6,
+            6, 7, 5, 4,
+            4, 5, 1, 0,
+            2, 6, 4, 0,
+            7, 3, 1, 5]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
 
         crate.serialize(root)
         writeFileSync("test.usdc", Buffer.from(crate.writer.buffer))
@@ -353,81 +371,7 @@ describe("USD", () => {
         expect(pseudoRoot).to.not.be.undefined
         expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
 
-        const x = {
-            "type": "PseudoRoot",
-            "name": "/",
-            "prim": true,
-            "fields": {
-                "documentation": {
-                    "type": "String",
-                    "inline": true,
-                    "array": false,
-                    "compressed": false,
-                    "value": "Blender v5.0.0"
-                },
-                "metersPerUnit": {
-                    "type": "Float",
-                    "inline": true,
-                    "array": false,
-                    "compressed": false,
-                    "value": 3.1414999961853027
-                },
-                "upAxis": {
-                    "type": "Token",
-                    "inline": true,
-                    "array": false,
-                    "compressed": false,
-                    "value": "Z"
-                }
-            },
-            "children": [
-                {
-                    "type": "Prim",
-                    "name": "Cube",
-                    "prim": true,
-                    "fields": {
-                        "specifier": {
-                            "type": "Specifier",
-                            "inline": true,
-                            "array": false,
-                            "compressed": false,
-                            "value": "Def"
-                        },
-                        "typeName": {
-                            "type": "Token",
-                            "inline": true,
-                            "array": false,
-                            "compressed": false,
-                            "value": "Xform"
-                        }
-                    },
-                    "children": [
-                        {
-                            "type": "Prim",
-                            "name": "Cube_001",
-                            "prim": true,
-                            "fields": {
-                                "specifier": {
-                                    "type": "Specifier",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "Def"
-                                },
-                                "typeName": {
-                                    "type": "Token",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "Mesh"
-                                }
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-        expect(pseudoRoot.toJSON()).to.deep.equal(x)
+        expect(pseudoRoot.toJSON()).to.deep.equal(generatedUSD)
     })
     describe("Crate parts", () => {
         it("BootStrap", () => {
@@ -491,7 +435,8 @@ describe("USD", () => {
         it(SectionName.FIELDS, () => {
             const tokens = new Tokens()
             const strings = new Strings(tokens)
-            const fieldsOut = new Fields(tokens, strings)
+            const data = new Writer()
+            const fieldsOut = new Fields(tokens, strings, data)
             fieldsOut.setFloat("metersPerUnit", 1)
 
             const writer = new Writer()
@@ -920,3 +865,154 @@ describe("USD", () => {
         })
     })
 })
+
+const generatedUSD = {
+    "type": "PseudoRoot",
+    "name": "/",
+    "prim": true,
+    "fields": {
+        "documentation": {
+            "type": "String",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": "Blender v5.0.0"
+        },
+        "metersPerUnit": {
+            "type": "Float",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": 3.1414999961853027
+        },
+        "upAxis": {
+            "type": "Token",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": "Z"
+        }
+    },
+    "children": [
+        {
+            "type": "Prim",
+            "name": "Cube",
+            "prim": true,
+            "fields": {
+                "specifier": {
+                    "type": "Specifier",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Def"
+                },
+                "typeName": {
+                    "type": "Token",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Xform"
+                }
+            },
+            "children": [
+                {
+                    "type": "Prim",
+                    "name": "Cube_001",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Mesh"
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Attribute",
+                            "name": "faceVertexIndices",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "int[]"
+                                },
+                                "default": {
+                                    "type": "Int",
+                                    "inline": false,
+                                    "array": true,
+                                    "compressed": false,
+                                    "value": [
+                                        0,
+                                        1,
+                                        3,
+                                        2,
+                                        2,
+                                        3,
+                                        7,
+                                        6,
+                                        6,
+                                        7,
+                                        5,
+                                        4,
+                                        4,
+                                        5,
+                                        1,
+                                        0,
+                                        2,
+                                        6,
+                                        4,
+                                        0,
+                                        7,
+                                        3,
+                                        1,
+                                        5
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "faceVertexCounts",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "int[]"
+                                },
+                                "default": {
+                                    "type": "Int",
+                                    "inline": false,
+                                    "array": true,
+                                    "compressed": false,
+                                    "value": [
+                                        4,
+                                        4,
+                                        4,
+                                        4,
+                                        4,
+                                        4
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

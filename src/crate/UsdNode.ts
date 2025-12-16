@@ -1,6 +1,6 @@
 import { CrateDataType } from "./CrateDataType.ts"
 import { CrateFile } from "./CrateFile.ts"
-import { SpecType } from "./SpecType.ts"
+import { isPrim, SpecType } from "./SpecType.ts"
 import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.js"
 
@@ -39,7 +39,7 @@ export class UsdNode {
     /**
      * encode node into the various sections of the crate
      */
-    encode() {}
+    encode() { }
     getType(): SpecType {
         return this.spec_type!
     }
@@ -161,27 +161,18 @@ export class UsdNode {
             jump = this.children.length + 1
         }
         arg.pathIndexes[arg.thisIndex] = arg.thisIndex
-        arg.tokenIndexes[arg.thisIndex] = arg.tokens.add(this.name)
+
+        let tokenIndex = arg.tokens.add(this.name)
+        if (!isPrim(this.spec_type!)) {
+            tokenIndex = -tokenIndex
+        }
+        arg.tokenIndexes[arg.thisIndex] = tokenIndex
+
         arg.jumps[arg.thisIndex] = jump
         // console.log(`[${arg.thisIndex}] := ${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
-        for(const child of this.children) {
+        for (const child of this.children) {
             ++arg.thisIndex
             child.serialize(arg)
         }
     }
 }
-
-    export class Mesh extends UsdNode {
-        faceVertexIndices?: ArrayLike<number>
-        faceVertexCounts?: ArrayLike<number>
-
-        override serialize(arg: UsdNodeSerializeArgs) {
-            super.serialize(arg)
-            // if (this.faceVertexIndices) {
-            //     out.writeIntArray("faceVertexIndices", this.faceVertexIndices)
-            // }
-            // if (this.faceVertexCounts) {
-            //     out.writeIntArray("faceVertexCounts", this.faceVertexCounts)
-            // }
-        }
-    }
