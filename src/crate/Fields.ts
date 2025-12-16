@@ -88,12 +88,12 @@ export class Fields {
         this.tokenIndices.push(this.tokens.add(name))
         this.valueReps.writeUint32(this.data.tell())
         this.valueReps.skip(2)
-        this.valueReps.writeUint8(CrateDataType.Token)
-        this.valueReps.writeUint8(IsArrayBit_)
+        this.valueReps.writeUint8(CrateDataType.TokenVector)
+        this.valueReps.writeUint8(0)
 
         this.data.writeUint64(value.length)
         for (const v of value) {
-            this.data.writeInt32(this.tokens.add(v))
+            this.data.writeUint32(this.tokens.add(v))
         }
         return idx
     }

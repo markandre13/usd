@@ -148,12 +148,11 @@ class Mesh extends UsdNode {
             new IntArrayAttr(crate, this, "faceVertexCounts", this.faceVertexCounts)
         }
 
-        // crate.fieldsets.fieldset_indices.push(
-        //     crate.fields.setTokenVector("properties", properties)
-        // )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setTokenVector("properties", properties)
+        )
 
         crate.fieldsets.fieldset_indices.push(-1)
-
 
         for (const child of this.children) {
             child.encode()
@@ -933,6 +932,16 @@ const generatedUSD = {
                             "array": false,
                             "compressed": false,
                             "value": "Mesh"
+                        },
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "faceVertexIndices",
+                                "faceVertexCounts"
+                            ]
                         }
                     },
                     "children": [
