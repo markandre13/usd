@@ -271,7 +271,7 @@ describe("USD", () => {
 
         // ( ... ) : field set
     })
-    it("write CrateFile", () => {
+    it.only("write CrateFile", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
@@ -329,14 +329,6 @@ describe("USD", () => {
         // const writer = new Writer()
         // mesh.serialize(writer)
         const crate = new CrateFile()
-        crate.strings.add(";-)")
-
-        // HACK: add token the code adds after writing the tokens section
-        // crate.tokens.add("/")
-        // crate.tokens.add("Cube")
-
-        const writer = new Writer()
-        crate.bootstrap.skip(writer) // leave room for bootstrap
 
         crate.paths._nodes = []
 
@@ -347,57 +339,14 @@ describe("USD", () => {
         const xform = new Xform(crate, root, "Cube")
         const mesh = new Mesh(crate, xform, "Cube_001")
 
-        root.encode()
-        crate.paths.encode(crate.tokens, root)
-
-        // WRITE SECTIONS
-
-        let start: number, size: number
-
-        start = writer.tell()
-        crate.tokens.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
-
-        start = writer.tell()
-        crate.strings.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.STRINGS, start, size }))
-
-        start = writer.tell()
-        crate.fields.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.FIELDS, start, size }))
-
-        start = writer.tell()
-        crate.fieldsets.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.FIELDSETS, start, size }))
-
-        start = writer.tell()
-        crate.paths.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.PATHS, start, size }))
-
-        start = writer.tell()
-        crate.specs.serialize(writer)
-        size = writer.tell() - start
-        crate.toc.addSection(new Section({ name: SectionName.SPECS, start, size }))
-
-        start = writer.tell()
-        crate.toc.serialize(writer)
-
-        writer.seek(0)
-        crate.bootstrap.tocOffset = start
-        crate.bootstrap.serialize(writer)
-
-        writeFileSync("test.usdc", Buffer.from(writer.buffer))
+        crate.serialize(root)
+        writeFileSync("test.usdc", Buffer.from(crate.writer.buffer))
 
         //
         // READ
         //
 
-        const stage = new UsdStage(Buffer.from(writer.buffer))
+        const stage = new UsdStage(Buffer.from(crate.writer.buffer))
         const pseudoRoot = stage.getPrimAtPath("/")!
         // console.log(JSON.stringify(pseudoRoot, undefined, 2))
 

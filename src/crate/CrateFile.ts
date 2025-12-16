@@ -12,6 +12,8 @@ import { FieldSets } from "./FieldSets.ts"
 import { Strings } from "./Strings.ts"
 import type { ValueRep } from "./ValueRep.ts"
 import { SectionName } from "./SectionName.ts"
+import { Writer } from "./Writer.js"
+import { Section } from "./Section.ts"
 
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
@@ -30,6 +32,7 @@ export class CrateFile {
     specs: Specs
 
     reader!: Reader
+    writer!: Writer
 
     constructor(reader?: Reader) {
         if (reader) {
@@ -73,6 +76,57 @@ export class CrateFile {
             this.paths = new Paths()
             this.specs = new Specs()
         }
+    }
+
+    serialize(root: UsdNode) {
+        this.strings.add(";-)") // this seems to be by convention
+
+        this.writer = new Writer()
+        const writer = this.writer
+        this.bootstrap.skip(writer) // leave room for bootstrap
+        root.encode()
+        this.paths.encode(this.tokens, root)
+
+        // WRITE SECTIONS
+
+        let start: number, size: number
+
+        start = writer.tell()
+        this.tokens.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.TOKENS, start, size }))
+
+        start = writer.tell()
+        this.strings.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.STRINGS, start, size }))
+
+        start = writer.tell()
+        this.fields.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.FIELDS, start, size }))
+
+        start = writer.tell()
+        this.fieldsets.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.FIELDSETS, start, size }))
+
+        start = writer.tell()
+        this.paths.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.PATHS, start, size }))
+
+        start = writer.tell()
+        this.specs.serialize(writer)
+        size = writer.tell() - start
+        this.toc.addSection(new Section({ name: SectionName.SPECS, start, size }))
+
+        start = writer.tell()
+        this.toc.serialize(writer)
+
+        writer.seek(0)
+        this.bootstrap.tocOffset = start
+        this.bootstrap.serialize(writer)
     }
 
     forEachField(fieldSetIndex: number, block: (name: string, value: ValueRep) => void) {
