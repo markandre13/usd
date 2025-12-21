@@ -1,11 +1,11 @@
-import type { CrateFile } from "../crate/CrateFile.ts"
+import type { Crate } from "../crate/Crate.ts"
 import { SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
 import type { Variability } from "../crate/Variability.ts"
 
 export class VariabilityAttr extends UsdNode {
     value: Variability
-    constructor(crate: CrateFile, parent: UsdNode, name: string, value: Variability) {
+    constructor(crate: Crate, parent: UsdNode, name: string, value: Variability) {
         super(crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
@@ -36,7 +36,7 @@ export class VariabilityAttr extends UsdNode {
 
 export class IntArrayAttr extends UsdNode {
     value: ArrayLike<number>
-    constructor(crate: CrateFile, parent: UsdNode, name: string, value: ArrayLike<number>) {
+    constructor(crate: Crate, parent: UsdNode, name: string, value: ArrayLike<number>) {
         super(crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
@@ -65,7 +65,7 @@ export class Vec3fArrayAttr extends UsdNode {
     value: ArrayLike<number>
     typeName: string
     constructor(
-        crate: CrateFile,
+        crate: Crate,
         parent: UsdNode,
         name: string,
         value: ArrayLike<number>,

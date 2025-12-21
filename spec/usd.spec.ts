@@ -12,7 +12,7 @@ import { Section } from "../src/crate/Section.ts"
 import { Tokens } from "../src/crate/Tokens.ts"
 import { SectionName } from "../src/crate/SectionName.ts"
 import { Fields } from "../src/crate/Fields.ts"
-import { CrateFile } from "../src/crate/CrateFile.ts"
+import { Crate } from "../src/crate/Crate.ts"
 import { Paths } from "../src/crate/Paths.ts"
 import { UsdNode } from "../src/crate/UsdNode.ts"
 import { Strings } from "../src/crate/Strings.ts"
@@ -161,7 +161,7 @@ describe("USD", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
-        const crate = new CrateFile()
+        const crate = new Crate()
 
         crate.paths._nodes = []
 
@@ -335,7 +335,7 @@ describe("USD", () => {
             const crate = {
                 tokens,
                 reader
-            } as any as CrateFile
+            } as any as Crate
 
             // console.log(`${fieldsOut.fields![0].valueRep.getValue(crate)}`)
             expect(fieldsIn.fields![0].valueRep.getValue(crate)).to.equal(1)
@@ -356,7 +356,7 @@ describe("USD", () => {
             const pathsOut = new Paths()
             pathsOut._nodes = []
 
-            const crate = {} as any as CrateFile
+            const crate = {} as any as Crate
 
             const pseudoRoot = new UsdNode(crate, undefined, pathsOut._nodes.length, "/", true)
             pseudoRoot.spec_type = SpecType.PseudoRoot
@@ -431,7 +431,7 @@ describe("USD", () => {
                 toc: toc,
                 tokens: tokens.tokens,
                 reader
-            } as any as CrateFile
+            } as any as Crate
             const pathsIn = new Paths(reader)
             // console.log("------------------------------------------ dump")
             // for(let i=0; i<pathsOut._nodes.length; ++i) {

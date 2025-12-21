@@ -1,5 +1,5 @@
 import { IntArrayAttr, VariabilityAttr, Vec3fArrayAttr } from "../attributes/index.ts"
-import type { CrateFile } from "../crate/CrateFile.ts"
+import type { Crate } from "../crate/Crate.ts"
 import { Specifier } from "../crate/Specifier.ts"
 import { SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
@@ -15,7 +15,7 @@ export class PseudoRoot extends UsdNode {
     documentation = "makehuman.js"
     upAxis = "Z"
 
-    constructor(crate: CrateFile) {
+    constructor(crate: Crate) {
         super(crate, undefined, -1, "/", true)
         this.spec_type = SpecType.PseudoRoot
     }
@@ -56,7 +56,7 @@ export class PseudoRoot extends UsdNode {
 }
 
 export class Xform extends Xformable {
-    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+    constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
     }
@@ -99,7 +99,7 @@ export class Mesh extends PointBased {
     faceVertexIndices?: ArrayLike<number>
     faceVertexCounts?: ArrayLike<number>
 
-    constructor(crate: CrateFile, parent: UsdNode, name: string) {
+    constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
     }

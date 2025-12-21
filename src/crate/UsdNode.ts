@@ -1,5 +1,5 @@
 import { CrateDataType } from "./CrateDataType.ts"
-import { CrateFile } from "./CrateFile.ts"
+import { Crate } from "./Crate.ts"
 import { isPrim, SpecType } from "./SpecType.ts"
 import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.js"
@@ -16,7 +16,7 @@ export interface UsdNodeSerializeArgs {
 }
 
 export class UsdNode {
-    crate: CrateFile
+    crate: Crate
     parent?: UsdNode
     children: UsdNode[] = [];
 
@@ -26,7 +26,7 @@ export class UsdNode {
     name: string
     prim: boolean
 
-    constructor(crate: CrateFile, parent: UsdNode | undefined, index: number, name: string, prim: boolean) {
+    constructor(crate: Crate, parent: UsdNode | undefined, index: number, name: string, prim: boolean) {
         this.crate = crate
         this.parent = parent
         if (parent !== undefined) {

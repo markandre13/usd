@@ -1,4 +1,4 @@
-import type { CrateFile } from "./CrateFile.ts"
+import type { Crate } from "./Crate.ts"
 import { Reader } from "./Reader.js"
 import { SectionName } from "./SectionName.ts"
 import type { Tokens } from "./Tokens.ts"

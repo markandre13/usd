@@ -1,6 +1,4 @@
 import { BootStrap } from "./BootStrap.ts"
-import { Field } from "./Field.ts"
-import { type StringIndex } from "../index.ts"
 import type { Reader } from "./Reader.ts"
 import { TableOfContents } from "./TableOfContents.ts"
 import { UsdNode } from "./UsdNode.ts"
@@ -12,7 +10,7 @@ import { FieldSets } from "./FieldSets.ts"
 import { Strings } from "./Strings.ts"
 import type { ValueRep } from "./ValueRep.ts"
 import { SectionName } from "./SectionName.ts"
-import { Writer } from "./Writer.js"
+import { Writer } from "./Writer.ts"
 import { Section } from "./Section.ts"
 
 interface BuildNodeTreeArgs {
@@ -21,7 +19,7 @@ interface BuildNodeTreeArgs {
     jumps: number[]
 }
 
-export class CrateFile {
+export class Crate {
     bootstrap: BootStrap
     toc: TableOfContents
     tokens: Tokens

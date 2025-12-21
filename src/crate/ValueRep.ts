@@ -9,7 +9,7 @@
 import { hexdump } from "../detail/hexdump.ts"
 import { decodeIntegers } from "../compression/integers.ts"
 import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
-import type { CrateFile } from "./CrateFile.ts"
+import type { Crate } from "./Crate.ts"
 import { Specifier } from "./Specifier.ts"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
@@ -24,7 +24,7 @@ export class ValueRep {
         this._buffer = buffer
         this._offset = offset
     }
-    toJSON(node: UsdNode | CrateFile, key: string) {
+    toJSON(node: UsdNode | Crate, key: string) {
         const v = node instanceof UsdNode ? this.getValue(node.crate) : this.getValue(node)
         if (v === undefined) {
             if (node instanceof UsdNode) {
@@ -42,7 +42,7 @@ export class ValueRep {
         }
     }
     // NOTE: tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value)
-    getValue(crate: CrateFile): any {
+    getValue(crate: Crate): any {
         const reader = crate.reader
         switch (this.getType()) {
             case CrateDataType.Bool:

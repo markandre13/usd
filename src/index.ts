@@ -1,7 +1,7 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
 import { Reader } from "./crate/Reader.js"
-import { CrateFile } from "./crate/CrateFile.ts"
+import { Crate } from "./crate/Crate.ts"
 import { UsdNode } from "./crate/UsdNode.ts"
 import { vec3 } from "gl-matrix"
 import { compressBlock, compressBound, decompressBlock } from "./compression/lz4.ts"
@@ -41,12 +41,12 @@ export function compressToBuffer(src: Uint8Array, dst: Uint8Array) {
 }
 
 export class UsdStage {
-    _crate!: CrateFile
+    _crate!: Crate
     constructor(buffer?: Buffer) {
         if (buffer) {
             const data = new DataView(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
             const reader = new Reader(data)
-            this._crate = new CrateFile(reader)
+            this._crate = new Crate(reader)
         }
     }
     getPrimAtPath(path: string) {
