@@ -1,3 +1,4 @@
+import { hexdump } from "../detail/hexdump.ts"
 import { compressToBuffer, decompressFromBuffer } from "../index.ts"
 import type { Reader } from "./Reader.ts"
 import type { Writer } from "./Writer.ts"
@@ -124,7 +125,12 @@ export class Tokens {
         }
         const compressedSize = compressToBuffer(src, dst)
 
-        // console.log(`write numTokens = ${this.tokens.length}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
+        // throw Error("yikes")
+        console.log(`write numTokens = ${this.tokens.length}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
+        console.log("UNCOMPRESSED")
+        hexdump(src, 0, uncompressedSize)
+        console.log("COMPRESSED")
+        hexdump(dst, 0, compressedSize)
 
         writer.writeUint64(this.tokens.length)
         writer.writeUint64(uncompressedSize)

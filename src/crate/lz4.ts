@@ -1,26 +1,31 @@
 //
 // copied on 2025-11-30 from https://github.com/Benzinga/lz4js
 //                           copyright 2018 John Chadwick, licensed under ISC
-// with the following changes to compressBlock():
-// * fix: return something when input which can't be compressed
-// * remove hashtable argument
-//
+// with the following changes
+// * compressBlock():
+//   * fix: return something when input which can't be compressed
+//   * fix: increase size of remaining literals to compatible with lz4.org's decompressBlock()
+//   * added comments
+//   * use capital letters for constants
+//   * remove hashtable argument
+// * decompressBlock()
+//   * add additional restrictions from lz4.org to validate compressBlock()'s correctness
 
 // Compression format parameters/constants.
-var minMatch = 4
-var minLength = 13
-var searchLimit = 5
-var skipTrigger = 6
-var hashSize = 1 << 16
+const LZ4_MIN_MATCH = 4 // we are looking for matches of at least 4 bytes
+const LZ4_MIN_LENGTH = 13 // don't compress when input is less than 13 bytes
+const LZ4_SEARCH_LIMIT = 5
+const LZ4_SKIP_TRIGGER = 6
+const LZ4_HASH_TABLE_SIZE = 1 << 16 // hash table has space for uint32_t entries (64k entries)
 
 // Token constants.
-var mlBits = 4
-var mlMask = (1 << mlBits) - 1
-var runBits = 4
-var runMask = (1 << runBits) - 1
+const LZ4_ML_BITS = 4
+const LZ4_ML_MASK = (1 << LZ4_ML_BITS) - 1
+const LZ4_RUN_BITS = 4
+const LZ4_RUN_MASK = (1 << LZ4_RUN_BITS) - 1
 
 // Shared buffers
-var hashTable = new Uint32Array(hashSize)
+const hashTable = new Uint32Array(LZ4_HASH_TABLE_SIZE)
 
 const util = {
     hashU32: function hashU32(a: number) {
@@ -33,8 +38,7 @@ const util = {
         return a ^ -1252372727 ^ a >>> 16 | 0
     },
     readU32: function readU32(b: Uint8Array, n: number) {
-        var x = 0
-        x |= b[n++] << 0
+        let x = b[n++] << 0
         x |= b[n++] << 8
         x |= b[n++] << 16
         x |= b[n++] << 24
@@ -43,7 +47,7 @@ const util = {
 }
 
 export function decompressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number, sLength: number, dIndex: number) {
-    var mLength, mOffset, sEnd, n, i
+    let mLength, mOffset, sEnd, n, i
 
     // Setup initial state.
     sEnd = sIndex + sLength
@@ -71,6 +75,27 @@ export function decompressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number
             }
         }
 
+        // additional condition from lz4.c not needed for this implementation
+        {
+            const ip = sIndex - literalCount
+            const op = dIndex - literalCount
+            const length = literalCount
+            const cpy = op + length
+            const oend = dst.buffer.byteLength
+            const iend = sEnd
+            const MFLIMIT = 12
+            const LASTLITERALS = 5
+            // if end of output or input buffer
+            if ((cpy > oend - MFLIMIT) || (ip + length > iend - (2 + 1 + LASTLITERALS))) {
+                /* We must be on the last sequence (or invalid) because of the parsing limitations
+                 * so check that we exactly consume the input and don't overrun the output buffer.
+                 */
+                if ((ip + length != iend) || (cpy > oend)) {
+                    return -ip - 1
+                }
+            }
+        }
+
         if (sIndex >= sEnd) {
             break
         }
@@ -91,7 +116,7 @@ export function decompressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number
             }
         }
 
-        mLength += minMatch
+        mLength += LZ4_MIN_MATCH
 
         // Copy match.
         for (i = dIndex - mOffset, n = i + mLength; i < n;) {
@@ -106,24 +131,35 @@ export function compressBound(n: number) {
     return (n + (n / 255) + 16) | 0
 };
 
+/**
+ * compress src into dst
+ * 
+ * @param src 
+ * @param dst 
+ * @param sIndex 
+ * @param sLength 
+ * @returns size of compressed data in dst
+ */
 export function compressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number, sLength: number) {
-    hashTable.fill(0)
 
-    var mIndex, mAnchor, mLength, mOffset, mStep
+    var mIndex, mAnchor, mLength, mOffset //, mStep = 1
     var literalCount, dIndex, sEnd, n
 
     // Setup initial state.
-    dIndex = 0
-    sEnd = sLength + sIndex
-    mAnchor = sIndex
+    dIndex = 0              // destination index for output
+    sEnd = sLength + sIndex // end of source
+    mAnchor = sIndex        // match anchor: position after which there wasn't a match yet
 
     // Process only if block is large enough.
-    if (sLength >= minLength) {
-        var searchMatchCount = (1 << skipTrigger) + 3
+    if (sLength >= LZ4_MIN_LENGTH) {
+        hashTable.fill(0)
+        let searchMatchNb = (1 << LZ4_SKIP_TRIGGER) + 3
 
         // Consume until last n literals (Lz4 spec limitation.)
-        while (sIndex + minMatch < sEnd - searchLimit) {
+        // while (sIndex + LZ4_MIN_MATCH < sEnd - LZ4_SEARCH_LIMIT) { // 4 5 2 = 11
+        while (sIndex + LZ4_MIN_MATCH < sEnd - LZ4_SEARCH_LIMIT - 2) {
             var seq = util.readU32(src, sIndex)
+            // console.log(`step=${mStep}, searchMatchNb=${searchMatchNb}, seq[${sIndex.toString().padStart(4, ' ')}] = 0x${seq.toString(16).padStart(8, '0')}`)
             var hash = util.hashU32(seq) >>> 0
 
             // Crush hash to 16 bits.
@@ -136,85 +172,94 @@ export function compressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number, 
             hashTable[hash] = sIndex + 1
 
             // Determine if there is a match (within range.)
-            if (mIndex < 0 || ((sIndex - mIndex) >>> 16) > 0 || util.readU32(src, mIndex) !== seq) {
-                mStep = searchMatchCount++ >> skipTrigger
+            // continue looking for a match when
+            if (mIndex < 0                              // seq not found in hashtable
+                || ((sIndex - mIndex) >>> 16) > 0       // OR distance between match and source exceeds 16 bits
+                || util.readU32(src, mIndex) !== seq)   // OR value referenced by hashtable actually differs
+            {
+                // speed up search the longer the search takes
+                const mStep = searchMatchNb++ >> LZ4_SKIP_TRIGGER
                 sIndex += mStep
-                continue
+                continue // keep looking for match
             }
+            // console.log(`matched sequence with earlier one at ${mIndex}`)
 
-            searchMatchCount = (1 << skipTrigger) + 3
+            searchMatchNb = (1 << LZ4_SKIP_TRIGGER) + 3
 
             // Calculate literal count and offset.
-            literalCount = sIndex - mAnchor
-            mOffset = sIndex - mIndex
+            literalCount = sIndex - mAnchor // number of bytes since the last match
+            mOffset = sIndex - mIndex       // offset from current source position to the matched position
 
             // We've already matched one word, so get that out of the way.
-            sIndex += minMatch
-            mIndex += minMatch
+            sIndex += LZ4_MIN_MATCH
+            mIndex += LZ4_MIN_MATCH
 
             // Determine match length.
-            // N.B.: mLength does not include minMatch, Lz4 adds it back
-            // in decoding.
-            mLength = sIndex
-            while (sIndex < sEnd - searchLimit && src[sIndex] === src[mIndex]) {
+            // N.B.: mLength does not include minMatch, Lz4 adds it back in decoding.
+            // console.log(`compare match at mIndex=${mIndex} with at sIndex=${sIndex}`)
+            mLength = sIndex // sIndex when starting to calculate length
+            while (sIndex < sEnd - LZ4_SEARCH_LIMIT && src[sIndex] === src[mIndex]) {
                 sIndex++
                 mIndex++
             }
-            mLength = sIndex - mLength
+            // console.log(`sIndex=${sIndex}, mIndex=${mIndex}`)
+            mLength = sIndex - mLength // sIndex after calculating length - sIndex when starting calculating length
 
-            // Write token + literal count.
-            var token = mLength < mlMask ? mLength : mlMask
-            if (literalCount >= runMask) {
-                dst[dIndex++] = (runMask << mlBits) + token
-                for (n = literalCount - runMask; n >= 0xff; n -= 0xff) {
+            // write token containing the lengths
+            // console.log(`literalsToFollow := mLength ${mLength} < mlMask ${LZ4_ML_MASK} ? mLength : mlMask`)
+            var literalsToFollow = mLength < LZ4_ML_MASK ? mLength : LZ4_ML_MASK
+            if (literalCount >= LZ4_RUN_MASK) {
+                // console.log(`dst[${dIndex}] := token: 0x${LZ4_RUN_MASK.toString(16)}${literalsToFollow.toString(16)}`)
+                dst[dIndex++] = (LZ4_RUN_MASK << LZ4_ML_BITS) + literalsToFollow
+                for (n = literalCount - LZ4_RUN_MASK; n >= 0xff; n -= 0xff) {
+                    // console.log(`dst[${dIndex}] := token: 0xff`)
                     dst[dIndex++] = 0xff
                 }
+                // console.log(`dst[${dIndex}] := token: 0x${n.toString(16).padStart(2, '0')}`)
                 dst[dIndex++] = n
             } else {
-                dst[dIndex++] = (literalCount << mlBits) + token
+                // console.log(`dst[${dIndex}] := token: ${literalCount.toString(16)} / ${literalsToFollow.toString(16)}`)
+                dst[dIndex++] = (literalCount << LZ4_ML_BITS) + literalsToFollow
             }
 
-            // Write literals.
+            // copy literals inside which the match was found
             for (var i = 0; i < literalCount; i++) {
                 dst[dIndex++] = src[mAnchor + i]
             }
 
-            // Write offset.
+            // write offset where to find the match relative to current position
             dst[dIndex++] = mOffset
             dst[dIndex++] = (mOffset >> 8)
 
-            // Write match length.
-            if (mLength >= mlMask) {
-                for (n = mLength - mlMask; n >= 0xff; n -= 0xff) {
+            // write length of the match
+            if (mLength >= LZ4_ML_MASK) {
+                for (n = mLength - LZ4_ML_MASK; n >= 0xff; n -= 0xff) {
                     dst[dIndex++] = 0xff
                 }
                 dst[dIndex++] = n
             }
 
-            // Move the anchor.
+            // move the anchor
             mAnchor = sIndex
         }
     }
 
-    //   // Nothing was encoded.
-    //   if (mAnchor === 0) {
-    //     return 0;
-    //   }
+    // write remaining literals for which no match was found
 
-    // Write remaining literals.
-    // Write literal token+count.
+    // write token with the length
     literalCount = sEnd - mAnchor
-    if (literalCount >= runMask) {
-        dst[dIndex++] = (runMask << mlBits)
-        for (n = literalCount - runMask; n >= 0xff; n -= 0xff) {
+    // console.log(`literalCount=${literalCount}`)
+    if (literalCount >= LZ4_RUN_MASK) {
+        dst[dIndex++] = (LZ4_RUN_MASK << LZ4_ML_BITS)
+        for (n = literalCount - LZ4_RUN_MASK; n >= 0xff; n -= 0xff) {
             dst[dIndex++] = 0xff
         }
         dst[dIndex++] = n
     } else {
-        dst[dIndex++] = (literalCount << mlBits)
+        dst[dIndex++] = (literalCount << LZ4_ML_BITS)
     }
 
-    // Write literals.
+    // copy the remaining literals
     sIndex = mAnchor
     while (sIndex < sEnd) {
         dst[dIndex++] = src[sIndex++]
