@@ -1,20 +1,22 @@
 {
-  "name": "usd",
-  "version": "1.0.0",
-  "description": "universal scene description for typescript",
-  "license": "GPL-3.0",
-  "author": "mhopf@mark13.org",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
-  },
-  "dependencies": {
-    "@types/chai": "^5.2.3",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^24.10.0",
-    "chai": "^6.2.0",
-    "gl-matrix": "^3.4.4",
-    "mocha": "^11.7.5"
-  }
+    "name": "usd",
+    "version": "1.0.0",
+    "description": "universal scene description for typescript",
+    "license": "GPL-3.0",
+    "author": "mhopf@mark13.org",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
+    },
+    "dependencies": {
+        "gl-matrix": "^3.4.4"
+    },
+    "devDependencies": {
+        "@types/chai": "^5.2.3",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^25.0.2",
+        "chai": "^6.2.1",
+        "mocha": "^11.7.5"
+    }
 }
