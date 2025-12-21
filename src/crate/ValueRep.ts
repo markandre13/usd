@@ -7,12 +7,13 @@
 // inline, the 6 data bytes are the offset from the start of the file to the
 
 import { hexdump } from "../detail/hexdump.ts"
-import { decodeIntegers, decompressFromBuffer } from "../index.ts"
+import { decodeIntegers } from "../compression/integers.ts"
 import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import type { CrateFile } from "./CrateFile.ts"
 import { Specifier } from "./Specifier.ts"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
+import { decompressFromBuffer } from "../index.ts"
 
 // value's location.
 // FIXME: last two bytes are type info

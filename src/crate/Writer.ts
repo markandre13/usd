@@ -1,7 +1,10 @@
+import { encodeIntegers } from "../compression/integers.ts"
+import { compressBound } from "../compression/lz4.ts"
 import { hexdump } from "../detail/hexdump.ts"
-import { compressToBuffer, encodeIntegers } from "../index.ts"
+import { compressToBuffer } from "../index.ts"
 import { CrateDataType } from "./CrateDataType.ts"
-import { compressBound } from "./lz4.ts"
+
+// pxr/usd/usdGeom/schema.usda
 
 enum Axis {
     X, Y, Z

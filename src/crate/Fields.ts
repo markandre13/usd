@@ -1,14 +1,13 @@
 import { compressToBuffer, decompressFromBuffer } from "../index.ts"
 import { CrateDataType } from "./CrateDataType.ts"
 import { Field } from "./Field.ts"
-import { compressBound } from "./lz4.ts"
+import { compressBound } from "../compression/lz4.ts"
 import { Reader } from "./Reader.js"
-import { SectionName } from "./SectionName.ts"
 import type { Specifier } from "./Specifier.ts"
 import type { Strings } from "./Strings.ts"
-import type { TableOfContents } from "./TableOfContents.ts"
 import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.ts"
+import type { Variability } from "./Variability.ts"
 import { Writer } from "./Writer.js"
 
 const IsArrayBit_ = 128
@@ -66,11 +65,36 @@ export class Fields {
     setFloat(name: string, value: number) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        // ValueRep
-
         this.valueReps.writeFloat32(value)
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Float)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
+    setBoolean(name: string, value: boolean) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint8(value ? 1 : 0)
+        this.valueReps.skip(5)
+        this.valueReps.writeUint8(CrateDataType.Bool)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
+    setDouble(name: string, value: number) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeFloat32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Double)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
+    setVariability(name: string, value: Variability) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Variability)
         this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
@@ -115,7 +139,7 @@ export class Fields {
         this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
-    setIntVector(name: string, value: number[]): number {
+    setIntArray(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
         this.valueReps.writeUint32(this.data.tell())
@@ -124,8 +148,22 @@ export class Fields {
         this.valueReps.writeUint8(IsArrayBit_)
 
         this.data.writeUint64(value.length)
-        for (const v of value) {
-            this.data.writeInt32(v)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeInt32(value[i])
+        }
+        return idx
+    }
+    setVec3fArray(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Vec3f)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length / 3)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat32(value[i])
         }
         return idx
     }

@@ -126,11 +126,11 @@ export class Tokens {
         const compressedSize = compressToBuffer(src, dst)
 
         // throw Error("yikes")
-        console.log(`write numTokens = ${this.tokens.length}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
-        console.log("UNCOMPRESSED")
-        hexdump(src, 0, uncompressedSize)
-        console.log("COMPRESSED")
-        hexdump(dst, 0, compressedSize)
+        // console.log(`write numTokens = ${this.tokens.length}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
+        // console.log("UNCOMPRESSED")
+        // hexdump(src, 0, uncompressedSize)
+        // console.log("COMPRESSED")
+        // hexdump(dst, 0, compressedSize)
 
         writer.writeUint64(this.tokens.length)
         writer.writeUint64(uncompressedSize)

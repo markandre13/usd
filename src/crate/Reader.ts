@@ -1,5 +1,6 @@
+import { decodeIntegers } from "../compression/integers.ts"
 import { hexdump } from "../detail/hexdump.ts"
-import { decodeIntegers, decompressFromBuffer } from "../index.ts"
+import { decompressFromBuffer } from "../index.ts"
 
 export const _SectionNameMaxLength = 15
 
