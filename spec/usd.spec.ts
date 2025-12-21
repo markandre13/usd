@@ -157,7 +157,7 @@ describe("USD", () => {
 
         // ( ... ) : field set
     })
-    it("write CrateFile", () => {
+    it.only("write CrateFile", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
@@ -233,7 +233,44 @@ describe("USD", () => {
         //
 
         const stage = new UsdStage(Buffer.from(crate.writer.buffer))
-        const pseudoRoot = stage.getPrimAtPath("/")!
+        const pseudoRoot = stage.getPrimAtPath("/")!.toJSON()
+
+        const buffer = readFileSync("spec/cube.usdc")
+        const orig = new UsdStage(buffer).getPrimAtPath("/")!.toJSON()
+
+        // console.log("%o", pseudoRoot)
+
+        function compare(a: any, b: any, path: string = "") {
+            if (a.type !== b.type) {
+                throw Error('yikes')
+            }
+            if (a.name !== b.name) {
+                throw Error('yikes')
+            }
+            if (a.prim !== b.prim) {
+                throw Error('yikes')
+            }
+            for(const name of Object.getOwnPropertyNames(a.fields)) {
+                const fa = a.fields[name]
+                const fb = b.fields[name]
+                if (fb === undefined) {
+                    throw Error(`yikes`)
+                }
+            }
+            for(const name of Object.getOwnPropertyNames(b.fields)) {
+                const fa = a.fields[name]
+                const fb = b.fields[name]
+                if (fa === undefined) {
+                    throw Error(`yikes`)
+                }
+            }
+
+            // fields
+            // children
+
+        }
+        compare(pseudoRoot, orig)
+
         // console.log(JSON.stringify(pseudoRoot, undefined, 2))
 
         // compare with the blender generated file

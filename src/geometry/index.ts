@@ -1,7 +1,7 @@
 import { IntArrayAttr, VariabilityAttr, Vec3fArrayAttr } from "../attributes/index.ts"
 import type { Crate } from "../crate/Crate.ts"
 import { Specifier } from "../crate/Specifier.ts"
-import { SpecType } from "../crate/SpecType.ts"
+import { isPrim, SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
 import { Variability } from "../crate/Variability.ts"
 
@@ -74,6 +74,11 @@ export class Xform extends Xformable {
         )
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "Xform")
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setTokenVector("primChildren", this.children
+                .filter(it => isPrim(it.getType()))
+                .map(it => it.name))
         )
 
         // crate.fieldsets.fieldset_indices.push(-1)
