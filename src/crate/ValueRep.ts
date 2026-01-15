@@ -166,69 +166,19 @@ export class ValueRep {
                 }
                 break
             case CrateDataType.Dictionary:
-                reader.offset = this.getIndex()
-                console.log(`_sr.offset [0]: ${reader.offset}`)
-
-                const sz = reader.getUint64()
-                console.log(`ReadCustomData(): sz = ${sz}`)
-
-                for (let i = 0; i < sz; ++i) {
-                    console.log(`_sr.offset [1]: ${reader.offset}`)
-                    const key = crate.strings.get(reader.getUint32())
-                    console.log(`ReadCustomData():     key = ${key}`)
-                    console.log(`_sr.offset [2]: ${reader.offset}`)
-                    const offset = reader.getUint64()
-                    console.log(`ReadCustomData():     offset = ${offset}`)
-                    console.log(`_sr.offset [3]: ${reader.offset}`)
-                    const a = reader.offset
-
-                    reader.offset += offset - 8
-                    console.log(`_sr.offset [4] valuerep: ${reader.offset}`)
-                    const value = new ValueRep(reader._dataview, reader.offset)
-                    reader.offset += 8
-                    console.log(`_sr.offset [5]: ${reader.offset}`)
-                    console.log(`ReadCustomData():     type = ${CrateDataType[value.getType()]} (${value.getType()})`)
-                    // console.log(value.getPayload())
-                    process.stdout.write(`${value._offset.toString(16).padStart(8, '0')} `)
-                    for (let i = 0; i < 8; ++i) {
-                        process.stdout.write(`${value._buffer.getUint8(value._offset + i).toString(16).padStart(2, '0')} `)
-                    }
-                    process.stdout.write('\n')
-
-                    process.stdout.write(`${value._offset.toString(16).padStart(8, '0')} `)
-                    for (let i = 0; i < 8; ++i) {
-                        process.stdout.write(`${reader._dataview.getUint8(value._offset + i).toString(16).padStart(2, '0')} `)
-                    }
-                    process.stdout.write('\n')
-                    console.log({ [key]: value.toJSON(crate, key) })
-
-                    reader.offset = a
-                }
-
-                // reader.offset = oldOffset
-
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
-                    const key = crate.strings.get(reader.getUint32())
-                    const value = new ValueRep(this._buffer, reader.offset)
-                    return { [key]: value.toJSON(crate, key) }
+                    const sz = reader.getUint64()
+                    const result: any = {}
+                    for (let i = 0; i < sz; ++i) {
+                        const key = crate.strings.get(reader.getUint32())
+                        const offset = reader.getUint64()
+                        const value = new ValueRep(reader._dataview, reader.offset + offset - 8)
+                        result[key] = value.toJSON(crate, key)
+                    }
+                    return result
                 }
                 break
-            //     const dict = {} as any
-            //     reader.offset = this.getIndex()
-            //     const n = reader.getUint64()
-            //     for (let i = 0; i < n; ++i) {
-            //         const key = crate.tokens[crate.strings[reader.getUint32()]]
-            //         const offset = reader.getUint64()
-            //         // this.reader.offset += offset - 8
-            //         // read ValueRep
-            //         // UnpackValueRep // NOTE: just reading the ValueRep might be enough if I implement on-demand read
-            //         // console.log(`${key} = ? (offset=${offset})`)
-            //         dict.key = 0
-            //         break
-            //     }
-            //     return dict
-            // } break
             case CrateDataType.TokenListOp:
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
