@@ -53,7 +53,7 @@ import { Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
 
 
 describe("USD", () => {
-    it("read cube.usdc", () => {
+    it("read cube.usdc and compare it with cube.json", () => {
         const buffer = readFileSync("spec/cube.usdc")
         const stage = new UsdStage(buffer)
 
@@ -157,7 +157,56 @@ describe("USD", () => {
 
         // ( ... ) : field set
     })
-    it.only("write CrateFile", () => {
+    describe("re-create blender 5.0 files", () => {
+        it.only("cube-flat-faces.usdc", () => {
+
+            const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
+            const stageIn = new UsdStage(buffer)
+            const origPseudoRoot = stageIn.getPrimAtPath("/")!
+            const orig = origPseudoRoot.toJSON()
+
+            // console.log(JSON.stringify(orig, undefined, 4))
+
+            // const crate = new Crate()
+            // crate.paths._nodes = []
+
+            // // #usda 1.0
+            // // (
+            // //     doc = "Blender v5.0.1"
+            // //     metersPerUnit = 1
+            // //     upAxis = "Z"
+            // //     defaultPrim = "root"
+            // // )
+            // const pseudoRoot = new PseudoRoot(crate)
+            // pseudoRoot.documentation = "Blender v5.0.1"
+
+            // // FIXME: the dictionay is decoded wrong...
+            // // def Xform "root" (
+            // //     customData = {
+            // //         dictionary Blender = {
+            // //             bool generated = 1
+            // //         }
+            // //     }
+            // // ) {
+            // const root = new Xform(crate, pseudoRoot, "root")
+            // // root.customData = {}
+
+            // //     def Xform "Cube" {
+            // //         custom string userProperties:blender:object_name = "Cube"
+            // const cube = new Xform(crate, root, "cube")
+
+            // //         def Mesh "Mesh" ( active = true ) {
+            // // ...
+
+            // crate.serialize(pseudoRoot)
+
+            // const stage = new UsdStage(Buffer.from(crate.writer.buffer))
+            // const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+
+            // compare(pseudoRootIn, orig)
+        })
+    })
+    it("write CrateFile", () => {
         // const stage = new UsdStage()
         // const form = new UsdGeom.Xform()
 
@@ -166,11 +215,16 @@ describe("USD", () => {
         crate.paths._nodes = []
 
         const root = new PseudoRoot(crate)
-        root.documentation = "makehuman.js"
+        root.documentation = "Blender v5.0.0"
         root.metersPerUnit = 1.0
         root.upAxis = "Z"
+
         const xform = new Xform(crate, root, "Cube")
+
         const mesh = new Mesh(crate, xform, "Cube_001")
+        mesh.subdivisionScheme = "none"
+        mesh.interpolateBoundary = "none"
+        mesh.faceVaryingLinearInterpolation = "none"
         mesh.extent = [
             -1, -1, -1,
             1, 1, 1
@@ -240,38 +294,16 @@ describe("USD", () => {
 
         // console.log("%o", pseudoRoot)
 
-        function compare(a: any, b: any, path: string = "") {
-            if (a.type !== b.type) {
-                throw Error('yikes')
-            }
-            if (a.name !== b.name) {
-                throw Error('yikes')
-            }
-            if (a.prim !== b.prim) {
-                throw Error('yikes')
-            }
-            for(const name of Object.getOwnPropertyNames(a.fields)) {
-                const fa = a.fields[name]
-                const fb = b.fields[name]
-                if (fb === undefined) {
-                    throw Error(`yikes`)
-                }
-            }
-            for(const name of Object.getOwnPropertyNames(b.fields)) {
-                const fa = a.fields[name]
-                const fb = b.fields[name]
-                if (fa === undefined) {
-                    throw Error(`yikes`)
-                }
-            }
+        // type
+        // name
+        // prim
+        // fields
+        // children
+        // console.log(JSON.stringify(pseudoRoot, undefined, 2))
+        // console.log(JSON.stringify(orig, undefined, 2))
 
-            // fields
-            // children
-
-        }
         compare(pseudoRoot, orig)
 
-        // console.log(JSON.stringify(pseudoRoot, undefined, 2))
 
         // compare with the blender generated file
 
@@ -739,30 +771,12 @@ const generatedUSD = {
                                     "array": true,
                                     "compressed": false,
                                     "value": [
-                                        0,
-                                        1,
-                                        3,
-                                        2,
-                                        2,
-                                        3,
-                                        7,
-                                        6,
-                                        6,
-                                        7,
-                                        5,
-                                        4,
-                                        4,
-                                        5,
-                                        1,
-                                        0,
-                                        2,
-                                        6,
-                                        4,
-                                        0,
-                                        7,
-                                        3,
-                                        1,
-                                        5
+                                        0, 1, 3, 2,
+                                        2, 3, 7, 6,
+                                        6, 7, 5, 4,
+                                        4, 5, 1, 0,
+                                        2, 6, 4, 0,
+                                        7, 3, 1, 5
                                     ]
                                 }
                             }
@@ -784,14 +798,7 @@ const generatedUSD = {
                                     "inline": false,
                                     "array": true,
                                     "compressed": false,
-                                    "value": [
-                                        4,
-                                        4,
-                                        4,
-                                        4,
-                                        4,
-                                        4
-                                    ]
+                                    "value": [4, 4, 4, 4, 4, 4]
                                 }
                             }
                         }
@@ -800,4 +807,37 @@ const generatedUSD = {
             ]
         }
     ]
+}
+
+// this is the thing i still need to write
+function compare(lhs: any, rhs: any, path: string = "") {
+    // console.log(`compare ${lhs}: ${typeof lhs}, ${rhs}: ${typeof rhs}, ${path}`)
+    if (typeof lhs !== typeof rhs) {
+        throw Error(`${path} lhs is of type ${typeof lhs} while rhs is of type ${rhs}`)
+    }
+    if (typeof lhs !== "object") {
+        if (lhs !== rhs) {
+            throw Error(`${path}: ${lhs} !== ${rhs}`)
+        }
+        return
+    }
+    if (lhs === undefined && rhs === undefined) {
+        console.log(`${path}: lhs === rhs === undefined`)
+        return
+    }
+    for (const name of Object.getOwnPropertyNames(lhs)) {
+        if (rhs[name] === undefined) {
+            throw Error(`yikes: ${path}.${name} is missing in rhs`)
+        }
+    }
+    for (const name of Object.getOwnPropertyNames(rhs)) {
+        if (lhs[name] === undefined) {
+            throw Error(`yikes: ${path}.${name} is missing in lhs`)
+        }
+    }
+    for (const name of Object.getOwnPropertyNames(lhs)) {
+        const fa = lhs[name]
+        const fb = rhs[name]
+        compare(fa, fb, `${path}.${name}`)
+    }
 }

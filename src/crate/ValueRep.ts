@@ -166,6 +166,47 @@ export class ValueRep {
                 }
                 break
             case CrateDataType.Dictionary:
+                reader.offset = this.getIndex()
+                console.log(`_sr.offset [0]: ${reader.offset}`)
+
+                const sz = reader.getUint64()
+                console.log(`ReadCustomData(): sz = ${sz}`)
+
+                for (let i = 0; i < sz; ++i) {
+                    console.log(`_sr.offset [1]: ${reader.offset}`)
+                    const key = crate.strings.get(reader.getUint32())
+                    console.log(`ReadCustomData():     key = ${key}`)
+                    console.log(`_sr.offset [2]: ${reader.offset}`)
+                    const offset = reader.getUint64()
+                    console.log(`ReadCustomData():     offset = ${offset}`)
+                    console.log(`_sr.offset [3]: ${reader.offset}`)
+                    const a = reader.offset
+
+                    reader.offset += offset - 8
+                    console.log(`_sr.offset [4] valuerep: ${reader.offset}`)
+                    const value = new ValueRep(reader._dataview, reader.offset)
+                    reader.offset += 8
+                    console.log(`_sr.offset [5]: ${reader.offset}`)
+                    console.log(`ReadCustomData():     type = ${CrateDataType[value.getType()]} (${value.getType()})`)
+                    // console.log(value.getPayload())
+                    process.stdout.write(`${value._offset.toString(16).padStart(8, '0')} `)
+                    for (let i = 0; i < 8; ++i) {
+                        process.stdout.write(`${value._buffer.getUint8(value._offset + i).toString(16).padStart(2, '0')} `)
+                    }
+                    process.stdout.write('\n')
+
+                    process.stdout.write(`${value._offset.toString(16).padStart(8, '0')} `)
+                    for (let i = 0; i < 8; ++i) {
+                        process.stdout.write(`${reader._dataview.getUint8(value._offset + i).toString(16).padStart(2, '0')} `)
+                    }
+                    process.stdout.write('\n')
+                    console.log({ [key]: value.toJSON(crate, key) })
+
+                    reader.offset = a
+                }
+
+                // reader.offset = oldOffset
+
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
                     const key = crate.strings.get(reader.getUint32())
@@ -259,7 +300,10 @@ export class ValueRep {
         }
         return undefined
     }
-    getType() { return this._buffer.getUint8(this._offset + 6) as CrateDataType }
+    getType() {
+        // console.log(`getType @ offset = ${this._offset}`)
+        return this._buffer.getUint8(this._offset + 6) as CrateDataType
+    }
     isArray() { return (this._buffer.getUint8(this._offset + 7)! & 128) !== 0 }
     isInlined() { return (this._buffer.getUint8(this._offset + 7)! & 64) !== 0 }
     isCompressed() { return (this._buffer.getUint8(this._offset + 7)! & 32) !== 0 }
@@ -267,8 +311,10 @@ export class ValueRep {
         hexdump(new Uint8Array(this._buffer.buffer), this._offset, 8)
     }
     getPayload(): bigint {
-        const d = new DataView(this._buffer.buffer)
-        return d.getBigUint64(this._offset, true) & 0xffffffffffffn
+        const d = new DataView(this._buffer.buffer, this._buffer.byteOffset)
+        const value = d.getBigUint64(this._offset, true) // & 0xffffffffffffn
+        console.log(`value rep @ ${this._offset} = ${value}`)
+        return value
     }
     // TODO: rename the following to inline? or merge them with the general ones
     getBool(): boolean {

@@ -10,6 +10,24 @@ export class Typed extends SchemaBase { }
 export class Imageable extends Typed { }
 export class Xformable extends Imageable { }
 
+// blender mesh options and how they map to usd
+//   shade: flat | smooth
+//     'normals' are not per 'points' but 'faceVertexIndices'
+//     and the flat/smooth is encoded via those
+//   edge > mark sharp
+//   edge > mark seam (i guess this is for uv?)
+//   edge > bevel weight
+//   edge > edge crease
+//
+//   materials
+//     multiple materials for one mesh
+//       via GeomSubset which lists the faces
+//       viewport display is not stored but taken from color itself during import
+//   armature, weights
+//   blendshape
+
+//   subdivision modifier becomes part of the Mesh... but might loose sharp edges (?)
+
 export class PseudoRoot extends UsdNode {
     metersPerUnit: number = 1.0
     documentation = "makehuman.js"
@@ -40,13 +58,14 @@ export class PseudoRoot extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("upAxis", this.upAxis)
         )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setTokenVector("primChildren", [this.children[0].name])
-        )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setToken("defaultPrim", this.children[0].name)
-        )
-
+        if (this.children.length > 0) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setTokenVector("primChildren", [this.children[0].name])
+            )
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setToken("defaultPrim", this.children[0].name)
+            )
+        }
         crate.fieldsets.fieldset_indices.push(-1)
 
         for (const child of this.children) {
@@ -81,7 +100,6 @@ export class Xform extends Xformable {
                 .map(it => it.name))
         )
 
-        // crate.fieldsets.fieldset_indices.push(-1)
         crate.fieldsets.fieldset_indices.push(-1)
 
         for (const child of this.children) {
@@ -93,11 +111,32 @@ export class Xform extends Xformable {
 export class Boundable extends Xformable {
     extent?: ArrayLike<number>
 }
-export class Gprim extends Boundable { }
+export class Gprim extends Boundable {
+    // color3f[] primvars:displayColor
+    // float[] primvars:displayOpacity
+    // uniform bool doubleSided = false
+    // uniform token orientation = "rightHanded" "leftHanded"
+}
+
+// Cube size
+// Sphere radius
+// Cylinder
+// Capsule
+// Cone
+// Cylinder_1
+// Capsule_1
+// Plane
 
 export class PointBased extends Gprim {
     points?: ArrayLike<number>
+    // vector3f[] velocities
+    // vector3f[] accelerations
     normals?: ArrayLike<number>
+
+    // uniform token subdivisionScheme = "catmullClark" 
+    subdivisionScheme: "catmullClark" | "loop" | "bilinear" | "none" = "catmullClark"
+    interpolateBoundary: "none" | "edgeOnly" | "edgeAndCorner" = "edgeAndCorner"
+    faceVaryingLinearInterpolation: "none" | "cornersOnly" | "cornersPlus1" | "cornersPlus2" | "boundaries" | "all" = "cornersPlus1"
 }
 
 export class Mesh extends PointBased {
@@ -130,7 +169,7 @@ export class Mesh extends PointBased {
         const properties: string[] = []
 
         properties.push("subdivisionScheme")
-        new VariabilityAttr(crate, this, "subdivisionScheme", Variability.Uniform)
+        new VariabilityAttr(crate, this, "subdivisionScheme", Variability.Uniform, this.subdivisionScheme)
 
         if (this.extent !== undefined) {
             properties.push("extent")
