@@ -88,7 +88,7 @@ class Attribute extends Prim { }
 
 export class Writer {
     buffer: ArrayBuffer
-    private view: DataView
+    view: DataView
     private offset: number
 
     constructor(byteLength?: number) {

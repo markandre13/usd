@@ -75,6 +75,8 @@ export class PseudoRoot extends UsdNode {
 }
 
 export class Xform extends Xformable {
+    customData?: any
+
     constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
@@ -87,6 +89,12 @@ export class Xform extends Xformable {
         crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        // if (this.customData !== undefined) {
+        //     crate.fieldsets.fieldset_indices.push(
+        //         crate.fields.setDictionary("customData", this.customData)
+        //     )
+        // }
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)

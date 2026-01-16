@@ -130,6 +130,38 @@ export class Fields {
         this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
+    setDictionary(name: string, value: any) {
+        // needs to be written from begining to the end
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Dictionary)
+        this.valueReps.writeUint8(0)
+
+        const names = Object.getOwnPropertyNames(value)
+        this.data.writeUint64(names.length)
+
+        const oldPos = this.data.tell()
+        this.data.skip(names.length * (4 + 8))
+        for(const name of names) {
+            // this.data.writeUint32(this.strings.add(name))
+            const v = value[name]
+            console.log(`${name}:${typeof v} ${v}`)
+            // offset to next value rep
+            // this.data.writeUint64(42)
+        }
+
+        this.data.seek(oldPos)
+        for(const name of names) {
+            this.data.writeUint32(this.strings.add(name))
+            const v = value[name]
+            console.log(`${name}:${typeof v} ${v}`)
+            // offset to next value rep
+            this.data.writeUint64(42)
+        }
+        return idx
+    }
     setString(name: string, value: string) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))

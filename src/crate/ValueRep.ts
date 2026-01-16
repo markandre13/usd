@@ -44,6 +44,9 @@ export class ValueRep {
     // NOTE: tinyusdz has most of it's unpack code in bool CrateReader::UnpackValueRep(const crate::ValueRep &rep, crate::CrateValue *value)
     getValue(crate: Crate): any {
         const reader = crate.reader
+        // if (reader === undefined) {
+        //     console.log('ValueRep.getValue(): create.reader === undefined')
+        // }
         switch (this.getType()) {
             case CrateDataType.Bool:
                 if (this.isInlined() && !this.isArray() && !this.isCompressed()) {
@@ -169,10 +172,13 @@ export class ValueRep {
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
                     const sz = reader.getUint64()
+                    console.log(`Dict has ${sz} entries`)
                     const result: any = {}
                     for (let i = 0; i < sz; ++i) {
                         const key = crate.strings.get(reader.getUint32())
+                        console.log(`Dict key = ${key}`)
                         const offset = reader.getUint64()
+                        console.log(`Dict offset = ${offset}`)
                         const value = new ValueRep(reader._dataview, reader.offset + offset - 8)
                         result[key] = value.toJSON(crate, key)
                     }

@@ -21,6 +21,7 @@ import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
 import { Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
+import { ValueRep } from "../src/crate/ValueRep.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -158,7 +159,7 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it.only("cube-flat-faces.usdc", () => {
+        it("cube-flat-faces.usdc", () => {
 
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
@@ -167,43 +168,142 @@ describe("USD", () => {
 
             // console.log(JSON.stringify(orig, undefined, 4))
 
-            // const crate = new Crate()
-            // crate.paths._nodes = []
+            const crate = new Crate()
+            crate.paths._nodes = []
 
-            // // #usda 1.0
-            // // (
-            // //     doc = "Blender v5.0.1"
-            // //     metersPerUnit = 1
-            // //     upAxis = "Z"
-            // //     defaultPrim = "root"
-            // // )
-            // const pseudoRoot = new PseudoRoot(crate)
-            // pseudoRoot.documentation = "Blender v5.0.1"
+            // #usda 1.0
+            // (
+            //     doc = "Blender v5.0.1"
+            //     metersPerUnit = 1
+            //     upAxis = "Z"
+            //     defaultPrim = "root"
+            // )
+            const pseudoRoot = new PseudoRoot(crate)
+            pseudoRoot.documentation = "Blender v5.0.1"
 
-            // // FIXME: the dictionay is decoded wrong...
-            // // def Xform "root" (
-            // //     customData = {
-            // //         dictionary Blender = {
-            // //             bool generated = 1
-            // //         }
-            // //     }
-            // // ) {
-            // const root = new Xform(crate, pseudoRoot, "root")
-            // // root.customData = {}
+            // FIXME: the dictionay is decoded wrong...
+            // def Xform "root" (
+            //     customData = {
+            //         dictionary Blender = {
+            //             bool generated = 1
+            //         }
+            //     }
+            // ) {
+            const root = new Xform(crate, pseudoRoot, "root")
+            root.customData = {
+                Blender: {
+                    generated: true
+                }
+            }
 
-            // //     def Xform "Cube" {
-            // //         custom string userProperties:blender:object_name = "Cube"
-            // const cube = new Xform(crate, root, "cube")
+            //     def Xform "Cube" {
+            //         custom string userProperties:blender:object_name = "Cube"
+            const cube = new Xform(crate, root, "cube")
 
-            // //         def Mesh "Mesh" ( active = true ) {
-            // // ...
+            //         def Mesh "Mesh" ( active = true ) {
+            // ...
 
-            // crate.serialize(pseudoRoot)
+            crate.serialize(pseudoRoot)
 
-            // const stage = new UsdStage(Buffer.from(crate.writer.buffer))
-            // const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+            const stage = new UsdStage(Buffer.from(crate.writer.buffer))
+            const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // compare(pseudoRootIn, orig)
+            compare(pseudoRootIn, orig)
+        })
+    })
+    describe.only("encode/decode values", () => {
+        it("inline String", () => {
+            const crate = new Crate()
+            crate.fields.setString("aaa", "foo")
+            const idx = crate.fields.setString("aaa", "bar")
+
+            const value = new ValueRep(crate.fields.valueReps.view, 8)
+
+            expect(value.getType()).to.equal(CrateDataType.String)
+            expect(crate.strings.get(value.getIndex())).to.equal("bar")
+            expect(value.getValue(crate)).to.equal("bar")
+        })
+        it("inline Float", () => {
+            const crate = new Crate()
+            const idx = crate.fields.setFloat("aaa", 3.1415)
+
+            const value = new ValueRep(crate.fields.valueReps.view, idx)
+
+            expect(value.getType()).to.equal(CrateDataType.Float)
+            expect(value.getFloat()).to.equal(3.1414999961853027)
+            expect(value.getValue(crate)).to.equal(3.1414999961853027)
+        })
+        it("inline Double", () => {
+            const crate = new Crate()
+            const idx = crate.fields.setDouble("aaa", 3.1415)
+
+            const value = new ValueRep(crate.fields.valueReps.view, idx)
+
+            expect(value.getType()).to.equal(CrateDataType.Double)
+            expect(value.getDouble()).to.equal(3.1414999961853027)
+            expect(value.getValue(crate)).to.equal(3.1414999961853027)
+        })
+        it("inline Bool", () => {
+            const crate = new Crate()
+            const idx = crate.fields.setBoolean("aaa", true)
+
+            const value = new ValueRep(crate.fields.valueReps.view, idx)
+
+            expect(value.getType()).to.equal(CrateDataType.Bool)
+            expect(value.getBool()).to.equal(true)
+            expect(value.getValue(crate)).to.equal(true)
+        })
+
+        it.only("Dictionary", () => {
+            const customData = {
+                // Blender: {
+                    generated: true
+                // }
+            }
+            const crate = new Crate()
+            crate.reader = new Reader(crate.writer.view)
+
+            console.log(`offset = ${crate.fields.valueReps.tell()}`)
+            const idx = crate.fields.setDictionary("aaa", customData)
+            console.log(`offset = ${crate.fields.valueReps.tell()}`)
+            console.log(idx)
+
+            const value = new ValueRep(crate.fields.valueReps.view, idx)
+
+            expect(value.getType()).to.equal(CrateDataType.Dictionary)
+
+
+            // create.
+
+            value.getValue(crate)
+
+            // hexdump(crate.writer.view)
+
+            // expect(value.getBool()).to.equal(true)
+
+            // const customData = {
+            //     "type": "Dictionary",
+            //     "inline": false,
+            //     "array": false,
+            //     "compressed": false,
+            //     "value": {
+            //         "Blender": {
+            //             "type": "Dictionary",
+            //             "inline": false,
+            //             "array": false,
+            //             "compressed": false,
+            //             "value": {
+            //                 "generated": {
+            //                     "type": "Bool",
+            //                     "inline": true,
+            //                     "array": false,
+            //                     "compressed": false,
+            //                     "value": true
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
         })
     })
     it("write CrateFile", () => {

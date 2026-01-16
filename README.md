@@ -1,5 +1,7 @@
 # USD Subset for makehuman.js
 
+bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts
+
 Things that did not work for me:
 
 * https://charlesfleche.net/building-usd-on-debian/
