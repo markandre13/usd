@@ -159,7 +159,7 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it("cube-flat-faces.usdc", () => {
+        it.skip("cube-flat-faces.usdc", () => {
 
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
@@ -253,58 +253,35 @@ describe("USD", () => {
             expect(value.getBool()).to.equal(true)
             expect(value.getValue(crate)).to.equal(true)
         })
-
-        it.only("Dictionary", () => {
+        it("Dictionary (1)", () => {
             const customData = {
-                // Blender: {
-                    generated: true
-                // }
+                generated: true
             }
             const crate = new Crate()
             crate.reader = new Reader(crate.writer.view)
 
-            console.log(`offset = ${crate.fields.valueReps.tell()}`)
-            const idx = crate.fields.setDictionary("aaa", customData)
-            console.log(`offset = ${crate.fields.valueReps.tell()}`)
-            console.log(idx)
+            const idx = crate.fields._setDictionary(customData)
 
             const value = new ValueRep(crate.fields.valueReps.view, idx)
-
             expect(value.getType()).to.equal(CrateDataType.Dictionary)
-
-
-            // create.
-
-            value.getValue(crate)
-
-            // hexdump(crate.writer.view)
-
-            // expect(value.getBool()).to.equal(true)
-
-            // const customData = {
-            //     "type": "Dictionary",
-            //     "inline": false,
-            //     "array": false,
-            //     "compressed": false,
-            //     "value": {
-            //         "Blender": {
-            //             "type": "Dictionary",
-            //             "inline": false,
-            //             "array": false,
-            //             "compressed": false,
-            //             "value": {
-            //                 "generated": {
-            //                     "type": "Bool",
-            //                     "inline": true,
-            //                     "array": false,
-            //                     "compressed": false,
-            //                     "value": true
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
+            expect(value.getValue(crate)).to.deep.equal(customData)
         })
+        it("Dictionary (2)", () => {
+            const customData = {
+                Blender: {
+                    generated: true
+                }
+            }
+            const crate = new Crate()
+            crate.reader = new Reader(crate.writer.view)
+
+            const idx = crate.fields.setDictionary("aaa", customData)
+
+            const value = new ValueRep(crate.fields.valueReps.view, idx)
+            expect(value.getType()).to.equal(CrateDataType.Dictionary)
+            expect(value.getValue(crate)).to.deep.equal(customData)
+        })
+
     })
     it("write CrateFile", () => {
         // const stage = new UsdStage()

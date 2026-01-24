@@ -72,12 +72,18 @@ export class Fields {
         return idx
     }
     setBoolean(name: string, value: boolean) {
-        const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        this.valueReps.writeUint8(value ? 1 : 0)
-        this.valueReps.skip(5)
-        this.valueReps.writeUint8(CrateDataType.Bool)
-        this.valueReps.writeUint8(IsInlinedBit)
+        return this._setBoolean(value)
+    }
+    _setBoolean(value: boolean) {
+        return this.__setBoolean(this.valueReps, value)
+    }
+    __setBoolean(writer: Writer, value: boolean) {
+        const idx = this.valueReps.tell() / 8
+        writer.writeUint8(value ? 1 : 0)
+        writer.skip(5)
+        writer.writeUint8(CrateDataType.Bool)
+        writer.writeUint8(IsInlinedBit)
         return idx
     }
     setDouble(name: string, value: number) {
@@ -131,34 +137,47 @@ export class Fields {
         return idx
     }
     setDictionary(name: string, value: any) {
-        // needs to be written from begining to the end
-        const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        this.valueReps.writeUint32(this.data.tell())
-        this.valueReps.skip(2)
-        this.valueReps.writeUint8(CrateDataType.Dictionary)
-        this.valueReps.writeUint8(0)
+        return this._setDictionary(value)
+    }
+    _setDictionary(value: any) {
+        return this.__setDictionary(this.valueReps, this.data, value)
+    }
+    __setDictionary(writer0: Writer, writer1: Writer, value: any) {
+        const idx = writer0.tell() / 8
+        writer0.writeUint32(writer1.tell())
+        writer0.skip(2)
+        writer0.writeUint8(CrateDataType.Dictionary)
+        writer0.writeUint8(0)
 
         const names = Object.getOwnPropertyNames(value)
-        this.data.writeUint64(names.length)
+        writer1.writeUint64(names.length)
 
-        const oldPos = this.data.tell()
-        this.data.skip(names.length * (4 + 8))
-        for(const name of names) {
-            // this.data.writeUint32(this.strings.add(name))
+        const oldPos = writer1.tell()
+        writer1.skip(names.length * (4 + 8))
+
+        // write values at back
+        const offsets: number[] = []
+        for (const name of names) {
+            offsets.push(writer1.tell())
             const v = value[name]
-            console.log(`${name}:${typeof v} ${v}`)
-            // offset to next value rep
-            // this.data.writeUint64(42)
+            switch (typeof v) {
+                case "boolean":
+                    this.__setBoolean(writer1, v)
+                    break
+                case "object":
+                    this.__setDictionary(writer1, writer1, v)
+                    break
+                default:
+                    throw Error(`yikes: type ${typeof v} not implemented yet`)
+            }
         }
 
-        this.data.seek(oldPos)
-        for(const name of names) {
-            this.data.writeUint32(this.strings.add(name))
-            const v = value[name]
-            console.log(`${name}:${typeof v} ${v}`)
-            // offset to next value rep
-            this.data.writeUint64(42)
+        // write names and offset at front
+        writer1.seek(oldPos)
+        for (const name of names) {
+            writer1.writeUint32(this.strings.add(name))
+            writer1.writeUint64(offsets.shift()! - 8 - 4)
         }
         return idx
     }
