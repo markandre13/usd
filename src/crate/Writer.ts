@@ -89,12 +89,14 @@ class Attribute extends Prim { }
 export class Writer {
     buffer: ArrayBuffer
     view: DataView
+    name?: string
     private offset: number
 
-    constructor(byteLength?: number) {
+    constructor(byteLength?: number, name?: string) {
         this.buffer = new ArrayBuffer(0, { maxByteLength: byteLength ? byteLength : 4096 })
         this.view = new DataView(this.buffer)
         this.offset = 0
+        this.name = name
     }
     seek(n: number) {
         this.offset = n

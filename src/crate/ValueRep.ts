@@ -14,6 +14,7 @@ import { Specifier } from "./Specifier.ts"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
 import { decompressFromBuffer } from "../index.ts"
+import { Reader } from "./Reader.ts"
 
 // value's location.
 // FIXME: last two bytes are type info
@@ -172,15 +173,11 @@ export class ValueRep {
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
                     const sz = reader.getUint64()
-                    // console.log(`Dict has ${sz} entries`)
                     const result: any = {}
                     for (let i = 0; i < sz; ++i) {
                         const key = crate.strings.get(reader.getUint32())
-                        // console.log(`Dict key = ${key}`)
                         const offset = reader.getUint64()
-                        // console.log(`Dict offset = ${offset}, value rep @ ${reader.offset + offset - 8}`)
                         const value = new ValueRep(reader._dataview, reader.offset + offset - 8)
-                        // result[key] = value.toJSON(crate, key)
                         result[key] = value.getValue(crate)
                     }
                     return result

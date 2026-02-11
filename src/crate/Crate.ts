@@ -65,7 +65,7 @@ export class Crate {
                 this.paths._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
             }
         } else {
-            this.writer = new Writer()
+            this.writer = new Writer(undefined, "data    ")
             this.bootstrap = new BootStrap()
             this.toc = new TableOfContents()
             this.tokens = new Tokens()

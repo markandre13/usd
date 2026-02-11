@@ -19,7 +19,7 @@ export class Fields {
     data!: Writer
     fields?: Field[]
 
-    valueReps = new Writer()
+    valueReps = new Writer(undefined, "valuerep")
     offset = 0
 
     private tokens!: Tokens
@@ -145,7 +145,16 @@ export class Fields {
     }
     __setDictionary(writer0: Writer, writer1: Writer, value: any) {
         const idx = writer0.tell() / 8
-        writer0.writeUint32(writer1.tell())
+        // console.log(`${writer0.name}@${writer0.tell()}: dict -> offset ${writer1.tell()}`)
+        // console.log(`__setDictionary() IN : writer0 valuerep @ ${writer0.tell()}`)
+
+        // just in case writer0 and writer1 are the same, advance writer0 to find out where writer1 will begin
+        const offset0 = writer0.tell()
+        writer0.skip(8)
+        const offset1 = writer1.tell()
+        writer0.seek(offset0)
+
+        writer0.writeUint32(offset1)
         writer0.skip(2)
         writer0.writeUint8(CrateDataType.Dictionary)
         writer0.writeUint8(0)
@@ -159,6 +168,7 @@ export class Fields {
         // write values at back
         const offsets: number[] = []
         for (const name of names) {
+            // console.log(`${writer1.name}@0x${writer1.tell().toString(16).padStart(4, '0')} value ${name}`)
             offsets.push(writer1.tell())
             const v = value[name]
             switch (typeof v) {
@@ -177,7 +187,7 @@ export class Fields {
         writer1.seek(oldPos)
         for (const name of names) {
             writer1.writeUint32(this.strings.add(name))
-            writer1.writeUint64(offsets.shift()! - 8 - 4)
+            writer1.writeUint64(offsets.shift()! - writer1.tell())
         }
         return idx
     }

@@ -68,19 +68,7 @@
                     "compressed": false,
                     "value": {
                         "Blender": {
-                            "type": "Dictionary",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": {
-                                "generated": {
-                                    "type": "Bool",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": true
-                                }
-                            }
+                            "generated": true
                         }
                     }
                 },

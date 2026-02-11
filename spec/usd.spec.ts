@@ -52,7 +52,6 @@ import { ValueRep } from "../src/crate/ValueRep.ts"
 // ATTRIBUTES
 //
 
-
 describe("USD", () => {
     it("read cube.usdc and compare it with cube.json", () => {
         const buffer = readFileSync("spec/cube.usdc")
@@ -78,6 +77,7 @@ describe("USD", () => {
         // console.log(JSON.stringify(pseudoRoot, undefined))
 
         const json = JSON.parse(readFileSync("spec/cube.json").toString())
+        // writeFileSync("spec/cube.json.tmp", JSON.stringify(pseudoRoot.toJSON(), undefined, 4))
         // console.log(JSON.stringify(pseudoRoot.toJSON()))
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
         // return
@@ -211,7 +211,7 @@ describe("USD", () => {
             compare(pseudoRootIn, orig)
         })
     })
-    describe.only("encode/decode values", () => {
+    describe("encode/decode values", () => {
         it("inline String", () => {
             const crate = new Crate()
             crate.fields.setString("aaa", "foo")
@@ -253,7 +253,7 @@ describe("USD", () => {
             expect(value.getBool()).to.equal(true)
             expect(value.getValue(crate)).to.equal(true)
         })
-        it("Dictionary (1)", () => {
+        it("Dictionary", () => {
             const customData = {
                 generated: true
             }
@@ -262,11 +262,28 @@ describe("USD", () => {
 
             const idx = crate.fields._setDictionary(customData)
 
+            // console.log(`# valuereps`)
+            // hexdump(new Uint8Array(crate.fields.valueReps.buffer,  0, crate.fields.valueReps.buffer.byteLength))
+            // console.log(`# data`)
+            // hexdump(new Uint8Array(crate.writer.buffer,  0, crate.writer.buffer.byteLength))
+
+            // # valuereps
+            // 0000 00 00 00 00 00 00 1f 00                         ........
+            //      ^                 ^
+            //      index 0           CrateDataType.Dictionary
+            // # data
+            // 0000 01 00 00 00 00 00 00 00 00 00 00 00 08 00 00 00 ................
+            //      ^                       ^           ^
+            //      dict size               key         dOffset 
+            // 0010 00 00 00 00 01 00 00 00 00 00 01 40             ...........@
+            //                  ^                 ^
+            //                  true              bool
+
             const value = new ValueRep(crate.fields.valueReps.view, idx)
             expect(value.getType()).to.equal(CrateDataType.Dictionary)
             expect(value.getValue(crate)).to.deep.equal(customData)
         })
-        it("Dictionary (2)", () => {
+        it("Dictionary containing Dictionary", () => {
             const customData = {
                 Blender: {
                     generated: true
@@ -275,7 +292,33 @@ describe("USD", () => {
             const crate = new Crate()
             crate.reader = new Reader(crate.writer.view)
 
-            const idx = crate.fields.setDictionary("aaa", customData)
+            const idx = crate.fields._setDictionary(customData)
+
+            // places the initial entry into crate.fields.valueReps, the rest into crate.writer
+
+            // expect(crate.fields.data).to.eql(crate.writer)
+            // expect(crate.fields.valueReps)
+
+            // console.log(`# valuereps`)
+            // hexdump(new Uint8Array(crate.fields.valueReps.buffer,  0, crate.fields.valueReps.buffer.byteLength))
+            // console.log(`# data`)
+            // hexdump(new Uint8Array(crate.writer.buffer,  0, crate.writer.buffer.byteLength))
+
+            // # valuereps
+            // 0000 00 00 00 00 00 00 1f 00                         ........
+            //      ^                 ^
+            //      index 0           CrateDataType.Dictionary
+            // # data
+            // 0000 01 00 00 00 00 00 00 00 01 00 00 00 08 00 00 00 ................
+            //      ^                       ^           ^
+            //      dict size               key         dOffset 
+            // 0010 00 00 00 00 1c 00 00 00 00 00 1f 00 01 00 00 00 ................
+            //                  ^                 ^     ^  
+            //                  index             Dict  dict size
+            // 0020 00 00 00 00 00 00 00 00 24 00 00 00 00 00 00 00 ........$.......
+            //                  ^ key?      ^ dOffset? (should be 30???)
+            // 0030 01 00 00 00 00 00 01 40                         .......@
+            //      ^ true            ^ Bool
 
             const value = new ValueRep(crate.fields.valueReps.view, idx)
             expect(value.getType()).to.equal(CrateDataType.Dictionary)
