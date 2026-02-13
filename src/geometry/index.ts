@@ -5,6 +5,45 @@ import { isPrim, SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
 import { Variability } from "../crate/Variability.ts"
 
+export class Attribute extends UsdNode {
+    value: any
+    custom: boolean
+
+    constructor(crate: Crate, parent: UsdNode, name: string, value: any) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.value = value
+        this.custom = false
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        if (this.custom) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setBoolean("custom", true)
+            )
+        }
+        if (typeof this.value === "string") {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setToken("typeName", "string")
+            )
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setString("default", this.value)
+            )
+        } else {
+            throw Error("TBD")
+        }
+
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
+}
+
 export class SchemaBase extends UsdNode { }
 export class Typed extends SchemaBase { }
 export class Imageable extends Typed { }
@@ -101,6 +140,16 @@ export class Xform extends Xformable {
                 crate.fields.setDictionary("customData", this.customData)
             )
         }
+
+        const properties = this.children
+                .filter(it => !isPrim(it.getType()))
+                .map(it => it.name)
+        if (properties.length > 0) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setTokenVector("properties", properties)
+            )
+        }
+
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setTokenVector("primChildren", this.children
                 .filter(it => isPrim(it.getType()))

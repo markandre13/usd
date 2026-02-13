@@ -20,7 +20,7 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
+import { Attribute, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
@@ -199,8 +199,8 @@ describe("USD", () => {
             //         custom string userProperties:blender:object_name = "Cube"
             const cube = new Xform(crate, root, "Cube")
 
-            // const attr = new Attribute(crate, cube, "userProperties:blender:object_name")
-            // attr.value = "Cube"
+            const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
+            attr.custom = true
 
             // UsdAttribute attr = prim.GetAttribute(TfToken("diffuseColor"));
 
