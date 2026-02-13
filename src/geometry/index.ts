@@ -90,18 +90,17 @@ export class Xform extends Xformable {
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
 
-        // if (this.customData !== undefined) {
-        //     crate.fieldsets.fieldset_indices.push(
-        //         crate.fields.setDictionary("customData", this.customData)
-        //     )
-        // }
-
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
         )
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "Xform")
         )
+        if (this.customData !== undefined) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setDictionary("customData", this.customData)
+            )
+        }
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setTokenVector("primChildren", this.children
                 .filter(it => isPrim(it.getType()))

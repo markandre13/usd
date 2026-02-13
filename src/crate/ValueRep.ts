@@ -173,12 +173,15 @@ export class ValueRep {
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
                     const sz = reader.getUint64()
+                    // console.log(`decode dict at ${this._offset} of size ${sz}, offset ${reader.offset.toString(16).padStart(4, '0')}`)
                     const result: any = {}
                     for (let i = 0; i < sz; ++i) {
                         const key = crate.strings.get(reader.getUint32())
                         const offset = reader.getUint64()
                         const value = new ValueRep(reader._dataview, reader.offset + offset - 8)
                         result[key] = value.getValue(crate)
+                        // console.log(`dict[${key}] = ${result[key]}`)
+                        // console.log(value.getType())
                     }
                     return result
                 }

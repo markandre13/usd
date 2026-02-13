@@ -77,6 +77,13 @@ export class Crate {
         }
     }
 
+    /**
+     * Serialize root into this.writer
+     * 
+     * NOTE: not idempotent
+     * 
+     * @param root 
+     */
     serialize(root: UsdNode) {
         this.strings.add(";-)") // this seems to be by convention
 

@@ -144,6 +144,8 @@ export class Fields {
         return this.__setDictionary(this.valueReps, this.data, value)
     }
     __setDictionary(writer0: Writer, writer1: Writer, value: any) {
+        // console.log(`SET DICTIONARY:  %o`, value)
+
         const idx = writer0.tell() / 8
         // console.log(`${writer0.name}@${writer0.tell()}: dict -> offset ${writer1.tell()}`)
         // console.log(`__setDictionary() IN : writer0 valuerep @ ${writer0.tell()}`)
@@ -161,6 +163,8 @@ export class Fields {
 
         const names = Object.getOwnPropertyNames(value)
         writer1.writeUint64(names.length)
+
+        // console.log(`encode dict at ${offset0} of size ${names.length}, offset ${offset1.toString(16).padStart(4, '0')}`)
 
         const oldPos = writer1.tell()
         writer1.skip(names.length * (4 + 8))
@@ -184,11 +188,13 @@ export class Fields {
         }
 
         // write names and offset at front
+        const offsetEnd = writer1.tell()
         writer1.seek(oldPos)
         for (const name of names) {
             writer1.writeUint32(this.strings.add(name))
             writer1.writeUint64(offsets.shift()! - writer1.tell())
         }
+        writer1.seek(offsetEnd)
         return idx
     }
     setString(name: string, value: string) {

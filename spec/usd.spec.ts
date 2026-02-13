@@ -159,8 +159,8 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it.skip("cube-flat-faces.usdc", () => {
-
+        it.only("cube-flat-faces.usdc", () => {
+            // read the original
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
             const origPseudoRoot = stageIn.getPrimAtPath("/")!
@@ -181,7 +181,6 @@ describe("USD", () => {
             const pseudoRoot = new PseudoRoot(crate)
             pseudoRoot.documentation = "Blender v5.0.1"
 
-            // FIXME: the dictionay is decoded wrong...
             // def Xform "root" (
             //     customData = {
             //         dictionary Blender = {
@@ -198,17 +197,32 @@ describe("USD", () => {
 
             //     def Xform "Cube" {
             //         custom string userProperties:blender:object_name = "Cube"
-            const cube = new Xform(crate, root, "cube")
+            const cube = new Xform(crate, root, "Cube")
+
+            // const attr = new Attribute(crate, cube, "userProperties:blender:object_name")
+            // attr.value = "Cube"
+
+            // UsdAttribute attr = prim.GetAttribute(TfToken("diffuseColor"));
 
             //         def Mesh "Mesh" ( active = true ) {
             // ...
 
+            // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
 
+            // CHECK THE HEXDUMP
+            // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
+
+            // deserialize
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
+            // console.log(JSON.stringify(pseudoRootIn, undefined, 4))
+            writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
+            writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
+
             compare(pseudoRootIn, orig)
+            // expect(pseudoRootIn).to.equal(orig)
         })
     })
     describe("encode/decode values", () => {
