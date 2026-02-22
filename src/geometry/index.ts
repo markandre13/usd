@@ -1,4 +1,4 @@
-import { CustomTokenAttr, IntArrayAttr, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../attributes/index.ts"
+import { AssetPathAttr, CustomTokenAttr, FloatAttr, IntArrayAttr, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../attributes/index.ts"
 import type { Crate } from "../crate/Crate.ts"
 import { Specifier } from "../crate/Specifier.ts"
 import { isPrim, SpecType } from "../crate/SpecType.ts"
@@ -186,6 +186,52 @@ export class Gprim extends Boundable {
 export type SubdivisionScheme = "catmullClark" | "loop" | "bilinear" | "none"
 export type InterpolateBoundary = "none" | "edgeOnly" | "edgeAndCorner"
 export type FaceVaryingLinearInterpolation = "none" | "cornersOnly" | "cornersPlus1" | "cornersPlus2" | "boundaries" | "all"
+
+export class DomeLight extends UsdNode {
+    constructor(crate: Crate, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+    }
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "DomeLight")
+        )
+
+        const properties: string[] = []
+
+        {
+            properties.push("inputs:intensity")
+            new FloatAttr(crate, this, "inputs:intensity", 1)
+        }
+
+        {
+            properties.push("inputs:texture:file")
+            new AssetPathAttr(crate, this, "inputs:texture:file", "./textures/color_0C0C0C.exr")
+        }
+
+
+        // userProperties:blender:data_name
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setTokenVector("properties", properties)
+        )
+
+        crate.fieldsets.fieldset_indices.push(-1)
+        for (const child of this.children) {
+            child.encode()
+        }
+    }
+}
 
 export class PointBased extends Gprim {
     points?: ArrayLike<number>

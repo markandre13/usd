@@ -20,7 +20,7 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
+import { Attribute, DomeLight, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
@@ -159,7 +159,7 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it.only("cube-flat-faces.usdc", () => {
+        it("cube-flat-faces.usdc", () => {
             // read the original
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
@@ -196,16 +196,13 @@ describe("USD", () => {
             }
 
             //     def Xform "Cube" {
-            //         custom string userProperties:blender:object_name = "Cube"
             const cube = new Xform(crate, root, "Cube")
 
+            //         custom string userProperties:blender:object_name = "Cube"
             const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
             attr.custom = true
 
-            // UsdAttribute attr = prim.GetAttribute(TfToken("diffuseColor"));
-
-            //         def Mesh "Mesh" ( active = true ) {
-            // ...
+            //         def Mesh "Mesh" ( active = true ) { ... }
             const mesh = new Mesh(crate, cube, "Mesh")
             mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
             mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
@@ -215,11 +212,15 @@ describe("USD", () => {
             mesh.extent = [-1, -1, -1, 1, 1, 1]
             mesh.subdivisionScheme = "none"
 
+            new DomeLight(crate, root, "env_light")
+
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
 
             // CHECK THE HEXDUMP
             // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
+
+            console.log("------------------------------")
 
             // deserialize
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
@@ -232,6 +233,35 @@ describe("USD", () => {
             compare(pseudoRootIn, orig)
             // expect(pseudoRootIn).to.equal(orig)
         })
+    })
+    it.only("cube-flat-faces.usdc regression", () => {
+        const crate = new Crate()
+        crate.paths._nodes = []
+
+        const pseudoRoot = new PseudoRoot(crate)
+
+        const root = new Xform(crate, pseudoRoot, "root")
+
+
+        const cube = new Xform(crate, root, "Cube")
+        const mesh = new Mesh(crate, cube, "Mesh")
+        const dome = new Xform(crate, root, "env_light")
+
+        crate.serialize(pseudoRoot)
+
+        // CHECK THE HEXDUMP
+
+        console.log("------------------------------")
+
+        // deserialize
+        const stage = new UsdStage(Buffer.from(crate.writer.buffer))
+
+        const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+        console.log(JSON.stringify(pseudoRootIn, undefined, 4))
+
+        expect(stage.getPrimAtPath("/root")).to.not.be.undefined
+        expect(stage.getPrimAtPath("/root/Cube")).to.not.be.undefined
+        expect(stage.getPrimAtPath("/root/env_light")).to.not.be.undefined
     })
     describe("encode/decode values", () => {
         it("inline String", () => {

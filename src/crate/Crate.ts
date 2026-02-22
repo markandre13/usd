@@ -58,8 +58,17 @@ export class Crate {
                 tokenIndexes: this.paths.tokenIndexes,
                 jumps: this.paths.jumps
             })
+            console.log(`XXX: this.paths._nodes.length=${this.paths._nodes.length}, this.specs.pathIndexes.length=${this.specs.pathIndexes.length}, this.specs.fieldsetIndexes.length=${this.specs.fieldsetIndexes.length}, this.specs.specTypeIndexes.length=${this.specs.specTypeIndexes.length}`)
             // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
             for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
+                if (this.paths._nodes[i] === undefined) {
+                    for(let j=0; j<this.paths._nodes.length; ++j) {
+                        if (this.paths._nodes[j] === undefined) {
+                            console.log(`this.paths._nodes[${j}] === undefined`)
+                        }
+                    }
+                    throw Error("yikes")
+                }
                 const idx = this.specs.pathIndexes[i]
                 this.paths._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]
                 this.paths._nodes[i].spec_type = this.specs.specTypeIndexes[idx]
@@ -177,9 +186,11 @@ export class Crate {
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
                 const elemToken = this.tokens.get(tokenIndex)
                 if (this.paths._nodes![idx] !== undefined) {
-                    throw Error(`yikes: node[${idx}] is already set`)
+                    console.warn(`yikes: node[${idx}] is already set at ${parentNode.getFullPathName()}, can't set ${elemToken}, already set to ${this.paths._nodes![idx].getFullPathName()}`)
+                    // throw Error(`yikes: node[${idx}] is already set at ${parentNode.getFullPathName()}, can't set ${elemToken}, already set to ${this.paths._nodes![idx].name}`)
+                } else {
+                    this.paths._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
                 }
-                this.paths._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
             }
             // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
             // if (this.tokens[tokenIndex] === undefined) {

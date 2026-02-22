@@ -3,6 +3,60 @@ import { SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
 import type { Variability } from "../crate/Variability.ts"
 
+export class FloatAttr extends UsdNode {
+    value: number
+    constructor(crate: Crate, parent: UsdNode, name: string, value: number) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.value = value
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "float")
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setFloat("default", this.value)
+        )
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
+}
+
+export class AssetPathAttr extends UsdNode {
+    value: string
+    constructor(crate: Crate, parent: UsdNode, name: string, value: string) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.value = value
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "asset")
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setAssetPath("default", this.value)
+        )
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
+}
+
 export class VariabilityAttr extends UsdNode {
     variability: Variability
     value: string

@@ -113,6 +113,15 @@ export class Fields {
         this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
+    setAssetPath(name: string, value: string) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.tokens.add(value))
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.AssetPath)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
     setTokenVector(name: string, value: string[]) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))

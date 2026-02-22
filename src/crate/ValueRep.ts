@@ -14,7 +14,6 @@ import { Specifier } from "./Specifier.ts"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
 import { decompressFromBuffer } from "../index.ts"
-import { Reader } from "./Reader.ts"
 
 // value's location.
 // FIXME: last two bytes are type info
