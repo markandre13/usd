@@ -206,6 +206,7 @@ export class Fields {
         this.valueReps.writeUint8(IsInlinedBit)
         return idx
     }
+    // TODO: this can be stored as compressed
     setIntArray(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
@@ -229,6 +230,20 @@ export class Fields {
         this.valueReps.writeUint8(IsArrayBit_)
 
         this.data.writeUint64(value.length / 3)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat32(value[i])
+        }
+        return idx
+    }
+    setVec2fArray(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Vec2f)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length / 2)
         for (let i = 0; i < value.length; ++i) {
             this.data.writeFloat32(value[i])
         }

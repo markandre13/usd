@@ -66,6 +66,7 @@ export class IntArrayAttr extends UsdNode {
 export class Vec3fArrayAttr extends UsdNode {
     value: ArrayLike<number>
     typeName: string
+    interpolation?: string
     constructor(
         crate: Crate,
         parent: UsdNode,
@@ -93,6 +94,53 @@ export class Vec3fArrayAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setVec3fArray("default", this.value)
         )
+        if (this.interpolation !== undefined) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setToken("interpolation", this.interpolation)
+            )
+        }
+
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
+}
+
+export class Vec2fArrayAttr extends UsdNode {
+    value: ArrayLike<number>
+    typeName: string
+    interpolation?: string
+    constructor(
+        crate: Crate,
+        parent: UsdNode,
+        name: string,
+        value: ArrayLike<number>,
+        typeName: "texCoord2f[]"
+    ) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.value = value
+        this.typeName = typeName
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", this.typeName)
+        )
+        if (this.interpolation !== undefined) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setToken("interpolation", this.interpolation)
+            )
+        }
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setVec2fArray("default", this.value)
+        )
+
         crate.fieldsets.fieldset_indices.push(-1)
     }
 }
