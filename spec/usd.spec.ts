@@ -159,7 +159,7 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it("cube-flat-faces.usdc", () => {
+        it.only("cube-flat-faces.usdc", () => {
             // read the original
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
@@ -220,7 +220,7 @@ describe("USD", () => {
             // CHECK THE HEXDUMP
             // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
 
-            console.log("------------------------------")
+            // console.log("------------------------------")
 
             // deserialize
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
@@ -234,7 +234,7 @@ describe("USD", () => {
             // expect(pseudoRootIn).to.equal(orig)
         })
     })
-    it.only("cube-flat-faces.usdc regression", () => {
+    xit("cube-flat-faces.usdc regression", () => {
         const crate = new Crate()
         crate.paths._nodes = []
 
@@ -250,6 +250,7 @@ describe("USD", () => {
         crate.serialize(pseudoRoot)
 
         // CHECK THE HEXDUMP
+        // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
 
         console.log("------------------------------")
 

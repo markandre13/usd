@@ -58,7 +58,7 @@ export class Crate {
                 tokenIndexes: this.paths.tokenIndexes,
                 jumps: this.paths.jumps
             })
-            console.log(`XXX: this.paths._nodes.length=${this.paths._nodes.length}, this.specs.pathIndexes.length=${this.specs.pathIndexes.length}, this.specs.fieldsetIndexes.length=${this.specs.fieldsetIndexes.length}, this.specs.specTypeIndexes.length=${this.specs.specTypeIndexes.length}`)
+            // console.log(`XXX: this.paths._nodes.length=${this.paths._nodes.length}, this.specs.pathIndexes.length=${this.specs.pathIndexes.length}, this.specs.fieldsetIndexes.length=${this.specs.fieldsetIndexes.length}, this.specs.specTypeIndexes.length=${this.specs.specTypeIndexes.length}`)
             // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
             for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
                 if (this.paths._nodes[i] === undefined) {

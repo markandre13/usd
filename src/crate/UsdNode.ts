@@ -3,6 +3,7 @@ import { Crate } from "./Crate.ts"
 import { isPrim, SpecType } from "./SpecType.ts"
 import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.js"
+import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "./Paths.ts"
 
 // Prim
 //   Attribute (is a property)
@@ -141,24 +142,27 @@ export class UsdNode {
         return result
     }
     serialize(arg: UsdNodeSerializeArgs) {
+        const thisIndex = arg.thisIndex
         const hasChild = this.children.length > 0
         let hasSibling = false
         if (this.parent && this.parent.children.findIndex(it => it == this) < this.parent.children.length - 1) {
             hasSibling = true
         }
+
         let jump = 0
         if (!hasChild && !hasSibling) {
-            jump = -2
+            jump = JUMP_NO_CHILD_NO_SIBLINGS
         }
         if (hasChild && !hasSibling) {
-            jump = -1
+            jump = JUMP_NEXT_IS_CHILD_NO_SIBLINGS
         }
         if (!hasChild && hasSibling) {
-            jump = 0
+            jump = JUMP_NO_CHILD_NEXT_IS_SIBLING
         }
         if (hasChild && hasSibling) {
             // jump needs to be the position of the next sibling
-            jump = this.children.length + 1
+            // jump = this.children.length + 1 // FIXME: my children and childrens children
+            jump = JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING
         }
         arg.pathIndexes[arg.thisIndex] = arg.thisIndex
 
@@ -173,6 +177,9 @@ export class UsdNode {
         for (const child of this.children) {
             ++arg.thisIndex
             child.serialize(arg)
+        }
+        if (jump === JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING) {
+            arg.jumps[thisIndex] = arg.thisIndex - 1
         }
     }
 }

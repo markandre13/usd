@@ -5,13 +5,11 @@ import type { Tokens } from "./Tokens.ts"
 import { UsdNode, type UsdNodeSerializeArgs } from "./UsdNode.ts"
 import type { Writer } from "./Writer.ts"
 
+export const JUMP_NO_CHILD_NO_SIBLINGS = -2
+export const JUMP_NEXT_IS_CHILD_NO_SIBLINGS = -1
+export const JUMP_NO_CHILD_NEXT_IS_SIBLING = 0
+export const JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING = -99
 
-
-// the meaning of jump (maybe?)
-// -2: has no child and no siblings
-// -1: next is child, there are no siblings
-//  0: no child, next is sibling
-//  x: next is child, sibling at +x
 export class Paths {
     _nodes: UsdNode[] = []
 
@@ -24,21 +22,9 @@ export class Paths {
         if (reader instanceof Reader) {
             this.num_nodes = reader.getUint64()
             const numEncodedPaths = reader.getUint64()
-            // console.log(`num_nodes = ${num_nodes}, numEncodedPaths=${numEncodedPaths}`)
             this.pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
             this.tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
             this.jumps = reader.getCompressedIntegers(numEncodedPaths)
-
-            // console.log('PATH READ')
-            // console.log(`numNodes       : ${this.num_nodes}`)
-            // console.log(`numEncodedPaths: ${numEncodedPaths}`)
-            // console.log(`pathIndices    : ${this.pathIndexes}`)
-            // console.log(`tokenIndexes   : ${this.tokenIndexes}`)
-            // console.log(`jumps          : ${this.jumps}`)
-
-            // for(let i=0; i<numEncodedPaths; ++i) {
-            //     console.log(`[${i}] = token ${tokenIndexes[i]} ${crate?.tokens[tokenIndexes[i]]}, jump ${jumps[i]}`)
-            // }
         }
     }
 

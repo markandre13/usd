@@ -1,4 +1,4 @@
-import { AssetPathAttr, CustomTokenAttr, FloatAttr, IntArrayAttr, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../attributes/index.ts"
+import { AssetPathAttr, FloatAttr, IntArrayAttr, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../attributes/index.ts"
 import type { Crate } from "../crate/Crate.ts"
 import { Specifier } from "../crate/Specifier.ts"
 import { isPrim, SpecType } from "../crate/SpecType.ts"
