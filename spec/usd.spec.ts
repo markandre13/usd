@@ -20,8 +20,9 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, DomeLight, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
+import { Attribute, DomeLight, GeomSubset, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
+import { IntArrayAttr, Relationship } from "../src/attributes/index.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -159,14 +160,17 @@ describe("USD", () => {
         // ( ... ) : field set
     })
     describe("re-create blender 5.0 files", () => {
-        it.only("cube-flat-faces.usdc", () => {
+        it("cube-flat-faces.usdc", () => {
             // read the original
             const buffer = readFileSync("spec/examples/cube-flat-faces.usdc")
             const stageIn = new UsdStage(buffer)
             const origPseudoRoot = stageIn.getPrimAtPath("/")!
             const orig = origPseudoRoot.toJSON()
-
             // console.log(JSON.stringify(orig, undefined, 4))
+
+            // read an adjusted, good enough variant of the original's JSON
+            // const buffer = readFileSync("spec/examples/cube-flat-faces.json")
+            // const orig = JSON.parse(buffer.toString())
 
             const crate = new Crate()
             crate.paths._nodes = []
@@ -217,52 +221,133 @@ describe("USD", () => {
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
 
-            // CHECK THE HEXDUMP
-            // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
+            // deserialize
+            const stage = new UsdStage(Buffer.from(crate.writer.buffer))
+            const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // console.log("------------------------------")
+            // writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
+            // writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
+            // writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
+
+            compare(pseudoRootIn, orig)
+        })
+        it("cube-smooth-faces.usdc") // only normals differ from cube-flat-faces.usdc
+        it.only("cube-flat-colored-faces.usdc", () => {
+            // read the original
+            const buffer = readFileSync("spec/examples/cube-flat-colored-faces.usdc")
+            const stageIn = new UsdStage(buffer)
+            const origPseudoRoot = stageIn.getPrimAtPath("/")!
+            const orig = origPseudoRoot.toJSON()
+            // console.log(JSON.stringify(orig, undefined, 4))
+
+            // read an adjusted, good enough variant of the original's JSON
+            // const buffer = readFileSync("spec/examples/cube-smooth-faces.json")
+            // const orig = JSON.parse(buffer.toString())
+
+            const crate = new Crate()
+            crate.paths._nodes = []
+
+            // #usda 1.0
+            // (
+            //     doc = "Blender v5.0.1"
+            //     metersPerUnit = 1
+            //     upAxis = "Z"
+            //     defaultPrim = "root"
+            // )
+            const pseudoRoot = new PseudoRoot(crate)
+            pseudoRoot.documentation = "Blender v5.0.1"
+
+            // def Xform "root" (
+            //     customData = {
+            //         dictionary Blender = {
+            //             bool generated = 1
+            //         }
+            //     }
+            // ) {
+            const root = new Xform(crate, pseudoRoot, "root")
+            root.customData = {
+                Blender: {
+                    generated: true
+                }
+            }
+
+            //     def Xform "Cube" {
+            const cube = new Xform(crate, root, "Cube")
+
+            //         custom string userProperties:blender:object_name = "Cube"
+            const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
+            attr.custom = true
+
+            //         def Mesh "Mesh" ( active = true ) { ... }
+            const mesh = new Mesh(crate, cube, "Cube")
+            mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+            mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
+            mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
+            mesh.extent = [-1, -1, -1, 1, 1, 1]
+            mesh.subdivisionScheme = "none"
+            mesh.doubleSided = true
+
+            mesh.apiSchemas = {
+                prepend: ["MaterialBindingAPI"]
+            }
+            mesh.materialBinding = {
+                // explicit: ["/root/_materials/red"]
+            }
+            mesh.nonOverlapping = true
+
+            // this mesh addionally needs
+            //   fields:
+            //     apiSchemas: MaterialBindingAPI           DONE
+            //     primChildren: [...]                      DONE
+            //   properties:
+            //     doubleSided,                             DONE
+            //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
+            //     subsetFamily:materialBind:familyType     DONE
+            const blue = new GeomSubset(crate, mesh, "blue")
+            new Attribute(crate, blue, "elementType", "face")
+            new Attribute(crate, blue, "familyName", "materialBind")
+            new IntArrayAttr(crate, blue, "indices", [5])
+            new Relationship(crate, blue, "material:binding", { explicit: [] })
+
+            const gray = new GeomSubset(crate, mesh, "gray")
+            new Attribute(crate, gray, "elementType", "face")
+            new Attribute(crate, gray, "familyName", "materialBind")
+            new IntArrayAttr(crate, gray, "indices", [1, 2, 3])
+            new Relationship(crate, gray, "material:binding", { explicit: [] })
+
+            const green = new GeomSubset(crate, mesh, "green")
+            new Attribute(crate, green, "elementType", "face")
+            new Attribute(crate, green, "familyName", "materialBind")
+            new IntArrayAttr(crate, green, "indices", [4])
+            new Relationship(crate, green, "material:binding", { explicit: [] })
+
+            const red = new GeomSubset(crate, mesh, "red")
+            new Attribute(crate, red, "elementType", "face")
+            new Attribute(crate, red, "familyName", "materialBind")
+            new IntArrayAttr(crate, red, "indices", [0])
+            new Relationship(crate, red, "material:binding", { explicit: [] })
+
+            // _materials
+
+            new DomeLight(crate, root, "env_light")
+
+            // serialize everything into crate.writer
+            crate.serialize(pseudoRoot)
 
             // deserialize
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // console.log(JSON.stringify(pseudoRootIn, undefined, 4))
+            writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
             writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
             writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
 
             compare(pseudoRootIn, orig)
-            // expect(pseudoRootIn).to.equal(orig)
         })
-    })
-    xit("cube-flat-faces.usdc regression", () => {
-        const crate = new Crate()
-        crate.paths._nodes = []
-
-        const pseudoRoot = new PseudoRoot(crate)
-
-        const root = new Xform(crate, pseudoRoot, "root")
-
-
-        const cube = new Xform(crate, root, "Cube")
-        const mesh = new Mesh(crate, cube, "Mesh")
-        const dome = new Xform(crate, root, "env_light")
-
-        crate.serialize(pseudoRoot)
-
-        // CHECK THE HEXDUMP
-        // hexdump(new Uint8Array(crate.writer.buffer, 0, crate.writer.buffer.byteLength))
-
-        console.log("------------------------------")
-
-        // deserialize
-        const stage = new UsdStage(Buffer.from(crate.writer.buffer))
-
-        const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
-        console.log(JSON.stringify(pseudoRootIn, undefined, 4))
-
-        expect(stage.getPrimAtPath("/root")).to.not.be.undefined
-        expect(stage.getPrimAtPath("/root/Cube")).to.not.be.undefined
-        expect(stage.getPrimAtPath("/root/env_light")).to.not.be.undefined
+        it("cube-smooth-sharp-faces.usdc")
+        it("armature.usdc")
     })
     describe("encode/decode values", () => {
         it("inline String", () => {
@@ -378,112 +463,6 @@ describe("USD", () => {
             expect(value.getValue(crate)).to.deep.equal(customData)
         })
 
-    })
-    it("write CrateFile", () => {
-        // const stage = new UsdStage()
-        // const form = new UsdGeom.Xform()
-
-        const crate = new Crate()
-
-        crate.paths._nodes = []
-
-        const root = new PseudoRoot(crate)
-        root.documentation = "Blender v5.0.0"
-        root.metersPerUnit = 1.0
-        root.upAxis = "Z"
-
-        const xform = new Xform(crate, root, "Cube")
-
-        const mesh = new Mesh(crate, xform, "Cube_001")
-        mesh.subdivisionScheme = "none"
-        mesh.interpolateBoundary = "none"
-        mesh.faceVaryingLinearInterpolation = "none"
-        mesh.extent = [
-            -1, -1, -1,
-            1, 1, 1
-        ]
-        mesh.points = [
-            -1, -1, -1,
-            -1, -1, 1,
-            -1, 1, -1,
-            -1, 1, 1,
-            1, -1, -1,
-            1, -1, 1,
-            1, 1, -1,
-            1, 1, 1
-        ]
-        mesh.normals = [
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
-            -1, 0, 0,
-
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
-            0, 1, 0,
-
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
-            1, 0, 0,
-
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
-            0, -1, 0,
-
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
-            0, 0, -1,
-
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1
-        ]
-        mesh.faceVertexIndices = [
-            0, 1, 3, 2,
-            2, 3, 7, 6,
-            6, 7, 5, 4,
-            4, 5, 1, 0,
-            2, 6, 4, 0,
-            7, 3, 1, 5]
-        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
-
-        crate.serialize(root)
-        writeFileSync("test.usdc", Buffer.from(crate.writer.buffer))
-
-        //
-        // READ
-        //
-
-        const stage = new UsdStage(Buffer.from(crate.writer.buffer))
-        const pseudoRoot = stage.getPrimAtPath("/")!.toJSON()
-
-        const buffer = readFileSync("spec/cube.usdc")
-        const orig = new UsdStage(buffer).getPrimAtPath("/")!.toJSON()
-
-        // console.log("%o", pseudoRoot)
-
-        // type
-        // name
-        // prim
-        // fields
-        // children
-        // console.log(JSON.stringify(pseudoRoot, undefined, 2))
-        // console.log(JSON.stringify(orig, undefined, 2))
-
-        compare(pseudoRoot, orig)
-
-
-        // compare with the blender generated file
-
-        // expect(pseudoRoot).to.not.be.undefined
-        // expect(pseudoRoot.getType()).to.equal(SpecType.PseudoRoot)
-
-        // expect(pseudoRoot.toJSON()).to.deep.equal(generatedUSD)
     })
     describe("Crate parts", () => {
         it("BootStrap", () => {

@@ -1,7 +1,8 @@
 import type { Crate } from "../crate/Crate.ts"
+import type { ListOp } from "../crate/Fields.ts"
 import { SpecType } from "../crate/SpecType.ts"
 import { UsdNode } from "../crate/UsdNode.ts"
-import type { Variability } from "../crate/Variability.ts"
+import { Variability } from "../crate/Variability.js"
 
 export class FloatAttr extends UsdNode {
     value: number
@@ -52,6 +53,34 @@ export class AssetPathAttr extends UsdNode {
         )
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setAssetPath("default", this.value)
+        )
+        crate.fieldsets.fieldset_indices.push(-1)
+    }
+}
+
+export class Relationship extends UsdNode {
+    value: ListOp<UsdNode>
+    constructor(crate: Crate, parent: UsdNode, name: string, value: ListOp<UsdNode>) {
+        super(crate, parent, -1, name, false)
+        this.spec_type = SpecType.Relationship
+        this.value = value
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setVariability("variability", Variability.Uniform)
+        )
+        // console.log(`targetPaths: %o`, this.value)
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setPathListOp("targetPaths", this.value)
         )
         crate.fieldsets.fieldset_indices.push(-1)
     }

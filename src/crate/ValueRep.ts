@@ -198,7 +198,7 @@ export class ValueRep {
                         return arr
                     }
                     const list = {} as any
-                    if (hdr.isExplicit()) {
+                    if (hdr.hasExplicitItems()) {
                         list.explicit = read()
                     }
                     if (hdr.hasAddedItems()) {

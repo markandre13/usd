@@ -1,5 +1,5 @@
 import { compressToBuffer, decompressFromBuffer } from "../index.ts"
-import { CrateDataType } from "./CrateDataType.ts"
+import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
 import { Field } from "./Field.ts"
 import { compressBound } from "../compression/lz4.ts"
 import { Reader } from "./Reader.js"
@@ -9,10 +9,21 @@ import type { Tokens } from "./Tokens.ts"
 import { ValueRep } from "./ValueRep.ts"
 import type { Variability } from "./Variability.ts"
 import { Writer } from "./Writer.js"
+import { UsdNode } from "./UsdNode.js"
 
 const IsArrayBit_ = 128
 const IsInlinedBit = 64
 const IsCompressedBit = 32
+
+export interface ListOp<T> {
+    isExplicit?: boolean
+    explicit?: T[]
+    add?: T[]
+    prepend?: T[]
+    append?: T[]
+    delete?: T[]
+    order?: T[]
+}
 
 export class Fields {
     tokenIndices: number[] = []
@@ -204,6 +215,54 @@ export class Fields {
             writer1.writeUint64(offsets.shift()! - writer1.tell())
         }
         writer1.seek(offsetEnd)
+        return idx
+    }
+    setTokenListOp(name: string, value: ListOp<string>) {
+        return this._setListOp(name, value, CrateDataType.TokenListOp)
+    }
+    setPathListOp(name: string, value: ListOp<UsdNode>) {
+        return this._setListOp(name, value, CrateDataType.PathListOp)
+    }
+    _setListOp(name: string, value: ListOp<string | number | UsdNode>, type: CrateDataType) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(type)
+        this.valueReps.writeUint8(0)
+
+        new ListOpHeader(this.data, value)
+
+        const write = (list?: (string | number | UsdNode)[]) => {
+            if (list === undefined) {
+                return
+            }
+            this.data.writeUint64(list.length)
+            for (const v of list) {
+                switch (typeof v) {
+                    case "string":
+                        this.data.writeUint32(this.tokens.add(v))
+                        break
+                    case "number":
+                        this.data.writeUint32(v)
+                        break
+                    case "object":
+                        const o = v as object
+                        if (o instanceof UsdNode) {
+                            this.data.writeUint32(o.index)
+                        }
+                        break
+                }
+            }
+        }
+
+        write(value.explicit)
+        write(value.add)
+        write(value.prepend)
+        write(value.append)
+        write(value.delete)
+        write(value.order)
+
         return idx
     }
     setString(name: string, value: string) {

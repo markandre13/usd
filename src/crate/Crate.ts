@@ -67,7 +67,7 @@ export class Crate {
                             console.log(`this.paths._nodes[${j}] === undefined`)
                         }
                     }
-                    throw Error("yikes")
+                    throw Error("yikes: Crate(reader): some paths._nodes[...] are undefined")
                 }
                 const idx = this.specs.pathIndexes[i]
                 this.paths._nodes[i].fieldset_index = this.specs.fieldsetIndexes[idx]

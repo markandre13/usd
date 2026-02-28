@@ -1,4 +1,6 @@
-import type { Reader } from "./Reader.ts"
+import type { ListOp } from "./Fields.ts"
+import { Reader } from "./Reader.js"
+import { Writer } from "./Writer.js"
 
 export enum CrateDataType {
     Bool = 1,
@@ -74,9 +76,39 @@ enum Bits {
 };
 
 export class ListOpHeader {
-    _bits: number
-    constructor(reader: Reader) {
-        this._bits = reader.getUint8()
+    _bits!: number
+    constructor(reader: Reader)
+    constructor(reader: Writer, value: ListOp)
+    constructor(reader: Reader | Writer, value?: ListOp) {
+        if (reader instanceof Reader) {
+            this._bits = reader.getUint8()
+        } else
+            if (reader instanceof Writer && value !== undefined) {
+                let bits = 0
+                if (value.isExplicit === true) {
+                    bits |= Bits.IsExplicitBit
+                }
+                if (value.explicit !== undefined) {
+                    bits |= Bits.HasExplicitItemsBit
+                }
+                if (value.add !== undefined) {
+                    bits |= Bits.HasAddedItemsBit
+                }
+                if (value.prepend !== undefined) {
+                    bits |= Bits.HasPrependedItemsBit
+                }
+                if (value.append !== undefined) {
+                    bits |= Bits.HasAppendedItemsBit
+                }
+                if (value.delete !== undefined) {
+                    bits |= Bits.HasDeletedItemsBit
+                }
+                if (value.order !== undefined) {
+                    bits |= Bits.HasOrderedItemsBit
+                }
+                this._bits = bits
+                reader.writeUint8(bits)
+            }
     }
     isExplicit() { return this._bits & Bits.IsExplicitBit }
     hasExplicitItems() { return this._bits & Bits.HasExplicitItemsBit }
