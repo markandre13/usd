@@ -16,7 +16,8 @@ import { Section } from "./Section.ts"
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
     tokenIndexes: number[]
-    jumps: number[]
+    jumps: number[],
+    depth: number
 }
 
 export class Crate {
@@ -53,10 +54,22 @@ export class Crate {
 
             // build node tree
             this.paths._nodes = new Array<UsdNode>(this.paths.num_nodes)
+
+            // for(let i = 0; i<this.paths.pathIndexes.length; ++i) {
+            //     const idx = this.paths.pathIndexes[i]
+            //     let tkn = this.paths.tokenIndexes[i]
+            //     if (tkn < 0) {
+            //         tkn = -tkn
+            //     }
+            //     const jmp = this.paths.jumps[i]
+            //     console.log(`    ${i} ${idx} ${this.tokens.get(tkn)} ${jmp} `)
+            // }
+
             const node = this.buildNodeTree({
                 pathIndexes: this.paths.pathIndexes,
                 tokenIndexes: this.paths.tokenIndexes,
-                jumps: this.paths.jumps
+                jumps: this.paths.jumps,
+                depth: 0
             })
             // console.log(`XXX: this.paths._nodes.length=${this.paths._nodes.length}, this.specs.pathIndexes.length=${this.specs.pathIndexes.length}, this.specs.fieldsetIndexes.length=${this.specs.fieldsetIndexes.length}, this.specs.specTypeIndexes.length=${this.specs.specTypeIndexes.length}`)
             // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
@@ -178,6 +191,8 @@ export class Crate {
                     throw Error("yikes: Index exceeds pathIndexes.size()")
                 }
                 root = parentNode = new UsdNode(this, undefined, idx, "/", true)
+                root.depth = 0
+                // console.log(`buildNodeTree(): this.paths._nodes![${idx}] := /`)
                 this.paths._nodes![idx] = parentNode
             } else {
                 if (thisIndex >= arg.tokenIndexes.length) {
@@ -186,13 +201,15 @@ export class Crate {
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
                 const elemToken = this.tokens.get(tokenIndex)
                 if (this.paths._nodes![idx] !== undefined) {
-                    console.warn(`yikes: node[${idx}] is already set at ${parentNode.getFullPathName()}, can't set ${elemToken}, already set to ${this.paths._nodes![idx].getFullPathName()}`)
+                    console.warn(`Crate.buildNodeTree(): node[${idx}] is already set at ${parentNode.getFullPathName()}, can't set ${elemToken}, already set to ${this.paths._nodes![idx].getFullPathName()}`)
                     // throw Error(`yikes: node[${idx}] is already set at ${parentNode.getFullPathName()}, can't set ${elemToken}, already set to ${this.paths._nodes![idx].name}`)
                 } else {
                     this.paths._nodes![idx] = new UsdNode(this, parentNode, idx, elemToken, isPrimPropertyPath)
+                    this.paths._nodes![idx].depth = parentNode.depth! + 1
+                    // console.log(`buildNodeTree(): this.paths._nodes![${idx}] := ${"  ".repeat(parentNode.depth!+1)}${elemToken}`)
                 }
             }
-            // console.log(`${this._nodes![idx].getFullPathName()}: thisIndex=${thisIndex}, idx=${idx}, jump=${jump}, token=${tokenIndex} (${this.crate.tokens[tokenIndex]})`)
+            // console.log(`${idx} ${"  ".repeat(this.paths._nodes![idx].depth!)} ${this.paths._nodes![idx].name}`)
             // if (this.tokens[tokenIndex] === undefined) {
             //     console.log(`BUMMER at tokenIndex ${tokenIndex}`)
             //     console.log(this.tokens)
@@ -204,7 +221,9 @@ export class Crate {
             if (hasChild) {
                 if (hasSibling) {
                     const siblingIndex = thisIndex + jump
+                    // ++arg.depth
                     this.buildNodeTree(arg, parentNode, siblingIndex)
+                    // --arg.depth
                 }
                 parentNode = this.paths._nodes![idx] // reset parent path
             }

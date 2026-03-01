@@ -41,9 +41,33 @@ export class Paths {
             thisIndex: 0,
             pathIndexes: this.pathIndexes,
             tokenIndexes: this.tokenIndexes,
-            jumps: this.jumps
+            jumps: this.jumps,
+            depth: 0
         }
+
         root.serialize(arg)
+        // console.log(`Path.encode()`)
+        // for (let i = 0; i < numEncodedPaths; ++i) {
+        //     const node = this._nodes[i]
+        //     const jump = this.jumps[i]
+        //     let jumpName = "?"
+        //     switch (jump) {
+        //         case JUMP_NO_CHILD_NO_SIBLINGS:
+        //             jumpName = 'no child, no sibling'
+        //             break
+        //         case JUMP_NEXT_IS_CHILD_NO_SIBLINGS:
+        //             jumpName = 'next is child, no sibling'
+        //             break
+        //         case JUMP_NO_CHILD_NEXT_IS_SIBLING:
+        //             jumpName = 'no child, next is sibling'
+        //             break
+        //         default:
+        //             jumpName = `next is child, sibling at ${i + jump}`
+        //             break
+        //     }
+
+        //     console.log(`    ${i} ${"  ".repeat(node.depth!)} ${node.name} ${jumpName}`)
+        // }
     }
 
     serialize(writer: Writer) {

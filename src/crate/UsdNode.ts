@@ -13,13 +13,15 @@ export interface UsdNodeSerializeArgs {
     thisIndex: number
     pathIndexes: number[]
     tokenIndexes: number[]
-    jumps: number[]
+    jumps: number[],
+    depth: number
 }
 
 export class UsdNode {
     crate: Crate
     parent?: UsdNode
     children: UsdNode[] = [];
+    depth?: number
 
     index: number
     spec_type?: SpecType
@@ -142,6 +144,7 @@ export class UsdNode {
         return result
     }
     serialize(arg: UsdNodeSerializeArgs) {
+        this.depth = arg.depth
         const thisIndex = arg.thisIndex
         const hasChild = this.children.length > 0
         let hasSibling = false
@@ -173,13 +176,16 @@ export class UsdNode {
         arg.tokenIndexes[arg.thisIndex] = tokenIndex
 
         arg.jumps[arg.thisIndex] = jump
-        // console.log(`[${arg.thisIndex}] := ${node.getFullPathName()}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jump}`)
+        // console.log(`[${arg.thisIndex}] := ${"  ".repeat(arg.depth)}${this.name}: hasChild = ${hasChild}, hasSibling=${hasSibling}, jump=${jumpName}`)
         for (const child of this.children) {
             ++arg.thisIndex
+            ++arg.depth
             child.serialize(arg)
+            --arg.depth
         }
         if (jump === JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING) {
-            arg.jumps[thisIndex] = arg.thisIndex - 1
+            arg.jumps[thisIndex] = arg.thisIndex - thisIndex + 1
+            // console.log(`jump[${thisIndex}] to ${arg.thisIndex + 1} by ${arg.thisIndex - thisIndex + 1}`)
         }
     }
 }
