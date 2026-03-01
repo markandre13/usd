@@ -249,6 +249,9 @@ export class Fields {
                     case "object":
                         const o = v as object
                         if (o instanceof UsdNode) {
+                            if (o.index === -1) {
+                                throw Error(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
+                            }
                             this.data.writeUint32(o.index)
                         }
                         break

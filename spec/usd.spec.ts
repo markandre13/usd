@@ -20,9 +20,10 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, DomeLight, GeomSubset, Mesh, PseudoRoot, Xform } from "../src/geometry/index.ts"
+import { Attribute, DomeLight, GeomSubset, Material, Mesh, PseudoRoot, Scope, Xform } from "../src/geometry/index.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
-import { IntArrayAttr, Relationship } from "../src/attributes/index.ts"
+import { IntArrayAttr, Relationship, VariabilityAttr } from "../src/attributes/index.ts"
+import { Variability } from "../src/crate/Variability.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
@@ -232,7 +233,7 @@ describe("USD", () => {
             compare(pseudoRootIn, orig)
         })
         xit("cube-smooth-faces.usdc") // only normals differ from cube-flat-faces.usdc
-        it.only("cube-flat-colored-faces.usdc", () => {
+        it("cube-flat-colored-faces.usdc", () => {
             // read the original
             const buffer = readFileSync("spec/examples/cube-flat-colored-faces.usdc")
             const stageIn = new UsdStage(buffer)
@@ -274,6 +275,12 @@ describe("USD", () => {
             //     def Xform "Cube" {
             const cube = new Xform(crate, root, "Cube")
 
+            const materials = new Scope(crate, root, "_materials")
+            const red = new Material(crate, materials, "red")
+            const gray = new Material(crate, materials, "gray")
+            const green = new Material(crate, materials, "green")
+            const blue = new Material(crate, materials, "blue")
+
             //         custom string userProperties:blender:object_name = "Cube"
             const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
             attr.custom = true
@@ -305,29 +312,30 @@ describe("USD", () => {
             //     doubleSided,                             DONE
             //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
             //     subsetFamily:materialBind:familyType     DONE
-            const blue = new GeomSubset(crate, mesh, "blue")
-            new Attribute(crate, blue, "elementType", "face")
-            new Attribute(crate, blue, "familyName", "materialBind")
-            new IntArrayAttr(crate, blue, "indices", [5])
-            new Relationship(crate, blue, "material:binding", { explicit: [] })
+            const blueFace = new GeomSubset(crate, mesh, "blue")
+            // new Attribute(crate, blue, "elementType", "face") // needs to be token, needs variablity
+            new VariabilityAttr(crate, blueFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(crate, blueFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(crate, blueFace, "indices", [5])
+            new Relationship(crate, blueFace, "material:binding", { explicit: [ blue ] })
 
-            const gray = new GeomSubset(crate, mesh, "gray")
-            new Attribute(crate, gray, "elementType", "face")
-            new Attribute(crate, gray, "familyName", "materialBind")
-            new IntArrayAttr(crate, gray, "indices", [1, 2, 3])
-            new Relationship(crate, gray, "material:binding", { explicit: [] })
+            const grayFace = new GeomSubset(crate, mesh, "gray")
+            new VariabilityAttr(crate, grayFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(crate, grayFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(crate, grayFace, "indices", [1, 2, 3])
+            new Relationship(crate, grayFace, "material:binding", { explicit: [ gray ] })
 
-            const green = new GeomSubset(crate, mesh, "green")
-            new Attribute(crate, green, "elementType", "face")
-            new Attribute(crate, green, "familyName", "materialBind")
-            new IntArrayAttr(crate, green, "indices", [4])
-            new Relationship(crate, green, "material:binding", { explicit: [] })
+            const greenFace = new GeomSubset(crate, mesh, "green")
+            new VariabilityAttr(crate, greenFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(crate, greenFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(crate, greenFace, "indices", [4])
+            new Relationship(crate, greenFace, "material:binding", { explicit: [ green ] })
 
-            const red = new GeomSubset(crate, mesh, "red")
-            new Attribute(crate, red, "elementType", "face")
-            new Attribute(crate, red, "familyName", "materialBind")
-            new IntArrayAttr(crate, red, "indices", [0])
-            new Relationship(crate, red, "material:binding", { explicit: [] })
+            const redFace = new GeomSubset(crate, mesh, "red")
+            new VariabilityAttr(crate, redFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(crate, redFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(crate, redFace, "indices", [0])
+            new Relationship(crate, redFace, "material:binding", { explicit: [ red ] })
 
             // _materials
 

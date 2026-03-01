@@ -182,6 +182,96 @@ export class PseudoRoot extends UsdNode {
     }
 }
 
+export class Scope extends UsdNode {
+    constructor(crate: Crate, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Scope")
+        )
+
+        const properties = this.children
+            .filter(it => !isPrim(it.getType()))
+            .map(it => it.name)
+        if (properties.length > 0) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setTokenVector("properties", properties)
+            )
+        }
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setTokenVector("primChildren", this.children
+                .filter(it => isPrim(it.getType()))
+                .map(it => it.name))
+        )
+
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        for (const child of this.children) {
+            child.encode()
+        }
+    }
+
+}
+
+export class Material extends UsdNode {
+    constructor(crate: Crate, parent: UsdNode, name: string) {
+        super(crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+    }
+
+    override encode() {
+        const crate = this.crate
+        this.index = crate.paths._nodes.length
+        crate.paths._nodes.push(this)
+        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        crate.specs.pathIndexes.push(this.index)
+        crate.specs.specTypeIndexes.push(this.spec_type!)
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Material")
+        )
+
+        const properties = this.children
+            .filter(it => !isPrim(it.getType()))
+            .map(it => it.name)
+        if (properties.length > 0) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setTokenVector("properties", properties)
+            )
+        }
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setTokenVector("primChildren", this.children
+                .filter(it => isPrim(it.getType()))
+                .map(it => it.name))
+        )
+
+        crate.fieldsets.fieldset_indices.push(-1)
+
+        for (const child of this.children) {
+            child.encode()
+        }
+    }
+
+}
+
 export class Xform extends Xformable {
     customData?: any
 

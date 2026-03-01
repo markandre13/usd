@@ -23,6 +23,7 @@ export class UsdNode {
     children: UsdNode[] = [];
     depth?: number
 
+    // use -1 when the index is yet unknown
     index: number
     spec_type?: SpecType
     fieldset_index?: number
