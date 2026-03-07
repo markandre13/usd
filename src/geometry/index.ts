@@ -218,8 +218,6 @@ export class Mesh extends PointBased {
         }
     }
 
-
-
     // override encode() {
     //     const crate = this.crate
     //     this.index = crate.paths._nodes.length
@@ -325,14 +323,12 @@ export class DomeLight extends UsdNode {
     constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
+        new FloatAttr(crate, this, "inputs:intensity", 1)
+        new AssetPathAttr(crate, this, "inputs:texture:file", "./textures/color_0C0C0C.exr")
     }
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
@@ -340,30 +336,6 @@ export class DomeLight extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "DomeLight")
         )
-
-        const properties: string[] = []
-
-        {
-            properties.push("inputs:intensity")
-            new FloatAttr(crate, this, "inputs:intensity", 1)
-        }
-
-        {
-            properties.push("inputs:texture:file")
-            new AssetPathAttr(crate, this, "inputs:texture:file", "./textures/color_0C0C0C.exr")
-        }
-
-
-        // userProperties:blender:data_name
-
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setTokenVector("properties", properties)
-        )
-
-        crate.fieldsets.fieldset_indices.push(-1)
-        for (const child of this.children) {
-            child.encode()
-        }
     }
 }
 
@@ -379,45 +351,9 @@ export class Scope extends Imageable {
     constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
+        this.specifier = Specifier.Def
+        this.typeName = "Scope"
     }
-
-    override encode() {
-        const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
-
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setSpecifier("specifier", Specifier.Def)
-        )
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setToken("typeName", "Scope")
-        )
-
-        const properties = this.children
-            .filter(it => !isPrim(it.getType()))
-            .map(it => it.name)
-        if (properties.length > 0) {
-            crate.fieldsets.fieldset_indices.push(
-                crate.fields.setTokenVector("properties", properties)
-            )
-        }
-
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setTokenVector("primChildren", this.children
-                .filter(it => isPrim(it.getType()))
-                .map(it => it.name))
-        )
-
-        crate.fieldsets.fieldset_indices.push(-1)
-
-        for (const child of this.children) {
-            child.encode()
-        }
-    }
-
 }
 
 export class Material extends UsdNode {
@@ -426,13 +362,14 @@ export class Material extends UsdNode {
         this.spec_type = SpecType.Prim
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
+        // this.index = crate.paths._nodes.length
+        // crate.paths._nodes.push(this)
+        // crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        // crate.specs.pathIndexes.push(this.index)
+        // crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
@@ -441,26 +378,26 @@ export class Material extends UsdNode {
             crate.fields.setToken("typeName", "Material")
         )
 
-        const properties = this.children
-            .filter(it => !isPrim(it.getType()))
-            .map(it => it.name)
-        if (properties.length > 0) {
-            crate.fieldsets.fieldset_indices.push(
-                crate.fields.setTokenVector("properties", properties)
-            )
-        }
+        // const properties = this.children
+        //     .filter(it => !isPrim(it.getType()))
+        //     .map(it => it.name)
+        // if (properties.length > 0) {
+        //     crate.fieldsets.fieldset_indices.push(
+        //         crate.fields.setTokenVector("properties", properties)
+        //     )
+        // }
 
-        crate.fieldsets.fieldset_indices.push(
-            crate.fields.setTokenVector("primChildren", this.children
-                .filter(it => isPrim(it.getType()))
-                .map(it => it.name))
-        )
+        // crate.fieldsets.fieldset_indices.push(
+        //     crate.fields.setTokenVector("primChildren", this.children
+        //         .filter(it => isPrim(it.getType()))
+        //         .map(it => it.name))
+        // )
 
-        crate.fieldsets.fieldset_indices.push(-1)
+        // crate.fieldsets.fieldset_indices.push(-1)
 
-        for (const child of this.children) {
-            child.encode()
-        }
+        // for (const child of this.children) {
+        //     child.encode()
+        // }
     }
 
 }
@@ -477,47 +414,83 @@ export class Attribute extends UsdNode {
         this.custom = false
     }
 
-    override encode() {
-        const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
-
-        if (this.custom) {
-            crate.fieldsets.fieldset_indices.push(
-                crate.fields.setBoolean("custom", true)
-            )
-        }
+    override encodeFields(): void {
+        super.encodeFields()
+        this.setBoolean("custom", this.custom)
+        // if (this.custom) {
+        //     this.crate.fieldsets.fieldset_indices.push(
+        //         this.crate.fields.setBoolean("custom", true)
+        //     )
+        // }
         switch (typeof this.value) {
             case "string":
-                crate.fieldsets.fieldset_indices.push(
-                    crate.fields.setToken("typeName", "string")
+                this.crate.fieldsets.fieldset_indices.push(
+                    this.crate.fields.setToken("typeName", "string")
                 )
-                crate.fieldsets.fieldset_indices.push(
-                    crate.fields.setString("default", this.value)
+                this.crate.fieldsets.fieldset_indices.push(
+                    this.crate.fields.setString("default", this.value)
                 )
                 break
             case "boolean":
-                crate.fieldsets.fieldset_indices.push(
-                    crate.fields.setToken("typeName", "bool")
+                this.crate.fieldsets.fieldset_indices.push(
+                    this.crate.fields.setToken("typeName", "bool")
                 )
                 if (this.variability) {
-                    crate.fieldsets.fieldset_indices.push(
-                        crate.fields.setVariability("variability", this.variability)
+                    this.crate.fieldsets.fieldset_indices.push(
+                        this.crate.fields.setVariability("variability", this.variability)
                     )
                 }
-                crate.fieldsets.fieldset_indices.push(
-                    crate.fields.setBoolean("default", this.value)
+                this.crate.fieldsets.fieldset_indices.push(
+                    this.crate.fields.setBoolean("default", this.value)
                 )
                 break
             default:
                 throw Error("TBD")
         }
 
-        crate.fieldsets.fieldset_indices.push(-1)
     }
+
+    // override encode() {
+    //     const crate = this.crate
+    //     this.index = crate.paths._nodes.length
+    //     crate.paths._nodes.push(this)
+    //     crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+    //     crate.specs.pathIndexes.push(this.index)
+    //     crate.specs.specTypeIndexes.push(this.spec_type!)
+
+    //     if (this.custom) {
+    //         crate.fieldsets.fieldset_indices.push(
+    //             crate.fields.setBoolean("custom", true)
+    //         )
+    //     }
+    //     switch (typeof this.value) {
+    //         case "string":
+    //             crate.fieldsets.fieldset_indices.push(
+    //                 crate.fields.setToken("typeName", "string")
+    //             )
+    //             crate.fieldsets.fieldset_indices.push(
+    //                 crate.fields.setString("default", this.value)
+    //             )
+    //             break
+    //         case "boolean":
+    //             crate.fieldsets.fieldset_indices.push(
+    //                 crate.fields.setToken("typeName", "bool")
+    //             )
+    //             if (this.variability) {
+    //                 crate.fieldsets.fieldset_indices.push(
+    //                     crate.fields.setVariability("variability", this.variability)
+    //                 )
+    //             }
+    //             crate.fieldsets.fieldset_indices.push(
+    //                 crate.fields.setBoolean("default", this.value)
+    //             )
+    //             break
+    //         default:
+    //             throw Error("TBD")
+    //     }
+
+    //     crate.fieldsets.fieldset_indices.push(-1)
+    // }
 }
 
 export class GeomSubset extends UsdNode {
@@ -525,13 +498,13 @@ export class GeomSubset extends UsdNode {
         super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Prim
     }
-    override encode() {
+    override encodeFields() {
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
+        // this.index = crate.paths._nodes.length
+        // crate.paths._nodes.push(this)
+        // crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
+        // crate.specs.pathIndexes.push(this.index)
+        // crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
@@ -540,14 +513,14 @@ export class GeomSubset extends UsdNode {
             crate.fields.setToken("typeName", "GeomSubset")
         )
 
-        const properties = this.children
-            .filter(it => !isPrim(it.getType()))
-            .map(it => it.name)
-        if (properties.length > 0) {
-            crate.fieldsets.fieldset_indices.push(
-                crate.fields.setTokenVector("properties", properties)
-            )
-        }
+        // const properties = this.children
+        //     .filter(it => !isPrim(it.getType()))
+        //     .map(it => it.name)
+        // if (properties.length > 0) {
+        //     crate.fieldsets.fieldset_indices.push(
+        //         crate.fields.setTokenVector("properties", properties)
+        //     )
+        // }
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setTokenListOp("apiSchemas", {
@@ -555,19 +528,19 @@ export class GeomSubset extends UsdNode {
             })
         )
 
-        const primChildren = this.children
-            .filter(it => isPrim(it.getType()))
-            .map(it => it.name)
-        if (primChildren.length !== 0) {
-            crate.fieldsets.fieldset_indices.push(
-                crate.fields.setTokenVector("primChildren", primChildren)
-            )
-        }
+        // const primChildren = this.children
+        //     .filter(it => isPrim(it.getType()))
+        //     .map(it => it.name)
+        // if (primChildren.length !== 0) {
+        //     crate.fieldsets.fieldset_indices.push(
+        //         crate.fields.setTokenVector("primChildren", primChildren)
+        //     )
+        // }
 
-        crate.fieldsets.fieldset_indices.push(-1)
+        // crate.fieldsets.fieldset_indices.push(-1)
 
-        for (const child of this.children) {
-            child.encode()
-        }
+        // for (const child of this.children) {
+        //     child.encode()
+        // }
     }
 }

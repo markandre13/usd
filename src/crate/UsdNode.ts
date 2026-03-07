@@ -47,8 +47,8 @@ export class UsdNode {
      */
     encode() {
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
+        // this.index = crate.paths._nodes.length
+        // crate.paths._nodes.push(this)
 
         crate.specs.pathIndexes.push(this.index)
         crate.specs.specTypeIndexes.push(this.spec_type!)
@@ -71,6 +71,13 @@ export class UsdNode {
                 break
             }
         }
+    }
+    numberOfNodes(): number {
+        let n = 1
+        for(const child of this.children) {
+            n += child.numberOfNodes()
+        }
+        return n
     }
 
     getType(): SpecType {
@@ -173,8 +180,10 @@ export class UsdNode {
         }
         return result
     }
-    serialize(arg: UsdNodeSerializeArgs) {
+    flatten(arg: UsdNodeSerializeArgs) {
         this.depth = arg.depth
+        this.index = arg.thisIndex
+        this.crate.paths._nodes[this.index] = this
         const thisIndex = arg.thisIndex
         const hasChild = this.children.length > 0
         let hasSibling = false
@@ -210,7 +219,7 @@ export class UsdNode {
         for (const child of this.children) {
             ++arg.thisIndex
             ++arg.depth
-            child.serialize(arg)
+            child.flatten(arg)
             --arg.depth
         }
         if (jump === JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING) {

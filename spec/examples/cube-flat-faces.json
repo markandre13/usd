@@ -267,7 +267,7 @@
                                             "type": "Int",
                                             "inline": false,
                                             "array": true,
-                                            "compressed": false,
+                                            "compressed": true,
                                             "value": [
                                                 4,
                                                 4,
@@ -295,7 +295,7 @@
                                             "type": "Int",
                                             "inline": false,
                                             "array": true,
-                                            "compressed": false,
+                                            "compressed": true,
                                             "value": [
                                                 0,
                                                 4,
@@ -586,6 +586,16 @@
                     "name": "env_light",
                     "prim": true,
                     "fields": {
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "inputs:intensity",
+                                "inputs:texture:file"
+                            ]
+                        },
                         "specifier": {
                             "type": "Specifier",
                             "inline": true,
@@ -599,16 +609,6 @@
                             "array": false,
                             "compressed": false,
                             "value": "DomeLight"
-                        },
-                        "properties": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": [
-                                "inputs:intensity",
-                                "inputs:texture:file"
-                            ]
                         }
                     },
                     "children": [

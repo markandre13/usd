@@ -111,8 +111,8 @@ export class Crate {
 
         const writer = this.writer
         this.bootstrap.skip(writer) // leave room for bootstrap
-        root.encode()
         this.paths.encode(this.tokens, root)
+        root.encode()
 
         // WRITE SECTIONS
 
@@ -196,7 +196,7 @@ export class Crate {
                 this.paths._nodes![idx] = parentNode
             } else {
                 if (thisIndex >= arg.tokenIndexes.length) {
-                    throw Error(`Index ${thisIndex} exceeds tokenIndexes.length = ${arg.tokenIndexes.length}`)
+                    throw Error(`Index ${thisIndex} exceeds tokenIndexes.length = ${arg.tokenIndexes.length}. $}`)
                 }
                 // console.log(`tokenIndex = ${tokenIndex}, _tokens.size = ${this.tokens!.length}`)
                 const elemToken = this.tokens.get(tokenIndex)

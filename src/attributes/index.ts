@@ -12,14 +12,9 @@ export class FloatAttr extends UsdNode {
         this.value = value
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "float")
@@ -27,7 +22,6 @@ export class FloatAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setFloat("default", this.value)
         )
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -39,14 +33,9 @@ export class AssetPathAttr extends UsdNode {
         this.value = value
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "asset")
@@ -54,7 +43,6 @@ export class AssetPathAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setAssetPath("default", this.value)
         )
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -66,23 +54,16 @@ export class Relationship extends UsdNode {
         this.value = value
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setVariability("variability", Variability.Uniform)
         )
-        // console.log(`targetPaths: %o`, this.value)
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setPathListOp("targetPaths", this.value)
         )
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -96,14 +77,9 @@ export class VariabilityAttr extends UsdNode {
         this.value = value
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "token")
@@ -114,8 +90,6 @@ export class VariabilityAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("default", this.value)
         )
-
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -127,13 +101,9 @@ export class IntArrayAttr extends UsdNode {
         this.value = value
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "int[]")
@@ -141,8 +111,6 @@ export class IntArrayAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setIntArray("default", this.value)
         )
-
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -163,13 +131,9 @@ export class Vec3fArrayAttr extends UsdNode {
         this.typeName = typeName
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", this.typeName)
@@ -182,8 +146,6 @@ export class Vec3fArrayAttr extends UsdNode {
                 crate.fields.setToken("interpolation", this.interpolation)
             )
         }
-
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }
 
@@ -204,13 +166,9 @@ export class Vec2fArrayAttr extends UsdNode {
         this.typeName = typeName
     }
 
-    override encode() {
+    override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
-        this.index = crate.paths._nodes.length
-        crate.paths._nodes.push(this)
-        crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        crate.specs.pathIndexes.push(this.index)
-        crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", this.typeName)
@@ -223,7 +181,5 @@ export class Vec2fArrayAttr extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setVec2fArray("default", this.value)
         )
-
-        crate.fieldsets.fieldset_indices.push(-1)
     }
 }

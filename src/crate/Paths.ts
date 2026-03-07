@@ -11,7 +11,7 @@ export const JUMP_NO_CHILD_NEXT_IS_SIBLING = 0
 export const JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING = -99
 
 export class Paths {
-    _nodes: UsdNode[] = []
+    _nodes!: UsdNode[]
 
     num_nodes!: number
     pathIndexes!: number[]
@@ -22,6 +22,9 @@ export class Paths {
         if (reader instanceof Reader) {
             this.num_nodes = reader.getUint64()
             const numEncodedPaths = reader.getUint64()
+
+            // console.log(`Paths(reader): num_nodes = ${this.num_nodes}, numEncodedPaths = ${numEncodedPaths}`)
+
             this.pathIndexes = reader.getCompressedIntegers(numEncodedPaths)
             this.tokenIndexes = reader.getCompressedIntegers(numEncodedPaths)
             this.jumps = reader.getCompressedIntegers(numEncodedPaths)
@@ -29,7 +32,10 @@ export class Paths {
     }
 
     encode(tokens: Tokens, root: UsdNode) {
+        this._nodes = new Array(root.numberOfNodes())
+
         const numEncodedPaths = this._nodes.length
+        // console.log(`numEncodedPaths = ${numEncodedPaths}`)
 
         this.pathIndexes = new Array<number>(numEncodedPaths)
         this.tokenIndexes = new Array<number>(numEncodedPaths)
@@ -45,29 +51,33 @@ export class Paths {
             depth: 0
         }
 
-        root.serialize(arg)
-        // console.log(`Path.encode()`)
-        // for (let i = 0; i < numEncodedPaths; ++i) {
-        //     const node = this._nodes[i]
-        //     const jump = this.jumps[i]
-        //     let jumpName = "?"
-        //     switch (jump) {
-        //         case JUMP_NO_CHILD_NO_SIBLINGS:
-        //             jumpName = 'no child, no sibling'
-        //             break
-        //         case JUMP_NEXT_IS_CHILD_NO_SIBLINGS:
-        //             jumpName = 'next is child, no sibling'
-        //             break
-        //         case JUMP_NO_CHILD_NEXT_IS_SIBLING:
-        //             jumpName = 'no child, next is sibling'
-        //             break
-        //         default:
-        //             jumpName = `next is child, sibling at ${i + jump}`
-        //             break
-        //     }
+        root.flatten(arg)
+        this.print()
+    }
 
-        //     console.log(`    ${i} ${"  ".repeat(node.depth!)} ${node.name} ${jumpName}`)
-        // }
+    print() {
+        console.log(`Path.print()`)
+        const numEncodedPaths = this.pathIndexes.length
+        for (let i = 0; i < numEncodedPaths; ++i) {
+            const node = this._nodes[i]
+            const jump = this.jumps[i]
+            let jumpName = "?"
+            switch (jump) {
+                case JUMP_NO_CHILD_NO_SIBLINGS:
+                    jumpName = 'no child, no sibling'
+                    break
+                case JUMP_NEXT_IS_CHILD_NO_SIBLINGS:
+                    jumpName = 'next is child, no sibling'
+                    break
+                case JUMP_NO_CHILD_NEXT_IS_SIBLING:
+                    jumpName = 'no child, next is sibling'
+                    break
+                default:
+                    jumpName = `next is child, sibling at ${i + jump}`
+                    break
+            }
+            console.log(`    ${i} ${node.index} ${"  ".repeat(node.depth!)} ${node.name} (${jumpName})`)
+        }
     }
 
     serialize(writer: Writer) {
@@ -83,8 +93,8 @@ export class Paths {
         // console.log(`tokenIndexes   : ${arg.tokenIndexes}`)
         // console.log(`jumps          : ${arg.jumps}`)
 
-        writer.writeUint64(this._nodes.length) // number of nodes
-        writer.writeUint64(this._nodes.length) // number of paths
+        writer.writeUint64(this._nodes!.length) // number of nodes
+        writer.writeUint64(this._nodes!.length) // number of paths
         writer.writeCompressedIntWithoutSize(this.pathIndexes)
         writer.writeCompressedIntWithoutSize(this.tokenIndexes)
         writer.writeCompressedIntWithoutSize(this.jumps)

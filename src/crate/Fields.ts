@@ -250,10 +250,12 @@ export class Fields {
                         const o = v as object
                         if (o instanceof UsdNode) {
                             if (o.index === -1) {
-                                // throw Error(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
-                                console.log(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
+                                throw Error(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
+                                // console.log(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
                             }
                             this.data.writeUint32(o.index)
+                        } else {
+                            throw Error("yikes")
                         }
                         break
                 }

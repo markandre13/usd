@@ -10,6 +10,9 @@ export class Specs {
     constructor(reader?: Reader) {
         if (reader !== undefined) {
             const num_specs = reader.getUint64()
+
+            // console.log(`Specs(reader): num_specs = ${num_specs}`)
+
             this.pathIndexes = reader.getCompressedIntegers(num_specs)
             this.fieldsetIndexes = reader.getCompressedIntegers(num_specs)
             this.specTypeIndexes = reader.getCompressedIntegers(num_specs)

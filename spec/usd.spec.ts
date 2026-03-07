@@ -56,7 +56,6 @@ import { Variability } from "../src/crate/Variability.ts"
 
 function makeCreate() {
     const crate = new Crate()
-    crate.paths._nodes = []
     return crate
 }
 
@@ -296,6 +295,7 @@ describe("USD", () => {
                 const crate = makeCreate()
                 const pseudoRoot = new PseudoRoot(crate)
                 const mesh = new Mesh(pseudoRoot, "Cube")
+                mesh.blenderDataName = "Cube"
 
                 const rootOut = wrangle(pseudoRoot, "/Cube").toJSON()
 
@@ -777,6 +777,7 @@ describe("USD", () => {
 
             //         def Mesh "Mesh" ( active = true ) { ... }
             const mesh = new Mesh(cube, "Mesh")
+            mesh.blenderDataName = "Mesh"
             mesh.extent = [-1, -1, -1, 1, 1, 1]
             mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
             mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
@@ -814,8 +815,7 @@ describe("USD", () => {
             const buffer = readFileSync("spec/examples/cube-colored-faces.json")
             const orig = JSON.parse(buffer.toString())
 
-            const crate = new Crate()
-            crate.paths._nodes = []
+            const crate = makeCreate()
 
             // #usda 1.0
             // (
@@ -856,20 +856,21 @@ describe("USD", () => {
             attr.custom = true
 
             //         def Mesh "Mesh" ( active = true ) { ... }
-            const mesh = new Mesh(cube, "Cube")
+            const mesh = new Mesh(cube, "Mesh")
+            mesh.blenderDataName = "Mesh"
+
             mesh.doubleSided = true
             mesh.extent = [-1, -1, -1, 1, 1, 1]
             mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
             mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
             mesh.materialBinding = {
-                // explicit: ["/root/_materials/red"]
+                explicit: [red]
             }
             mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
             mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
             mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
             mesh.subdivisionScheme = "none"
             mesh.familyType = "nonOverlapping"
-            mesh.blenderDataName = "Cube"
 
             // this mesh addionally needs
             //   fields:
@@ -880,7 +881,6 @@ describe("USD", () => {
             //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
             //     subsetFamily:materialBind:familyType     DONE
             const blueFace = new GeomSubset(mesh, "blue")
-            // new Attribute(crate, blue, "elementType", "face") // needs to be token, needs variablity
             new VariabilityAttr(crate, blueFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(crate, blueFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(crate, blueFace, "indices", [5])
@@ -1180,10 +1180,9 @@ describe("USD", () => {
             expect(fieldssetIn.fieldset_indices).to.deep.equal(fieldsetsOut.fieldset_indices)
         })
         it(SectionName.PATHS, () => {
-            const pathsOut = new Paths()
+            const crate = makeCreate()
+            const pathsOut = crate.paths
             pathsOut._nodes = []
-
-            const crate = {} as any as Crate
 
             const pseudoRoot = new UsdNode(crate, undefined, pathsOut._nodes.length, "/", true)
             pseudoRoot.spec_type = SpecType.PseudoRoot
