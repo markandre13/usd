@@ -6,8 +6,8 @@ import { Variability } from "../crate/Variability.js"
 
 export class FloatAttr extends UsdNode {
     value: number
-    constructor(crate: Crate, parent: UsdNode, name: string, value: number) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, value: number) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
     }
@@ -27,8 +27,8 @@ export class FloatAttr extends UsdNode {
 
 export class AssetPathAttr extends UsdNode {
     value: string
-    constructor(crate: Crate, parent: UsdNode, name: string, value: string) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, value: string) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
     }

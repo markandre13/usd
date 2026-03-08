@@ -305,6 +305,22 @@ export class Fields {
         }
         return idx
     }
+    setVec3f(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint8(value[0])
+        this.valueReps.writeUint8(value[1])
+        this.valueReps.writeUint8(value[2])
+        this.valueReps.writeUint8(0)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Vec3f)
+        this.valueReps.writeUint8(IsInlinedBit)
+        // this.data.writeUint64(value.length / 3)
+        // for (let i = 0; i < value.length; ++i) {
+        //     this.data.writeFloat32(value[i])
+        // }
+        return idx
+    }
     setVec3fArray(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))

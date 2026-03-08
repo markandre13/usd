@@ -20,10 +20,10 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, DomeLight, GeomSubset, Material, Mesh, Scope, Xform } from "../src/geometry/index.ts"
+import { Attribute, AttributeX, DomeLight, GeomSubset, Material, Mesh, Scope, Shader, Xform } from "../src/geometry/index.ts"
 import { PseudoRoot } from "../src/geometry/PseudoRoot.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
-import { IntArrayAttr, Relationship, VariabilityAttr } from "../src/attributes/index.ts"
+import { FloatAttr, IntArrayAttr, Relationship, VariabilityAttr } from "../src/attributes/index.ts"
 import { Variability } from "../src/crate/Variability.ts"
 
 // UsdObject < UsdProperty < UsdAttribute
@@ -844,15 +844,68 @@ describe("USD", () => {
 
             //     def Xform "Cube" {
             const cube = new Xform(root, "Cube")
-
             const materials = new Scope(root, "_materials")
-            const red = new Material(materials, "red")
-            const gray = new Material(materials, "gray")
-            const green = new Material(materials, "green")
             const blue = new Material(materials, "blue")
-            // outputs:surface
+            // outputs:surface                 : ConnectionPaths(...)
             // userProperties:blender:data_name
-            // new Principled_BSDF
+            blue.blenderDataName = "blue"
+            const blueShader = new Shader(blue, "Principled_BSDF")
+            new AttributeX(blueShader, "info:id", (node) => {
+                node.setToken("typeName", "token")
+                node.setVariability("variability", Variability.Uniform)
+                node.setToken("default", "UsdPreviewSurface")
+            })
+            new AttributeX(blueShader, "inputs:clearcoat", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 0)
+            })
+            new AttributeX(blueShader, "inputs:clearcoatRoughness", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 0.029999999329447746)
+            })
+            new AttributeX(blueShader, "inputs:diffuseColor", (node) => {
+                node.setToken("typeName", "color3f")
+                node.setVec3f("default", [0, 0, 1])
+            })
+            // FIXME: AFTER THIS ONE FIELDS ARE NOT ENCODED AT ALL
+            // CHECK ENCODING, WRITE AND READ
+            new AttributeX(blueShader, "inputs:ior", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 1.5)
+            })
+            new AttributeX(blueShader, "inputs:metallic", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 0)
+            })
+            new AttributeX(blueShader, "inputs:opacity", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 1)
+            })
+            new AttributeX(blueShader, "inputs:roughness", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 0.5)
+            })
+            new AttributeX(blueShader, "inputs:specular", (node) => {
+                node.setToken("typeName", "float")
+                node.setFloat("default", 0.5)
+            })
+            new AttributeX(blueShader, "outputs:surface", (node) => {
+                node.setToken("typeName", "token")
+            })
+
+
+            // "outputs:surface",
+            // "inputs:diffuseColor",
+            // "inputs:metallic",
+            // "inputs:roughness",
+            // "inputs:ior",
+            // "inputs:opacity",
+            // "inputs:specular",
+            // "inputs:clearcoatRoughness"
+
+            const green = new Material(materials, "green")
+            const gray = new Material(materials, "gray")
+            const red = new Material(materials, "red")
 
             //         custom string userProperties:blender:object_name = "Cube"
             const attr = new Attribute(cube, "userProperties:blender:object_name", "Cube")

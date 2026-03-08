@@ -6,6 +6,7 @@ import { ValueRep } from "./ValueRep.js"
 import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "./Paths.ts"
 import type { Specifier } from "./Specifier.ts"
 import type { ListOp } from "./Fields.ts"
+import type { Variability } from "./Variability.ts"
 
 // Prim
 //   Attribute (is a property)
@@ -228,56 +229,77 @@ export class UsdNode {
         }
     }
 
-    protected setBoolean(name: string, value?: boolean) {
+    setBoolean(name: string, value?: boolean) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setBoolean(name, value)
             )
         }
     }
-    protected setDouble(name: string, value?: number) {
+    setFloat(name: string, value?: number) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setFloat(name, value)
+            )
+        }
+    }
+    setVec3f(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec3f(name, value)
+            )
+        }
+    }
+    setDouble(name: string, value?: number) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setDouble(name, value)
             )
         }
     }
-    protected setString(name: string, value?: string) {
+    setString(name: string, value?: string) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setString(name, value)
             )
         }
     }
-    protected setSpecifier(name: string, value?: Specifier) {
+    setSpecifier(name: string, value?: Specifier) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setSpecifier(name, value)
             )
         }
     }
-    protected setToken(name: string, value?: string) {
+    setVariability(name: string, value?: Variability) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVariability(name, value)
+            )
+        }
+    }
+    setToken(name: string, value?: string) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setToken(name, value)
             )
         }
     }
-    protected setTokenVector(name: string, value?: string[]) {
+    setTokenVector(name: string, value?: string[]) {
         if (value && value.length > 0) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setTokenVector(name, value)
             )
         }
     }
-    protected setTokenListOp(name: string, value?: ListOp<string>) {
+    setTokenListOp(name: string, value?: ListOp<string>) {
         if (value) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setTokenListOp("apiSchemas", value)
             )
         }
     }
-    protected setCustomData(name: string, value?: any) {
+    setCustomData(name: string, value?: any) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setDictionary(name, value)

@@ -179,6 +179,7 @@ export class Mesh extends PointBased {
         }
     }
 
+    // also in Material
     set blenderDataName(value: string | undefined) {
         this.deleteChild("userProperties:blender:data_name")
         if (value !== undefined) {
@@ -218,114 +219,14 @@ export class Mesh extends PointBased {
             new VariabilityAttr(this, "subsetFamily:materialBind:familyType", Variability.Uniform, value)
         }
     }
-
-    // override encode() {
-    //     const crate = this.crate
-    //     this.index = crate.paths._nodes.length
-    //     crate.paths._nodes.push(this)
-    //     crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-    //     crate.specs.pathIndexes.push(this.index)
-    //     crate.specs.specTypeIndexes.push(this.spec_type!)
-
-    //     crate.fieldsets.fieldset_indices.push(
-    //         crate.fields.setSpecifier("specifier", Specifier.Def)
-    //     )
-    //     crate.fieldsets.fieldset_indices.push(
-    //         crate.fields.setToken("typeName", "Mesh")
-    //     )
-    //     if (this.apiSchemas) {
-    //         crate.fieldsets.fieldset_indices.push(
-    //             crate.fields.setTokenListOp("apiSchemas", this.apiSchemas)
-    //         )
-    //     }
-
-    //     const primChildren = this.children
-    //         .filter(it => isPrim(it.getType()))
-    //         .map(it => it.name)
-    //     if (primChildren.length > 0) {
-    //         crate.fieldsets.fieldset_indices.push(
-    //             crate.fields.setTokenVector("primChildren", primChildren)
-    //         )
-    //     }
-
-    //     crate.fieldsets.fieldset_indices.push(
-    //         crate.fields.setBoolean("active", true)
-    //     )
-
-    //     const properties: string[] = []
-
-    //     if (this.doubleSided !== undefined) {
-    //         properties.push("doubleSided")
-    //         const attr = new Attribute(crate, this, "doubleSided", this.doubleSided)
-    //         attr.variability = Variability.Uniform
-    //     }
-
-    //     if (this.extent !== undefined) {
-    //         properties.push("extent")
-    //         new Vec3fArrayAttr(crate, this, "extent", this.extent, "float3[]")
-    //     }
-    //     if (this.faceVertexCounts !== undefined) {
-    //         properties.push("faceVertexCounts")
-    //         new IntArrayAttr(crate, this, "faceVertexCounts", this.faceVertexCounts)
-    //     }
-    //     if (this.faceVertexIndices !== undefined) {
-    //         properties.push("faceVertexIndices")
-    //         new IntArrayAttr(crate, this, "faceVertexIndices", this.faceVertexIndices)
-    //     }
-    //     if (this.materialBinding !== undefined) {
-    //         properties.push("material:binding")
-    //         new Relationship(crate, this, "material:binding", this.materialBinding)
-    //     }
-    //     if (this.normals !== undefined) {
-    //         properties.push("normals")
-    //         const attr = new Vec3fArrayAttr(crate, this, "normals", this.normals, "normal3f[]")
-    //         attr.interpolation = "faceVarying"
-    //     }
-    //     if (this.points !== undefined) {
-    //         properties.push("points")
-    //         new Vec3fArrayAttr(crate, this, "points", this.points, "point3f[]")
-    //     }
-    //     if (this.texCoords) {
-    //         properties.push("primvars:st")
-    //         const attr = new Vec2fArrayAttr(crate, this, "primvars:st", this.texCoords, "texCoord2f[]")
-    //         attr.interpolation = "faceVarying"
-    //     }
-
-    //     {
-    //         properties.push("subdivisionScheme")
-    //         new VariabilityAttr(crate, this, "subdivisionScheme", Variability.Uniform, this.subdivisionScheme)
-    //     }
-
-    //     if (this.nonOverlapping === true) {
-    //         properties.push("subsetFamily:materialBind:familyType")
-    //         new VariabilityAttr(crate, this, "subsetFamily:materialBind:familyType", Variability.Uniform, "nonOverlapping")
-    //     }
-
-    //     {
-    //         properties.push("userProperties:blender:data_name")
-    //         const attr = new Attribute(crate, this, "userProperties:blender:data_name", this.name)
-    //         attr.custom = true
-    //     }
-
-    //     // userProperties:blender:data_name
-
-    //     crate.fieldsets.fieldset_indices.push(
-    //         crate.fields.setTokenVector("properties", properties)
-    //     )
-
-    //     crate.fieldsets.fieldset_indices.push(-1)
-    //     for (const child of this.children) {
-    //         child.encode()
-    //     }
-    // }
 }
 
 export class DomeLight extends UsdNode {
     constructor(crate: Crate, parent: UsdNode, name: string) {
         super(crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
-        new FloatAttr(crate, this, "inputs:intensity", 1)
-        new AssetPathAttr(crate, this, "inputs:texture:file", "./textures/color_0C0C0C.exr")
+        new FloatAttr(this, "inputs:intensity", 1)
+        new AssetPathAttr(this, "inputs:texture:file", "./textures/color_0C0C0C.exr")
     }
     override encodeFields() {
         super.encodeFields()
@@ -362,15 +263,16 @@ export class Material extends UsdNode {
         super(parent.crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
     }
-
+    set blenderDataName(value: string | undefined) {
+        this.deleteChild("userProperties:blender:data_name")
+        if (value !== undefined) {
+            const attr = new Attribute(this, "userProperties:blender:data_name", value)
+            attr.custom = true
+        }
+    }
     override encodeFields() {
         super.encodeFields()
         const crate = this.crate
-        // this.index = crate.paths._nodes.length
-        // crate.paths._nodes.push(this)
-        // crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        // crate.specs.pathIndexes.push(this.index)
-        // crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
@@ -378,29 +280,45 @@ export class Material extends UsdNode {
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setToken("typeName", "Material")
         )
+    }
+}
 
-        // const properties = this.children
-        //     .filter(it => !isPrim(it.getType()))
-        //     .map(it => it.name)
-        // if (properties.length > 0) {
-        //     crate.fieldsets.fieldset_indices.push(
-        //         crate.fields.setTokenVector("properties", properties)
-        //     )
-        // }
+export class Shader extends UsdNode {
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, false)
+        this.spec_type = SpecType.Prim
+    }
+    set blenderDataName(value: string | undefined) {
+        this.deleteChild("userProperties:blender:data_name")
+        if (value !== undefined) {
+            const attr = new Attribute(this, "userProperties:blender:data_name", value)
+            attr.custom = true
+        }
+    }
+    override encodeFields(): void {
+        super.encodeFields()
+        const crate = this.crate
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setSpecifier("specifier", Specifier.Def)
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "Shader")
+        )
+    }
+}
 
-        // crate.fieldsets.fieldset_indices.push(
-        //     crate.fields.setTokenVector("primChildren", this.children
-        //         .filter(it => isPrim(it.getType()))
-        //         .map(it => it.name))
-        // )
-
-        // crate.fieldsets.fieldset_indices.push(-1)
-
-        // for (const child of this.children) {
-        //     child.encode()
-        // }
+export class AttributeX extends UsdNode {
+    private _fields: (node: UsdNode) => void
+    constructor(parent: UsdNode, name: string, fields: (node: UsdNode) => void) {
+        super(parent.crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this._fields = fields
     }
 
+    override encodeFields(): void {
+        super.encodeFields()
+        this._fields(this)
+    }
 }
 
 export class Attribute extends UsdNode {
@@ -418,11 +336,6 @@ export class Attribute extends UsdNode {
     override encodeFields(): void {
         super.encodeFields()
         this.setBoolean("custom", this.custom)
-        // if (this.custom) {
-        //     this.crate.fieldsets.fieldset_indices.push(
-        //         this.crate.fields.setBoolean("custom", true)
-        //     )
-        // }
         switch (typeof this.value) {
             case "string":
                 this.crate.fieldsets.fieldset_indices.push(
@@ -450,48 +363,6 @@ export class Attribute extends UsdNode {
         }
 
     }
-
-    // override encode() {
-    //     const crate = this.crate
-    //     this.index = crate.paths._nodes.length
-    //     crate.paths._nodes.push(this)
-    //     crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-    //     crate.specs.pathIndexes.push(this.index)
-    //     crate.specs.specTypeIndexes.push(this.spec_type!)
-
-    //     if (this.custom) {
-    //         crate.fieldsets.fieldset_indices.push(
-    //             crate.fields.setBoolean("custom", true)
-    //         )
-    //     }
-    //     switch (typeof this.value) {
-    //         case "string":
-    //             crate.fieldsets.fieldset_indices.push(
-    //                 crate.fields.setToken("typeName", "string")
-    //             )
-    //             crate.fieldsets.fieldset_indices.push(
-    //                 crate.fields.setString("default", this.value)
-    //             )
-    //             break
-    //         case "boolean":
-    //             crate.fieldsets.fieldset_indices.push(
-    //                 crate.fields.setToken("typeName", "bool")
-    //             )
-    //             if (this.variability) {
-    //                 crate.fieldsets.fieldset_indices.push(
-    //                     crate.fields.setVariability("variability", this.variability)
-    //                 )
-    //             }
-    //             crate.fieldsets.fieldset_indices.push(
-    //                 crate.fields.setBoolean("default", this.value)
-    //             )
-    //             break
-    //         default:
-    //             throw Error("TBD")
-    //     }
-
-    //     crate.fieldsets.fieldset_indices.push(-1)
-    // }
 }
 
 export class GeomSubset extends UsdNode {
@@ -502,11 +373,6 @@ export class GeomSubset extends UsdNode {
     override encodeFields() {
         super.encodeFields()
         const crate = this.crate
-        // this.index = crate.paths._nodes.length
-        // crate.paths._nodes.push(this)
-        // crate.specs.fieldsetIndexes.push(crate.fieldsets.fieldset_indices.length)
-        // crate.specs.pathIndexes.push(this.index)
-        // crate.specs.specTypeIndexes.push(this.spec_type!)
 
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setSpecifier("specifier", Specifier.Def)
@@ -515,34 +381,10 @@ export class GeomSubset extends UsdNode {
             crate.fields.setToken("typeName", "GeomSubset")
         )
 
-        // const properties = this.children
-        //     .filter(it => !isPrim(it.getType()))
-        //     .map(it => it.name)
-        // if (properties.length > 0) {
-        //     crate.fieldsets.fieldset_indices.push(
-        //         crate.fields.setTokenVector("properties", properties)
-        //     )
-        // }
-
         crate.fieldsets.fieldset_indices.push(
             crate.fields.setTokenListOp("apiSchemas", {
                 prepend: ["MaterialBindingAPI"]
             })
         )
-
-        // const primChildren = this.children
-        //     .filter(it => isPrim(it.getType()))
-        //     .map(it => it.name)
-        // if (primChildren.length !== 0) {
-        //     crate.fieldsets.fieldset_indices.push(
-        //         crate.fields.setTokenVector("primChildren", primChildren)
-        //     )
-        // }
-
-        // crate.fieldsets.fieldset_indices.push(-1)
-
-        // for (const child of this.children) {
-        //     child.encode()
-        // }
     }
 }
