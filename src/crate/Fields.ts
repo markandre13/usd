@@ -226,12 +226,17 @@ export class Fields {
     _setListOp(name: string, value: ListOp<string | number | UsdNode>, type: CrateDataType) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
+        const offset = this.data.tell()
+        // if (value.explicit && value.explicit[0] instanceof UsdNode) {
+        //     console.log(`ValueRep(): write ListOp<UsdNode> @ ${offset}`)
+        // }
         this.valueReps.writeUint32(this.data.tell())
         this.valueReps.skip(2)
         this.valueReps.writeUint8(type)
         this.valueReps.writeUint8(0)
 
-        new ListOpHeader(this.data, value)
+        const hdr = new ListOpHeader(this.data, value)
+        // console.log(hdr.toString())
 
         const write = (list?: (string | number | UsdNode)[]) => {
             if (list === undefined) {
@@ -249,6 +254,7 @@ export class Fields {
                     case "object":
                         const o = v as object
                         if (o instanceof UsdNode) {
+                            // console.log(`_setListOp(${name}, ${o.index} %o)`, o.toJSON())
                             if (o.index === -1) {
                                 throw Error(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)
                                 // console.log(`Fields._setListOp("${name}", ...): object ${o.getFullPathName()} has no index yet`)

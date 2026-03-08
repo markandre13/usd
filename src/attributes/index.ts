@@ -48,8 +48,8 @@ export class AssetPathAttr extends UsdNode {
 
 export class Relationship extends UsdNode {
     value: ListOp<UsdNode>
-    constructor(crate: Crate, parent: UsdNode, name: string, value: ListOp<UsdNode>) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, value: ListOp<UsdNode>) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Relationship
         this.value = value
     }
@@ -70,8 +70,8 @@ export class Relationship extends UsdNode {
 export class VariabilityAttr extends UsdNode {
     variability: Variability
     value: string
-    constructor(crate: Crate, parent: UsdNode, name: string, variability: Variability, value: string) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, variability: Variability, value: string) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.variability = variability
         this.value = value
@@ -95,8 +95,8 @@ export class VariabilityAttr extends UsdNode {
 
 export class IntArrayAttr extends UsdNode {
     value: ArrayLike<number>
-    constructor(crate: Crate, parent: UsdNode, name: string, value: ArrayLike<number>) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, value: ArrayLike<number>) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
     }
@@ -119,13 +119,12 @@ export class Vec3fArrayAttr extends UsdNode {
     typeName: string
     interpolation?: string
     constructor(
-        crate: Crate,
         parent: UsdNode,
         name: string,
         value: ArrayLike<number>,
         typeName: "float3[]" | "point3f[]" | "normal3f[]"
     ) {
-        super(crate, parent, -1, name, false)
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
         this.typeName = typeName

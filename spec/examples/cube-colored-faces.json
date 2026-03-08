@@ -690,6 +690,18 @@
                                     "name": "blue",
                                     "prim": true,
                                     "fields": {
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "elementType",
+                                                "familyName",
+                                                "indices",
+                                                "material:binding"
+                                            ]
+                                        },
                                         "specifier": {
                                             "type": "Specifier",
                                             "inline": true,
@@ -703,18 +715,6 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": "GeomSubset"
-                                        },
-                                        "properties": {
-                                            "type": "TokenVector",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": [
-                                                "elementType",
-                                                "familyName",
-                                                "indices",
-                                                "material:binding"
-                                            ]
                                         },
                                         "apiSchemas": {
                                             "type": "TokenListOp",
@@ -840,6 +840,18 @@
                                     "name": "gray",
                                     "prim": true,
                                     "fields": {
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "elementType",
+                                                "familyName",
+                                                "indices",
+                                                "material:binding"
+                                            ]
+                                        },
                                         "specifier": {
                                             "type": "Specifier",
                                             "inline": true,
@@ -853,18 +865,6 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": "GeomSubset"
-                                        },
-                                        "properties": {
-                                            "type": "TokenVector",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": [
-                                                "elementType",
-                                                "familyName",
-                                                "indices",
-                                                "material:binding"
-                                            ]
                                         },
                                         "apiSchemas": {
                                             "type": "TokenListOp",
@@ -992,6 +992,18 @@
                                     "name": "green",
                                     "prim": true,
                                     "fields": {
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "elementType",
+                                                "familyName",
+                                                "indices",
+                                                "material:binding"
+                                            ]
+                                        },
                                         "specifier": {
                                             "type": "Specifier",
                                             "inline": true,
@@ -1005,18 +1017,6 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": "GeomSubset"
-                                        },
-                                        "properties": {
-                                            "type": "TokenVector",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": [
-                                                "elementType",
-                                                "familyName",
-                                                "indices",
-                                                "material:binding"
-                                            ]
                                         },
                                         "apiSchemas": {
                                             "type": "TokenListOp",
@@ -1142,6 +1142,18 @@
                                     "name": "red",
                                     "prim": true,
                                     "fields": {
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "elementType",
+                                                "familyName",
+                                                "indices",
+                                                "material:binding"
+                                            ]
+                                        },
                                         "specifier": {
                                             "type": "Specifier",
                                             "inline": true,
@@ -1155,18 +1167,6 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": "GeomSubset"
-                                        },
-                                        "properties": {
-                                            "type": "TokenVector",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": [
-                                                "elementType",
-                                                "familyName",
-                                                "indices",
-                                                "material:binding"
-                                            ]
                                         },
                                         "apiSchemas": {
                                             "type": "TokenListOp",
@@ -1296,6 +1296,18 @@
                     "name": "_materials",
                     "prim": true,
                     "fields": {
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "red",
+                                "gray",
+                                "green",
+                                "blue"
+                            ]
+                        },
                         "specifier": {
                             "type": "Specifier",
                             "inline": true,
@@ -1309,18 +1321,6 @@
                             "array": false,
                             "compressed": false,
                             "value": "Scope"
-                        },
-                        "primChildren": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": [
-                                "red",
-                                "gray",
-                                "green",
-                                "blue"
-                            ]
                         }
                     },
                     "children": [
@@ -2731,6 +2731,16 @@
                     "name": "env_light",
                     "prim": true,
                     "fields": {
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "inputs:intensity",
+                                "inputs:texture:file"
+                            ]
+                        },
                         "specifier": {
                             "type": "Specifier",
                             "inline": true,
@@ -2744,16 +2754,6 @@
                             "array": false,
                             "compressed": false,
                             "value": "DomeLight"
-                        },
-                        "properties": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": [
-                                "inputs:intensity",
-                                "inputs:texture:file"
-                            ]
                         }
                     },
                     "children": [

@@ -220,19 +220,23 @@ export class ValueRep {
                 }
                 break
             case CrateDataType.PathListOp:
+                // TODO: type might be number, string or UsdNode
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
                     const hdr = new ListOpHeader(reader)
+                    // console.log(`ValueRep(): read PathListOp @ ${reader.offset}, ${hdr}`)
                     const read = () => {
                         const n = reader.getUint64()
+                        // console.log(`  n = ${n}`)
                         const arr = new Array<string>(n)
                         for (let i = 0; i < n; ++i) {
                             arr[i] = crate.paths._nodes[reader.getUint32()].getFullPathName()
+                            // console.log(`  arr[${i}] = %o`, arr[i])
                         }
                         return arr
                     }
                     const list = {} as any
-                    if (hdr.isExplicit()) {
+                    if (hdr.hasExplicitItems()) {
                         list.explicit = read()
                     }
                     if (hdr.hasAddedItems()) {

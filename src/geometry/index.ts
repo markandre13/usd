@@ -77,7 +77,7 @@ export class Boundable extends Xformable {
     set extent(value: ArrayLike<number> | undefined) {
         this.deleteChild("extent")
         if (value !== undefined) {
-            new Vec3fArrayAttr(this.crate, this, "extent", value, "float3[]")
+            new Vec3fArrayAttr(this, "extent", value, "float3[]")
         }
     }
 }
@@ -95,7 +95,8 @@ export class Gprim extends Boundable {
     set doubleSided(value: boolean | undefined) {
         this.deleteChild("doubleSided")
         if (value !== undefined) {
-            const attr = new Attribute(this.crate, this, "doubleSided", value)
+            const attr = new Attribute(this, "doubleSided", value)
+            attr.custom = undefined
             attr.variability = Variability.Uniform
         }
     }
@@ -119,7 +120,7 @@ export class PointBased extends Gprim {
     set points(value: ArrayLike<number> | undefined) {
         this.deleteChild("points")
         if (value !== undefined) {
-            new Vec3fArrayAttr(this.crate, this, "points", value, "point3f[]")
+            new Vec3fArrayAttr(this, "points", value, "point3f[]")
         }
     }
     set texCoords(value: ArrayLike<number> | undefined) {
@@ -134,7 +135,7 @@ export class PointBased extends Gprim {
     set normals(value: ArrayLike<number> | undefined) {
         this.deleteChild("normals")
         if (value !== undefined) {
-            const attr = new Vec3fArrayAttr(this.crate, this, "normals", value, "normal3f[]")
+            const attr = new Vec3fArrayAttr(this, "normals", value, "normal3f[]")
             attr.interpolation = "faceVarying"
         }
     }
@@ -143,7 +144,7 @@ export class PointBased extends Gprim {
     set subdivisionScheme(value: SubdivisionScheme | undefined) {
         this.deleteChild("subdivisionScheme")
         if (value !== undefined) {
-            new VariabilityAttr(this.crate, this, "subdivisionScheme", Variability.Uniform, value)
+            new VariabilityAttr(this, "subdivisionScheme", Variability.Uniform, value)
         }
     }
     interpolateBoundary: InterpolateBoundary = "edgeAndCorner"
@@ -181,7 +182,7 @@ export class Mesh extends PointBased {
     set blenderDataName(value: string | undefined) {
         this.deleteChild("userProperties:blender:data_name")
         if (value !== undefined) {
-            const attr = new Attribute(this.crate, this, "userProperties:blender:data_name", value)
+            const attr = new Attribute(this, "userProperties:blender:data_name", value)
             attr.custom = true
         }
     }
@@ -189,13 +190,13 @@ export class Mesh extends PointBased {
     set faceVertexIndices(value: ArrayLike<number> | undefined) {
         this.deleteChild("faceVertexIndices")
         if (value !== undefined) {
-            new IntArrayAttr(this.crate, this, "faceVertexIndices", value)
+            new IntArrayAttr(this, "faceVertexIndices", value)
         }
     }
     set faceVertexCounts(value: ArrayLike<number> | undefined) {
         this.deleteChild("faceVertexCounts")
         if (value !== undefined) {
-            new IntArrayAttr(this.crate, this, "faceVertexCounts", value)
+            new IntArrayAttr(this, "faceVertexCounts", value)
         }
     }
 
@@ -205,7 +206,7 @@ export class Mesh extends PointBased {
         this.deleteChild("material:binding")
         if (value !== undefined) {
             this.prependApiSchema("MaterialBindingAPI")
-            new Relationship(this.crate, this, "material:binding", value)
+            new Relationship(this, "material:binding", value)
         }
     }
     /**
@@ -214,7 +215,7 @@ export class Mesh extends PointBased {
     set familyType(value: "partition" | "nonOverlapping" | "unrestricted" | undefined) {
         this.deleteChild("subsetFamily:materialBind:familyType")
         if (value !== undefined) {
-            new VariabilityAttr(this.crate, this, "subsetFamily:materialBind:familyType", Variability.Uniform, value)
+            new VariabilityAttr(this, "subsetFamily:materialBind:familyType", Variability.Uniform, value)
         }
     }
 
@@ -348,8 +349,8 @@ export class DomeLight extends UsdNode {
  * defined in pxr/usd/usdGeom/schema.usda
  */
 export class Scope extends Imageable {
-    constructor(crate: Crate, parent: UsdNode, name: string) {
-        super(crate, parent, -1, name, true)
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
         this.specifier = Specifier.Def
         this.typeName = "Scope"
@@ -357,8 +358,8 @@ export class Scope extends Imageable {
 }
 
 export class Material extends UsdNode {
-    constructor(crate: Crate, parent: UsdNode, name: string) {
-        super(crate, parent, -1, name, true)
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
     }
 
@@ -405,10 +406,10 @@ export class Material extends UsdNode {
 export class Attribute extends UsdNode {
     value: any
     variability?: Variability
-    custom: boolean
+    custom?: boolean
 
-    constructor(crate: Crate, parent: UsdNode, name: string, value: any) {
-        super(crate, parent, -1, name, false)
+    constructor(parent: UsdNode, name: string, value: any) {
+        super(parent.crate, parent, -1, name, false)
         this.spec_type = SpecType.Attribute
         this.value = value
         this.custom = false
@@ -499,6 +500,7 @@ export class GeomSubset extends UsdNode {
         this.spec_type = SpecType.Prim
     }
     override encodeFields() {
+        super.encodeFields()
         const crate = this.crate
         // this.index = crate.paths._nodes.length
         // crate.paths._nodes.push(this)

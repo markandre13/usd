@@ -75,11 +75,12 @@ enum Bits {
     HasAppendedItemsBit = 1 << 6
 };
 
-export class ListOpHeader {
+export class ListOpHeader<T> extends Object {
     _bits!: number
     constructor(reader: Reader)
-    constructor(reader: Writer, value: ListOp)
-    constructor(reader: Reader | Writer, value?: ListOp) {
+    constructor(reader: Writer, value: ListOp<T>)
+    constructor(reader: Reader | Writer, value?: ListOp<T>) {
+        super()
         if (reader instanceof Reader) {
             this._bits = reader.getUint8()
         } else
@@ -117,4 +118,7 @@ export class ListOpHeader {
     hasAppendedItems() { return this._bits & Bits.HasAppendedItemsBit }
     hasDeletedItems() { return this._bits & Bits.HasDeletedItemsBit }
     hasOrderedItems() { return this._bits & Bits.HasOrderedItemsBit }
+    override toString() {
+        return `ListOpHeader {${this.isExplicit()?"isExplicit ":""}${this.hasExplicitItems()?"explicit ":""}}`
+    }
 }

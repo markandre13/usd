@@ -52,7 +52,7 @@ export class Paths {
         }
 
         root.flatten(arg)
-        this.print()
+        // this.print()
     }
 
     print() {

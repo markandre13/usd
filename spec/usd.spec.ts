@@ -772,7 +772,7 @@ describe("USD", () => {
             const cube = new Xform(root, "Cube")
 
             //         custom string userProperties:blender:object_name = "Cube"
-            const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
+            const attr = new Attribute(cube, "userProperties:blender:object_name", "Cube")
             attr.custom = true
 
             //         def Mesh "Mesh" ( active = true ) { ... }
@@ -845,19 +845,21 @@ describe("USD", () => {
             //     def Xform "Cube" {
             const cube = new Xform(root, "Cube")
 
-            const materials = new Scope(crate, root, "_materials")
-            const red = new Material(crate, materials, "red")
-            const gray = new Material(crate, materials, "gray")
-            const green = new Material(crate, materials, "green")
-            const blue = new Material(crate, materials, "blue")
+            const materials = new Scope(root, "_materials")
+            const red = new Material(materials, "red")
+            const gray = new Material(materials, "gray")
+            const green = new Material(materials, "green")
+            const blue = new Material(materials, "blue")
+            // outputs:surface
+            // userProperties:blender:data_name
+            // new Principled_BSDF
 
             //         custom string userProperties:blender:object_name = "Cube"
-            const attr = new Attribute(crate, cube, "userProperties:blender:object_name", "Cube")
+            const attr = new Attribute(cube, "userProperties:blender:object_name", "Cube")
             attr.custom = true
 
             //         def Mesh "Mesh" ( active = true ) { ... }
-            const mesh = new Mesh(cube, "Mesh")
-            mesh.blenderDataName = "Mesh"
+            const mesh = new Mesh(cube, "Cube")
 
             mesh.doubleSided = true
             mesh.extent = [-1, -1, -1, 1, 1, 1]
@@ -871,6 +873,7 @@ describe("USD", () => {
             mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
             mesh.subdivisionScheme = "none"
             mesh.familyType = "nonOverlapping"
+            mesh.blenderDataName = "Cube"
 
             // this mesh addionally needs
             //   fields:
@@ -881,28 +884,28 @@ describe("USD", () => {
             //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
             //     subsetFamily:materialBind:familyType     DONE
             const blueFace = new GeomSubset(mesh, "blue")
-            new VariabilityAttr(crate, blueFace, "elementType", Variability.Uniform, "face")
-            new VariabilityAttr(crate, blueFace, "familyName", Variability.Uniform, "materialBind")
-            new IntArrayAttr(crate, blueFace, "indices", [5])
-            new Relationship(crate, blueFace, "material:binding", { explicit: [blue] })
+            new VariabilityAttr(blueFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(blueFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(blueFace, "indices", [5])
+            new Relationship(blueFace, "material:binding", { explicit: [blue] })
 
             const grayFace = new GeomSubset(mesh, "gray")
-            new VariabilityAttr(crate, grayFace, "elementType", Variability.Uniform, "face")
-            new VariabilityAttr(crate, grayFace, "familyName", Variability.Uniform, "materialBind")
-            new IntArrayAttr(crate, grayFace, "indices", [1, 2, 3])
-            new Relationship(crate, grayFace, "material:binding", { explicit: [gray] })
+            new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(grayFace, "indices", [1, 2, 3])
+            new Relationship(grayFace, "material:binding", { explicit: [gray] })
 
             const greenFace = new GeomSubset(mesh, "green")
-            new VariabilityAttr(crate, greenFace, "elementType", Variability.Uniform, "face")
-            new VariabilityAttr(crate, greenFace, "familyName", Variability.Uniform, "materialBind")
-            new IntArrayAttr(crate, greenFace, "indices", [4])
-            new Relationship(crate, greenFace, "material:binding", { explicit: [green] })
+            new VariabilityAttr(greenFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(greenFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(greenFace, "indices", [4])
+            new Relationship(greenFace, "material:binding", { explicit: [green] })
 
             const redFace = new GeomSubset(mesh, "red")
-            new VariabilityAttr(crate, redFace, "elementType", Variability.Uniform, "face")
-            new VariabilityAttr(crate, redFace, "familyName", Variability.Uniform, "materialBind")
-            new IntArrayAttr(crate, redFace, "indices", [0])
-            new Relationship(crate, redFace, "material:binding", { explicit: [red] })
+            new VariabilityAttr(redFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(redFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(redFace, "indices", [0])
+            new Relationship(redFace, "material:binding", { explicit: [red] })
 
             // _materials
 
