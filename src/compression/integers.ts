@@ -141,11 +141,11 @@ function decodeNHelper(N: number, arg: ARGD) {
                 arg.vintsIn += 1
                 break
             case Code.Int16:
-                arg.prevVal += arg.src.getInt16(arg.vintsIn)
+                arg.prevVal += arg.src.getInt16(arg.vintsIn, true)
                 arg.vintsIn += 2
                 break
             case Code.Int32:
-                arg.prevVal += arg.src.getInt32(arg.vintsIn)
+                arg.prevVal += arg.src.getInt32(arg.vintsIn, true)
                 arg.vintsIn += 4
                 break
         }

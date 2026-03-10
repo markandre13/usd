@@ -1302,10 +1302,10 @@
                             "array": false,
                             "compressed": false,
                             "value": [
-                                "red",
+                                "blue",
                                 "gray",
                                 "green",
-                                "blue"
+                                "red"
                             ]
                         },
                         "specifier": {
@@ -1679,15 +1679,6 @@
                             "name": "gray",
                             "prim": true,
                             "fields": {
-                                "primChildren": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": [
-                                        "Principled_BSDF"
-                                    ]
-                                },
                                 "properties": {
                                     "type": "TokenVector",
                                     "inline": false,
@@ -1696,6 +1687,15 @@
                                     "value": [
                                         "outputs:surface",
                                         "userProperties:blender:data_name"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "Principled_BSDF"
                                     ]
                                 },
                                 "specifier": {
@@ -2029,15 +2029,6 @@
                             "name": "green",
                             "prim": true,
                             "fields": {
-                                "primChildren": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": [
-                                        "Principled_BSDF"
-                                    ]
-                                },
                                 "properties": {
                                     "type": "TokenVector",
                                     "inline": false,
@@ -2046,6 +2037,15 @@
                                     "value": [
                                         "outputs:surface",
                                         "userProperties:blender:data_name"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "Principled_BSDF"
                                     ]
                                 },
                                 "specifier": {
@@ -2379,15 +2379,6 @@
                             "name": "red",
                             "prim": true,
                             "fields": {
-                                "primChildren": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": [
-                                        "Principled_BSDF"
-                                    ]
-                                },
                                 "properties": {
                                     "type": "TokenVector",
                                     "inline": false,
@@ -2396,6 +2387,15 @@
                                     "value": [
                                         "outputs:surface",
                                         "userProperties:blender:data_name"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "Principled_BSDF"
                                     ]
                                 },
                                 "specifier": {

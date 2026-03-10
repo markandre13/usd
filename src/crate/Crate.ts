@@ -4,7 +4,7 @@ import { TableOfContents } from "./TableOfContents.ts"
 import { UsdNode } from "./UsdNode.ts"
 import { Tokens } from "./Tokens.ts"
 import { Fields } from "./Fields.ts"
-import { Paths } from "./Paths.ts"
+import { JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS, Paths } from "./Paths.ts"
 import { Specs } from "./Specs.ts"
 import { FieldSets } from "./FieldSets.ts"
 import { Strings } from "./Strings.ts"
@@ -12,6 +12,7 @@ import type { ValueRep } from "./ValueRep.ts"
 import { SectionName } from "./SectionName.ts"
 import { Writer } from "./Writer.ts"
 import { Section } from "./Section.ts"
+import { SpecType } from "./SpecType.ts"
 
 interface BuildNodeTreeArgs {
     pathIndexes: number[]
@@ -75,7 +76,7 @@ export class Crate {
             // move this into buildNodeTree so that we can directly instantiate classes like Xform, Mesh, ...
             for (let i = 0; i < this.specs.pathIndexes.length; ++i) {
                 if (this.paths._nodes[i] === undefined) {
-                    for(let j=0; j<this.paths._nodes.length; ++j) {
+                    for (let j = 0; j < this.paths._nodes.length; ++j) {
                         if (this.paths._nodes[j] === undefined) {
                             console.log(`this.paths._nodes[${j}] === undefined`)
                         }
@@ -229,6 +230,56 @@ export class Crate {
             }
         }
         return root
+    }
+
+    print() {
+        console.log(`Path.print()`)
+        const numEncodedPaths = this.paths.pathIndexes.length
+        for (let i = 0; i < numEncodedPaths; ++i) {
+            const node = this.paths._nodes[i]
+
+            const jump = this.paths.jumps[i]
+            let jumpName = "?"
+            switch (jump) {
+                case JUMP_NO_CHILD_NO_SIBLINGS:
+                    jumpName = 'no child, no sibling'
+                    break
+                case JUMP_NEXT_IS_CHILD_NO_SIBLINGS:
+                    jumpName = 'next is child, no sibling'
+                    break
+                case JUMP_NO_CHILD_NEXT_IS_SIBLING:
+                    jumpName = 'no child, next is sibling'
+                    break
+                default:
+                    jumpName = `next is child, sibling at ${i + jump}`
+                    break
+            }
+
+            const idx = this.specs.pathIndexes[i]
+            const fieldset_index = this.specs.fieldsetIndexes[idx]
+            const spec_type = this.specs.specTypeIndexes[idx]
+
+            let fields = ""
+            // console.log(`fieldset indices lenght: ${this.fieldsets.fieldset_indices.length}`)
+            for (let i = fieldset_index; this.fieldsets.fieldset_indices[i] >= 0; ++i) {
+                const fieldIndex = this.fieldsets.fieldset_indices[i]
+                fields=`${fields}${fieldIndex},`
+// console.log(`  fieldIndex=${fieldIndex}`)
+// console.log(this.fields)
+                // const field = this.fields.fields![fieldIndex]
+                // const token = this.tokens.get(field.tokenIndex)
+
+                // fields = `${fields}${token},`
+            }
+            // for (let j = fieldset_index!; this.fieldsets.fieldset_indices[j] >= 0; ++j) {
+            //     const fieldIndex = this.fieldsets.fieldset_indices[i]
+            //     // const field = this.fields.fields![fieldIndex]
+            //     // this.fields.tokenIndices[f]
+            //     // const token = this.tokens.get(field.tokenIndex)
+            //     fields = `${fieldIndex};`
+            // }
+            console.log(`    ${i} ${node.index} ${"  ".repeat(node.depth!)} ${node.name} (${jumpName}), ${SpecType[spec_type]}, fields @ ${fieldset_index}: ${fields}`)
+        }
     }
 
 }
