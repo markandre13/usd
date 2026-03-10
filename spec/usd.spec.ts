@@ -802,6 +802,12 @@ describe("USD", () => {
             compare(pseudoRootIn, orig)
         })
         xit("cube-smooth-faces.usdc") // only normals differ from cube-flat-faces.usdc
+        // FIXME: comparing the USDC as USDA created by ./tusdcat reveals a difference:
+        //        ./tusdcat  /Users/mark/js/usd/spec/examples/cube-flat-colored-faces.usdc > orig.usda
+        //        ./tusdcat  /Users/mark/js/usd/constructed.usdc  > constructed.usda
+        //        diff -u orig.usda constructed.usda 
+        //        - int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        //        + int[] faceVertexCounts = [9, 0, 28672, 65536, 6148, 0]
         it.only("cube-flat-colored-faces.usdc", () => {
             // read the original
             // const buffer = readFileSync("spec/examples/cube-flat-colored-faces.usdc")
@@ -809,7 +815,7 @@ describe("USD", () => {
             // const origPseudoRoot = stageIn.getPrimAtPath("/")!
             // const orig = origPseudoRoot.toJSON()
             // console.log(JSON.stringify(orig, undefined, 4))
-            // writeFileSync("spec/examples/cube-colored-faces.json", JSON.stringify(orig, undefined, 4))
+            // // writeFileSync("spec/examples/cube-colored-faces.json", JSON.stringify(orig, undefined, 4))
 
             // read an adjusted, good enough variant of the original's JSON
             const buffer = readFileSync("spec/examples/cube-colored-faces.json")
@@ -851,7 +857,7 @@ describe("USD", () => {
                 // userProperties:blender:data_name
                 const data: {
                     surface?: ListOp<UsdNode>
-                } = { }
+                } = {}
                 new AttributeX(material, "outputs:surface", (node) => {
                     node.setToken("typeName", "token")
                     node.setPathListOp("connectionPaths", data.surface)
@@ -895,11 +901,12 @@ describe("USD", () => {
                     node.setToken("typeName", "float")
                     node.setFloat("default", 0.5)
                 })
+                // token outputs:surface
                 const surface = new AttributeX(shader, "outputs:surface", (node) => {
                     node.setToken("typeName", "token")
-                    // FIXME: is that it? or did decoding fail????
                 })
                 data.surface = {
+                    isExplicit: true,
                     explicit: [surface]
                 }
                 return material
@@ -921,6 +928,7 @@ describe("USD", () => {
             mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
             mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
             mesh.materialBinding = {
+                isExplicit: true,
                 explicit: [red]
             }
             mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
@@ -942,25 +950,27 @@ describe("USD", () => {
             new VariabilityAttr(blueFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(blueFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(blueFace, "indices", [5])
-            new Relationship(blueFace, "material:binding", { explicit: [blue] })
+            new Relationship(blueFace, "material:binding", { isExplicit: true, explicit: [blue] })
 
             const grayFace = new GeomSubset(mesh, "gray")
             new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(grayFace, "indices", [1, 2, 3])
-            new Relationship(grayFace, "material:binding", { explicit: [gray] })
+            new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] }
+            )
 
             const greenFace = new GeomSubset(mesh, "green")
             new VariabilityAttr(greenFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(greenFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(greenFace, "indices", [4])
-            new Relationship(greenFace, "material:binding", { explicit: [green] })
+            new Relationship(greenFace, "material:binding", { isExplicit: true, explicit: [green] }
+            )
 
             const redFace = new GeomSubset(mesh, "red")
             new VariabilityAttr(redFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(redFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(redFace, "indices", [0])
-            new Relationship(redFace, "material:binding", { explicit: [red] })
+            new Relationship(redFace, "material:binding", { isExplicit: true, explicit: [red] })
 
             // _materials
 
@@ -983,7 +993,7 @@ describe("USD", () => {
             writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
             writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
 
-            // compare(pseudoRootIn, orig)
+            compare(pseudoRootIn, orig)
         })
         it("cube-smooth-sharp-faces.usdc")
         it("armature.usdc")

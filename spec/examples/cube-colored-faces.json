@@ -370,6 +370,7 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": {
+                                                "isExplicit": true,
                                                 "explicit": [
                                                     "/root/_materials/red"
                                                 ]
@@ -826,6 +827,7 @@
                                                     "array": false,
                                                     "compressed": false,
                                                     "value": {
+                                                        "isExplicit": true,
                                                         "explicit": [
                                                             "/root/_materials/blue"
                                                         ]
@@ -978,6 +980,7 @@
                                                     "array": false,
                                                     "compressed": false,
                                                     "value": {
+                                                        "isExplicit": true,
                                                         "explicit": [
                                                             "/root/_materials/gray"
                                                         ]
@@ -1128,6 +1131,7 @@
                                                     "array": false,
                                                     "compressed": false,
                                                     "value": {
+                                                        "isExplicit": true,
                                                         "explicit": [
                                                             "/root/_materials/green"
                                                         ]
@@ -1278,6 +1282,7 @@
                                                     "array": false,
                                                     "compressed": false,
                                                     "value": {
+                                                        "isExplicit": true,
                                                         "explicit": [
                                                             "/root/_materials/red"
                                                         ]
@@ -1382,6 +1387,7 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": {
+                                                "isExplicit": true,
                                                 "explicit": [
                                                     "/root/_materials/blue/Principled_BSDF/outputs:surface"
                                                 ]
@@ -1732,6 +1738,7 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": {
+                                                "isExplicit": true,
                                                 "explicit": [
                                                     "/root/_materials/gray/Principled_BSDF/outputs:surface"
                                                 ]
@@ -2082,6 +2089,7 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": {
+                                                "isExplicit": true,
                                                 "explicit": [
                                                     "/root/_materials/green/Principled_BSDF/outputs:surface"
                                                 ]
@@ -2432,6 +2440,7 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": {
+                                                "isExplicit": true,
                                                 "explicit": [
                                                     "/root/_materials/red/Principled_BSDF/outputs:surface"
                                                 ]

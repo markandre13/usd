@@ -14,6 +14,7 @@ import { Specifier } from "./Specifier.ts"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
 import { decompressFromBuffer } from "../index.ts"
+import type { ListOp } from "./Fields.ts"
 
 // value's location.
 // FIXME: last two bytes are type info
@@ -197,7 +198,10 @@ export class ValueRep {
                         }
                         return arr
                     }
-                    const list = {} as any
+                    const list: ListOp<string> = {}
+                    if (hdr.isExplicit()) {
+                        list.isExplicit = true
+                    }
                     if (hdr.hasExplicitItems()) {
                         list.explicit = read()
                     }
@@ -235,7 +239,10 @@ export class ValueRep {
                         }
                         return arr
                     }
-                    const list = {} as any
+                    const list: ListOp<string> = {}
+                    if (hdr.isExplicit()) {
+                        list.isExplicit = true
+                    }
                     if (hdr.hasExplicitItems()) {
                         list.explicit = read()
                     }

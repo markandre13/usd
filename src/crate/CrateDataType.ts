@@ -66,7 +66,7 @@ export enum CrateDataType {
 }
 
 enum Bits {
-    IsExplicitBit = 1 << 0,
+    IsExplicitBit = 1,
     HasExplicitItemsBit = 1 << 1,
     HasAddedItemsBit = 1 << 2,
     HasDeletedItemsBit = 1 << 3,
@@ -118,7 +118,4 @@ export class ListOpHeader<T> extends Object {
     hasAppendedItems() { return this._bits & Bits.HasAppendedItemsBit }
     hasDeletedItems() { return this._bits & Bits.HasDeletedItemsBit }
     hasOrderedItems() { return this._bits & Bits.HasOrderedItemsBit }
-    override toString() {
-        return `ListOpHeader {${this.isExplicit()?"isExplicit ":""}${this.hasExplicitItems()?"explicit ":""}}`
-    }
 }
