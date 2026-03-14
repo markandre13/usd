@@ -1,0 +1,2511 @@
+{
+    "type": "PseudoRoot",
+    "name": "/",
+    "prim": true,
+    "fields": {
+        "primChildren": {
+            "type": "TokenVector",
+            "inline": false,
+            "array": false,
+            "compressed": false,
+            "value": [
+                "root"
+            ]
+        },
+        "metersPerUnit": {
+            "type": "Double",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": 1
+        },
+        "documentation": {
+            "type": "String",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": "Blender v5.0.1"
+        },
+        "upAxis": {
+            "type": "Token",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": "Z"
+        },
+        "defaultPrim": {
+            "type": "Token",
+            "inline": true,
+            "array": false,
+            "compressed": false,
+            "value": "root"
+        }
+    },
+    "children": [
+        {
+            "type": "Prim",
+            "name": "root",
+            "prim": true,
+            "fields": {
+                "primChildren": {
+                    "type": "TokenVector",
+                    "inline": false,
+                    "array": false,
+                    "compressed": false,
+                    "value": [
+                        "Light",
+                        "Camera",
+                        "Armature",
+                        "_materials",
+                        "env_light"
+                    ]
+                },
+                "specifier": {
+                    "type": "Specifier",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Def"
+                },
+                "typeName": {
+                    "type": "Token",
+                    "inline": true,
+                    "array": false,
+                    "compressed": false,
+                    "value": "Xform"
+                },
+                "customData": {
+                    "type": "Dictionary",
+                    "inline": false,
+                    "array": false,
+                    "compressed": false,
+                    "value": {
+                        "Blender": {
+                            "generated": true
+                        }
+                    }
+                }
+            },
+            "children": [
+                {
+                    "type": "Prim",
+                    "name": "Armature",
+                    "prim": true,
+                    "fields": {
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "userProperties:blender:object_name",
+                                "xformOp:rotateXYZ",
+                                "xformOp:scale",
+                                "xformOp:translate",
+                                "xformOpOrder"
+                            ]
+                        },
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "Armature",
+                                "Cube"
+                            ]
+                        },
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "SkelRoot"
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Attribute",
+                            "name": "userProperties:blender:object_name",
+                            "prim": false,
+                            "fields": {
+                                "custom": {
+                                    "type": "Bool",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": true
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "string"
+                                },
+                                "default": {
+                                    "type": "String",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Armature"
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:rotateXYZ",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        0,
+                                        0,
+                                        0
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:scale",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        1,
+                                        1,
+                                        1
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:translate",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "double3"
+                                },
+                                "default": {
+                                    "type": "Vec3d",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOpOrder",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "token[]"
+                                },
+                                "variability": {
+                                    "type": "Variability",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Uniform"
+                                },
+                                "default": {
+                                    "type": "Token",
+                                    "inline": false,
+                                    "array": true,
+                                    "compressed": false,
+                                    "value": [
+                                        "xformOp:translate",
+                                        "xformOp:rotateXYZ",
+                                        "xformOp:scale"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Prim",
+                            "name": "Armature",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Skeleton"
+                                },
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "joints",
+                                        "bindTransforms",
+                                        "restTransforms",
+                                        "primvars:blender:bone_lengths"
+                                    ]
+                                },
+                                "apiSchemas": {
+                                    "type": "TokenListOp",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": {
+                                        "prepend": [
+                                            "SkelBindingAPI"
+                                        ]
+                                    }
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "Attribute",
+                                    "name": "bindTransforms",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "matrix4d[]"
+                                        },
+                                        "variability": {
+                                            "type": "Variability",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Uniform"
+                                        },
+                                        "default": {
+                                            "type": "Matrix4d",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "joints",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "token[]"
+                                        },
+                                        "variability": {
+                                            "type": "Variability",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Uniform"
+                                        },
+                                        "default": {
+                                            "type": "Token",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false,
+                                            "value": [
+                                                "Bone",
+                                                "Bone/Bone_001"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "primvars:blender:bone_lengths",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float[]"
+                                        },
+                                        "interpolation": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "uniform"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "restTransforms",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "matrix4d[]"
+                                        },
+                                        "variability": {
+                                            "type": "Variability",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Uniform"
+                                        },
+                                        "default": {
+                                            "type": "Matrix4d",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Prim",
+                            "name": "Cube",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Xform"
+                                },
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "xformOp:translate",
+                                        "xformOpOrder",
+                                        "xformOp:rotateXYZ",
+                                        "xformOp:scale",
+                                        "userProperties:blender:object_name"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "Cube"
+                                    ]
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "Attribute",
+                                    "name": "userProperties:blender:object_name",
+                                    "prim": false,
+                                    "fields": {
+                                        "custom": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "string"
+                                        },
+                                        "default": {
+                                            "type": "String",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Cube"
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "xformOp:rotateXYZ",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float3"
+                                        },
+                                        "default": {
+                                            "type": "Vec3f",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                0,
+                                                0,
+                                                0
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "xformOp:scale",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float3"
+                                        },
+                                        "default": {
+                                            "type": "Vec3f",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                1,
+                                                1,
+                                                1
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "xformOp:translate",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "double3"
+                                        },
+                                        "default": {
+                                            "type": "Vec3d",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "xformOpOrder",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "token[]"
+                                        },
+                                        "variability": {
+                                            "type": "Variability",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Uniform"
+                                        },
+                                        "default": {
+                                            "type": "Token",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false,
+                                            "value": [
+                                                "xformOp:translate",
+                                                "xformOp:rotateXYZ",
+                                                "xformOp:scale"
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Prim",
+                                    "name": "Cube",
+                                    "prim": true,
+                                    "fields": {
+                                        "specifier": {
+                                            "type": "Specifier",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Def"
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Mesh"
+                                        },
+                                        "apiSchemas": {
+                                            "type": "TokenListOp",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": {
+                                                "prepend": [
+                                                    "MaterialBindingAPI",
+                                                    "SkelBindingAPI"
+                                                ]
+                                            }
+                                        },
+                                        "active": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "points",
+                                                "faceVertexCounts",
+                                                "faceVertexIndices",
+                                                "primvars:st",
+                                                "normals",
+                                                "extent",
+                                                "subdivisionScheme",
+                                                "material:binding",
+                                                "doubleSided",
+                                                "userProperties:blender:data_name",
+                                                "primvars:skel:jointIndices",
+                                                "primvars:skel:jointWeights",
+                                                "skel:skeleton",
+                                                "primvars:skel:geomBindTransform"
+                                            ]
+                                        }
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Attribute",
+                                            "name": "doubleSided",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "bool"
+                                                },
+                                                "variability": {
+                                                    "type": "Variability",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Uniform"
+                                                },
+                                                "default": {
+                                                    "type": "Bool",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": true
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "extent",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float3[]"
+                                                },
+                                                "default": {
+                                                    "type": "Vec3f",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        1,
+                                                        1,
+                                                        1
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "faceVertexCounts",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "int[]"
+                                                },
+                                                "default": {
+                                                    "type": "Int",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4,
+                                                        4
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "faceVertexIndices",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "int[]"
+                                                },
+                                                "default": {
+                                                    "type": "Int",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": true,
+                                                    "value": [
+                                                        0,
+                                                        4,
+                                                        6,
+                                                        2,
+                                                        10,
+                                                        2,
+                                                        6,
+                                                        9,
+                                                        9,
+                                                        6,
+                                                        4,
+                                                        11,
+                                                        5,
+                                                        1,
+                                                        3,
+                                                        7,
+                                                        8,
+                                                        0,
+                                                        2,
+                                                        10,
+                                                        11,
+                                                        4,
+                                                        0,
+                                                        8,
+                                                        5,
+                                                        11,
+                                                        8,
+                                                        1,
+                                                        1,
+                                                        8,
+                                                        10,
+                                                        3,
+                                                        7,
+                                                        9,
+                                                        11,
+                                                        5,
+                                                        3,
+                                                        10,
+                                                        9,
+                                                        7
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Relationship",
+                                            "name": "material:binding",
+                                            "prim": false,
+                                            "fields": {
+                                                "variability": {
+                                                    "type": "Variability",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Uniform"
+                                                },
+                                                "targetPaths": {
+                                                    "type": "PathListOp",
+                                                    "inline": false,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": {
+                                                        "isExplicit": true,
+                                                        "explicit": [
+                                                            "/root/_materials/Material"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "normals",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "normal3f[]"
+                                                },
+                                                "default": {
+                                                    "type": "Vec3f",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0,
+                                                        0,
+                                                        -1,
+                                                        0
+                                                    ]
+                                                },
+                                                "interpolation": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "faceVarying"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "points",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "point3f[]"
+                                                },
+                                                "default": {
+                                                    "type": "Vec3f",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        1,
+                                                        1,
+                                                        1,
+                                                        1,
+                                                        1,
+                                                        -1,
+                                                        1,
+                                                        -1,
+                                                        1,
+                                                        1,
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        1,
+                                                        1,
+                                                        -1,
+                                                        1,
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        1,
+                                                        -1,
+                                                        -1,
+                                                        -1,
+                                                        1,
+                                                        1,
+                                                        0,
+                                                        -1,
+                                                        -1,
+                                                        0,
+                                                        1,
+                                                        -1,
+                                                        0,
+                                                        -1,
+                                                        1,
+                                                        0
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "primvars:skel:geomBindTransform",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "matrix4d"
+                                                },
+                                                "default": {
+                                                    "type": "Matrix4d",
+                                                    "inline": false,
+                                                    "array": false,
+                                                    "compressed": false
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "primvars:skel:jointIndices",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "int[]"
+                                                },
+                                                "interpolation": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "vertex"
+                                                },
+                                                "elementSize": {
+                                                    "type": "Int",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false
+                                                },
+                                                "default": {
+                                                    "type": "Int",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": true,
+                                                    "value": [
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        1,
+                                                        0,
+                                                        1
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "primvars:skel:jointWeights",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float[]"
+                                                },
+                                                "interpolation": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "vertex"
+                                                },
+                                                "elementSize": {
+                                                    "type": "Int",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "primvars:st",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "texCoord2f[]"
+                                                },
+                                                "interpolation": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "faceVarying"
+                                                },
+                                                "default": {
+                                                    "type": "Vec2f",
+                                                    "inline": false,
+                                                    "array": true,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        0.625,
+                                                        0.5,
+                                                        0.875,
+                                                        0.5,
+                                                        0.875,
+                                                        0.75,
+                                                        0.625,
+                                                        0.75,
+                                                        0.5,
+                                                        0.75,
+                                                        0.625,
+                                                        0.75,
+                                                        0.625,
+                                                        1,
+                                                        0.5,
+                                                        1,
+                                                        0.5,
+                                                        0,
+                                                        0.625,
+                                                        0,
+                                                        0.625,
+                                                        0.25,
+                                                        0.5,
+                                                        0.25,
+                                                        0.125,
+                                                        0.5,
+                                                        0.375,
+                                                        0.5,
+                                                        0.375,
+                                                        0.75,
+                                                        0.125,
+                                                        0.75,
+                                                        0.5,
+                                                        0.5,
+                                                        0.625,
+                                                        0.5,
+                                                        0.625,
+                                                        0.75,
+                                                        0.5,
+                                                        0.75,
+                                                        0.5,
+                                                        0.25,
+                                                        0.625,
+                                                        0.25,
+                                                        0.625,
+                                                        0.5,
+                                                        0.5,
+                                                        0.5,
+                                                        0.375,
+                                                        0.25,
+                                                        0.5,
+                                                        0.25,
+                                                        0.5,
+                                                        0.5,
+                                                        0.375,
+                                                        0.5,
+                                                        0.375,
+                                                        0.5,
+                                                        0.5,
+                                                        0.5,
+                                                        0.5,
+                                                        0.75,
+                                                        0.375,
+                                                        0.75,
+                                                        0.375,
+                                                        0,
+                                                        0.5,
+                                                        0,
+                                                        0.5,
+                                                        0.25,
+                                                        0.375,
+                                                        0.25,
+                                                        0.375,
+                                                        0.75,
+                                                        0.5,
+                                                        0.75,
+                                                        0.5,
+                                                        1,
+                                                        0.375,
+                                                        1
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Relationship",
+                                            "name": "skel:skeleton",
+                                            "prim": false,
+                                            "fields": {
+                                                "variability": {
+                                                    "type": "Variability",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Uniform"
+                                                },
+                                                "targetPaths": {
+                                                    "type": "PathListOp",
+                                                    "inline": false,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": {
+                                                        "isExplicit": true,
+                                                        "explicit": [
+                                                            "/root/Armature/Armature"
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "subdivisionScheme",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "token"
+                                                },
+                                                "variability": {
+                                                    "type": "Variability",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Uniform"
+                                                },
+                                                "default": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "none"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "userProperties:blender:data_name",
+                                            "prim": false,
+                                            "fields": {
+                                                "custom": {
+                                                    "type": "Bool",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": true
+                                                },
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "string"
+                                                },
+                                                "default": {
+                                                    "type": "String",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Cube"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Prim",
+                    "name": "Camera",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Xform"
+                        },
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "xformOp:translate",
+                                "xformOpOrder",
+                                "xformOp:rotateXYZ",
+                                "xformOp:scale",
+                                "userProperties:blender:object_name"
+                            ]
+                        },
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "Camera"
+                            ]
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Attribute",
+                            "name": "userProperties:blender:object_name",
+                            "prim": false,
+                            "fields": {
+                                "custom": {
+                                    "type": "Bool",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": true
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "string"
+                                },
+                                "default": {
+                                    "type": "String",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Camera"
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:rotateXYZ",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        63.559295654296875,
+                                        2.2983238068263745e-7,
+                                        46.69194412231445
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:scale",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        1,
+                                        1,
+                                        1
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:translate",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "double3"
+                                },
+                                "default": {
+                                    "type": "Vec3d",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOpOrder",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "token[]"
+                                },
+                                "variability": {
+                                    "type": "Variability",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Uniform"
+                                },
+                                "default": {
+                                    "type": "Token",
+                                    "inline": false,
+                                    "array": true,
+                                    "compressed": false,
+                                    "value": [
+                                        "xformOp:translate",
+                                        "xformOp:rotateXYZ",
+                                        "xformOp:scale"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Prim",
+                            "name": "Camera",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Camera"
+                                },
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "projection",
+                                        "focalLength",
+                                        "horizontalAperture",
+                                        "verticalAperture",
+                                        "clippingRange",
+                                        "userProperties:blender:data_name"
+                                    ]
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "Attribute",
+                                    "name": "clippingRange",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float2"
+                                        },
+                                        "default": {
+                                            "type": "Vec2f",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                0.10000000149011612,
+                                                100,
+                                                2.802596928649634e-45
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "focalLength",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": 0.5
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "horizontalAperture",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": 0.36000001430511475
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "projection",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "token"
+                                        },
+                                        "default": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "perspective"
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "userProperties:blender:data_name",
+                                    "prim": false,
+                                    "fields": {
+                                        "custom": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "string"
+                                        },
+                                        "default": {
+                                            "type": "String",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Camera"
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "verticalAperture",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": 0.20250000059604645
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Prim",
+                    "name": "Light",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Xform"
+                        },
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "xformOp:translate",
+                                "xformOpOrder",
+                                "xformOp:rotateXYZ",
+                                "xformOp:scale",
+                                "userProperties:blender:object_name"
+                            ]
+                        },
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "Light"
+                            ]
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Attribute",
+                            "name": "userProperties:blender:object_name",
+                            "prim": false,
+                            "fields": {
+                                "custom": {
+                                    "type": "Bool",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": true
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "string"
+                                },
+                                "default": {
+                                    "type": "String",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Light"
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:rotateXYZ",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        37.261051177978516,
+                                        3.1637091636657715,
+                                        106.93632507324219
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:scale",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float3"
+                                },
+                                "default": {
+                                    "type": "Vec3f",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        1,
+                                        0.9999999403953552,
+                                        1
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOp:translate",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "double3"
+                                },
+                                "default": {
+                                    "type": "Vec3d",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "xformOpOrder",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "token[]"
+                                },
+                                "variability": {
+                                    "type": "Variability",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Uniform"
+                                },
+                                "default": {
+                                    "type": "Token",
+                                    "inline": false,
+                                    "array": true,
+                                    "compressed": false,
+                                    "value": [
+                                        "xformOp:translate",
+                                        "xformOp:rotateXYZ",
+                                        "xformOp:scale"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "type": "Prim",
+                            "name": "Light",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "SphereLight"
+                                },
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "inputs:radius",
+                                        "inputs:intensity",
+                                        "inputs:enableColorTemperature",
+                                        "inputs:normalize",
+                                        "userProperties:blender:data_name",
+                                        "extent"
+                                    ]
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "Attribute",
+                                    "name": "extent",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float3[]"
+                                        },
+                                        "default": {
+                                            "type": "Vec3f",
+                                            "inline": false,
+                                            "array": true,
+                                            "compressed": false,
+                                            "value": [
+                                                -0.10000000149011612,
+                                                -0.10000000149011612,
+                                                -0.10000000149011612,
+                                                0.10000000149011612,
+                                                0.10000000149011612,
+                                                0.10000000149011612
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "inputs:enableColorTemperature",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "bool"
+                                        },
+                                        "default": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "inputs:intensity",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": 318.30987548828125
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "inputs:normalize",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "bool"
+                                        },
+                                        "default": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "inputs:radius",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "float"
+                                        },
+                                        "default": {
+                                            "type": "Float",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": 0.10000000149011612
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "userProperties:blender:data_name",
+                                    "prim": false,
+                                    "fields": {
+                                        "custom": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "string"
+                                        },
+                                        "default": {
+                                            "type": "String",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Light"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Prim",
+                    "name": "_materials",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Scope"
+                        },
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "Material"
+                            ]
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Prim",
+                            "name": "Material",
+                            "prim": true,
+                            "fields": {
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Material"
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "Principled_BSDF"
+                                    ]
+                                },
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "outputs:surface",
+                                        "userProperties:blender:data_name"
+                                    ]
+                                }
+                            },
+                            "children": [
+                                {
+                                    "type": "Attribute",
+                                    "name": "outputs:surface",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "token"
+                                        },
+                                        "connectionPaths": {
+                                            "type": "PathListOp",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": {
+                                                "isExplicit": true,
+                                                "explicit": [
+                                                    "/root/_materials/Material/Principled_BSDF/outputs:surface"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "userProperties:blender:data_name",
+                                    "prim": false,
+                                    "fields": {
+                                        "custom": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "string"
+                                        },
+                                        "default": {
+                                            "type": "String",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Material"
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Prim",
+                                    "name": "Principled_BSDF",
+                                    "prim": true,
+                                    "fields": {
+                                        "specifier": {
+                                            "type": "Specifier",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Def"
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Shader"
+                                        },
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "info:id",
+                                                "outputs:surface",
+                                                "inputs:diffuseColor",
+                                                "inputs:metallic",
+                                                "inputs:roughness",
+                                                "inputs:ior",
+                                                "inputs:opacity",
+                                                "inputs:specular",
+                                                "inputs:clearcoat",
+                                                "inputs:clearcoatRoughness"
+                                            ]
+                                        }
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "Attribute",
+                                            "name": "info:id",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "token"
+                                                },
+                                                "variability": {
+                                                    "type": "Variability",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "Uniform"
+                                                },
+                                                "default": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "UsdPreviewSurface"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:clearcoat",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 0
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:clearcoatRoughness",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 0.029999999329447746
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:diffuseColor",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "color3f"
+                                                },
+                                                "default": {
+                                                    "type": "Vec3f",
+                                                    "inline": false,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": [
+                                                        0.800000011920929,
+                                                        0.800000011920929,
+                                                        0.800000011920929
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:ior",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 1.5
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:metallic",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 0
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:opacity",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 1
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:roughness",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 0.5
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "inputs:specular",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "float"
+                                                },
+                                                "default": {
+                                                    "type": "Float",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": 0.5
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "Attribute",
+                                            "name": "outputs:surface",
+                                            "prim": false,
+                                            "fields": {
+                                                "typeName": {
+                                                    "type": "Token",
+                                                    "inline": true,
+                                                    "array": false,
+                                                    "compressed": false,
+                                                    "value": "token"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "Prim",
+                    "name": "env_light",
+                    "prim": true,
+                    "fields": {
+                        "specifier": {
+                            "type": "Specifier",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "Def"
+                        },
+                        "typeName": {
+                            "type": "Token",
+                            "inline": true,
+                            "array": false,
+                            "compressed": false,
+                            "value": "DomeLight"
+                        },
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": [
+                                "inputs:intensity",
+                                "inputs:texture:file"
+                            ]
+                        }
+                    },
+                    "children": [
+                        {
+                            "type": "Attribute",
+                            "name": "inputs:intensity",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "float"
+                                },
+                                "default": {
+                                    "type": "Float",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": 1
+                                }
+                            }
+                        },
+                        {
+                            "type": "Attribute",
+                            "name": "inputs:texture:file",
+                            "prim": false,
+                            "fields": {
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "asset"
+                                },
+                                "default": {
+                                    "type": "AssetPath",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "./textures/color_0C0C0C.exr"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

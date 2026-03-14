@@ -20,7 +20,7 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, AttributeX, DomeLight, GeomSubset, Material, Mesh, Scope, Shader, Xform } from "../src/geometry/index.ts"
+import { Attribute, AttributeX, DomeLight, GeomSubset, Material, Mesh, Scope, Shader, SkelRoot, Xform } from "../src/geometry/index.ts"
 import { PseudoRoot } from "../src/geometry/PseudoRoot.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
 import { IntArrayAttr, Relationship, VariabilityAttr } from "../src/attributes/index.ts"
@@ -652,6 +652,14 @@ describe("USD", () => {
         expect(pseudoRoot.toJSON()).to.deep.equal(json)
 
     })
+    /**
+     * re-create files generated with blender 5.0
+     * features covered are those needed by makehuman.js
+     * 
+     * during development i compared json files with these commands:
+     *   diff -y --color=always -W 180 spec/examples/cube-colored-faces.json constructed.json | less -r
+     *   diff -u --color=always -W 180 spec/examples/cube-colored-faces.json constructed.json | less -r
+     */
     describe("re-create blender 5.0 files", () => {
         it("cube-flat-faces.usdc", () => {
             const prefix = "spec/examples/cube-flat-faces"
@@ -914,7 +922,182 @@ describe("USD", () => {
 
             compare(pseudoRootIn, orig)
         })
-        it("armature.usdc")
+        it.only("armature.usdc", () => {
+            const prefix = "spec/examples/armature"
+            // read the original
+            const buffer = readFileSync(`${prefix}.usdc`)
+            const stageIn = new UsdStage(buffer)
+            const origPseudoRoot = stageIn.getPrimAtPath("/")!
+            const orig = origPseudoRoot.toJSON()
+            // console.log(JSON.stringify(orig, undefined, 4))
+            // writeFileSync(`${prefix}.json`, JSON.stringify(orig, undefined, 4))
+
+            // read an adjusted, good enough variant of the original's JSON
+            // const buffer = readFileSync(`${prefix}.json`)
+            // const orig = JSON.parse(buffer.toString())
+
+            const crate = makeCreate()
+
+            const pseudoRoot = new PseudoRoot(crate)
+            pseudoRoot.defaultPrim = "root"
+            pseudoRoot.documentation = "Blender v5.0.1"
+
+            const root = new Xform(pseudoRoot, "root")
+            root.customData = {
+                Blender: {
+                    generated: true
+                }
+            }
+
+            // const cube = new Xform(root, "Armature")
+            const skelRoot = new SkelRoot(root, "Armature")
+            const attr = new Attribute(skelRoot, "userProperties:blender:object_name", "Armature")
+            attr.custom = true
+            new AttributeX(skelRoot, "xformOp:rotateXYZ", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [0, 0, 0])
+            })
+            new AttributeX(skelRoot, "xformOp:scale", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [1, 1, 1])
+            })
+            new AttributeX(skelRoot, "xformOp:translate", (node) => {
+                node.setToken("typeName", "double3")
+                node.setVec3d("default", [1, 1, 1])
+            })
+            new AttributeX(skelRoot, "xformOpOrder", (node) => {
+                node.setToken("typeName", "token[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setTokenArray("default", ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"])
+            })
+            // const skeleton = new Skeleton(skelRoot, "Armature")
+            // bindTransforms
+            // joints
+            // primvars:blender:bone_lengths
+            // restTransforms
+
+            const materials = new Scope(root, "_materials")
+
+            function makePrincipled_BSDF(name: string, diffuseColor: number[]) {
+                const material = new Material(materials, name)
+                // outputs:surface                 : ConnectionPaths(...)
+                // userProperties:blender:data_name
+                const data: {
+                    surface?: ListOp<UsdNode>
+                } = {}
+                new AttributeX(material, "outputs:surface", (node) => {
+                    node.setToken("typeName", "token")
+                    node.setPathListOp("connectionPaths", data.surface)
+                })
+                material.blenderDataName = name
+                const shader = new Shader(material, "Principled_BSDF")
+                new AttributeX(shader, "info:id", (node) => {
+                    node.setToken("typeName", "token")
+                    node.setVariability("variability", Variability.Uniform)
+                    node.setToken("default", "UsdPreviewSurface")
+                })
+                new AttributeX(shader, "inputs:clearcoat", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 0)
+                })
+                new AttributeX(shader, "inputs:clearcoatRoughness", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 0.029999999329447746)
+                })
+                new AttributeX(shader, "inputs:diffuseColor", (node) => {
+                    node.setToken("typeName", "color3f")
+                    node.setVec3f("default", diffuseColor)
+                })
+                new AttributeX(shader, "inputs:ior", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 1.5)
+                })
+                new AttributeX(shader, "inputs:metallic", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 0)
+                })
+                new AttributeX(shader, "inputs:opacity", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 1)
+                })
+                new AttributeX(shader, "inputs:roughness", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 0.5)
+                })
+                new AttributeX(shader, "inputs:specular", (node) => {
+                    node.setToken("typeName", "float")
+                    node.setFloat("default", 0.5)
+                })
+                // token outputs:surface
+                const surface = new AttributeX(shader, "outputs:surface", (node) => {
+                    node.setToken("typeName", "token")
+                })
+                data.surface = {
+                    isExplicit: true,
+                    explicit: [surface]
+                }
+                return material
+            }
+            const gray = makePrincipled_BSDF("Material", [0.8, 0.8, 0.8])
+
+
+
+            //         def Mesh "Mesh" ( active = true ) { ... }
+            const mesh = new Mesh(skelRoot, "Armature")
+
+            mesh.doubleSided = true
+            mesh.extent = [-1, -1, -1, 1, 1, 1]
+            mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
+            mesh.materialBinding = {
+                isExplicit: true,
+                explicit: [gray]
+            }
+            mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+            mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
+            mesh.subdivisionScheme = "none"
+            mesh.familyType = "nonOverlapping"
+            mesh.blenderDataName = "Armature"
+
+            // this mesh addionally needs
+            //   fields:
+            //     apiSchemas: MaterialBindingAPI           DONE
+            //     primChildren: [...]                      DONE
+            //   properties:
+            //     doubleSided,                             DONE
+            //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
+            //     subsetFamily:materialBind:familyType     DONE
+
+            const grayFace = new GeomSubset(mesh, "gray")
+            new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
+            new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
+            new IntArrayAttr(grayFace, "indices", [1, 2, 3])
+            new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] })
+
+            // _materials
+
+            new DomeLight(crate, root, "env_light")
+
+            // serialize everything into crate.writer
+            crate.serialize(pseudoRoot)
+            // crate.print()
+
+            // console.log("----------------")
+
+            // deserialize 
+            const stage = new UsdStage(Buffer.from(crate.writer.buffer))
+
+            // stage._crate.print()
+
+            const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+
+            writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
+            writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
+            writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
+
+            compare(pseudoRootIn, orig)
+        })
     })
     describe("encode/decode values", () => {
         it("inline String", () => {

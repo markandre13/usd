@@ -81,6 +81,7 @@ export class Boundable extends Xformable {
         }
     }
 }
+
 /**
  * Base class for all geometric primitives.  
  *   
@@ -101,6 +102,27 @@ export class Gprim extends Boundable {
         }
     }
     // uniform token orientation = "rightHanded" "leftHanded"
+}
+
+/**
+ * Concrete prim schema for a transform, which implements Xformable
+ * 
+ * defined in pxr/usd/usdSkel/schema.usda
+ */
+export class SkelRoot extends Boundable {
+    customData?: any
+
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+        this.specifier = Specifier.Def
+        this.typeName = "SkelRoot"
+    }
+
+    override encodeFields(): void {
+        super.encodeFields()
+        this.setCustomData("customData", this.customData)
+    }
 }
 
 // Cube size

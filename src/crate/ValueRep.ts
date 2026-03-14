@@ -148,6 +148,43 @@ export class ValueRep {
                     return this.getVec3f()
                 }
             } break
+            case CrateDataType.Vec2d:
+            case CrateDataType.Vec3d:
+            case CrateDataType.Vec4d: {
+                let size = 0
+                switch (this.getType()) {
+                    case CrateDataType.Vec2d:
+                        size = 2
+                        break
+                    case CrateDataType.Vec3d:
+                        size = 3
+                        break
+                    case CrateDataType.Vec4d:
+                        size = 4
+                        break
+                }
+                if (this.isArray() && !this.isInlined() && !this.isCompressed()) {
+                    crate.reader.offset = this.getIndex()
+                    const n = reader.getUint64()
+                    const arr = new Array<number>(n * size)
+                    for (let i = 0; i < n * size; ++i) {
+                        arr[i] = reader.getFloat64()
+                    }
+                    return arr
+                }
+                if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
+                    reader.offset = this.getIndex()
+                    const arr = new Array<number>(3)
+                    for (let i = 0; i < 3; ++i) {
+                        arr[i] = reader.getFloat64()
+                    }
+                    return arr
+                }
+                if (!this.isArray() && this.isInlined() && !this.isCompressed()) {
+                    return this.getVec3f()
+                }
+            } break
+
             case CrateDataType.TokenVector:
                 if (!this.isInlined() && !this.isArray() && !this.isCompressed()) {
                     crate.reader.offset = this.getIndex()
