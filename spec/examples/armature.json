@@ -51,9 +51,9 @@
                     "array": false,
                     "compressed": false,
                     "value": [
-                        "Light",
-                        "Camera",
                         "Armature",
+                        "Camera",
+                        "Light",
                         "_materials",
                         "env_light"
                     ]
@@ -256,10 +256,10 @@
                                     "array": false,
                                     "compressed": false,
                                     "value": [
-                                        "joints",
                                         "bindTransforms",
-                                        "restTransforms",
-                                        "primvars:blender:bone_lengths"
+                                        "joints",
+                                        "primvars:blender:bone_lengths",
+                                        "restTransforms"
                                     ]
                                 },
                                 "specifier": {
@@ -404,6 +404,26 @@
                             "name": "Cube",
                             "prim": true,
                             "fields": {
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "userProperties:blender:object_name",
+                                        "xformOp:rotateXYZ",
+                                        "xformOp:scale",
+                                        "xformOp:translate",
+                                        "xformOpOrder"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": ["Cube"]
+                                },
                                 "specifier": {
                                     "type": "Specifier",
                                     "inline": true,
@@ -417,26 +437,6 @@
                                     "array": false,
                                     "compressed": false,
                                     "value": "Xform"
-                                },
-                                "properties": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": [
-                                        "xformOp:translate",
-                                        "xformOpOrder",
-                                        "xformOp:rotateXYZ",
-                                        "xformOp:scale",
-                                        "userProperties:blender:object_name"
-                                    ]
-                                },
-                                "primChildren": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": ["Cube"]
                                 }
                             },
                             "children": [
@@ -574,20 +574,20 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": [
-                                                "points",
+                                                "doubleSided",
+                                                "extent",
                                                 "faceVertexCounts",
                                                 "faceVertexIndices",
-                                                "primvars:st",
-                                                "normals",
-                                                "extent",
-                                                "subdivisionScheme",
                                                 "material:binding",
-                                                "doubleSided",
-                                                "userProperties:blender:data_name",
+                                                "normals",
+                                                "points",
+                                                "primvars:skel:geomBindTransform",
                                                 "primvars:skel:jointIndices",
                                                 "primvars:skel:jointWeights",
+                                                "primvars:st",
                                                 "skel:skeleton",
-                                                "primvars:skel:geomBindTransform"
+                                                "subdivisionScheme",
+                                                "userProperties:blender:data_name"
                                             ]
                                         },
                                         "specifier": {
@@ -1675,6 +1675,13 @@
                     "name": "_materials",
                     "prim": true,
                     "fields": {
+                        "primChildren": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": ["Material"]
+                        },
                         "specifier": {
                             "type": "Specifier",
                             "inline": true,
@@ -1688,13 +1695,6 @@
                             "array": false,
                             "compressed": false,
                             "value": "Scope"
-                        },
-                        "primChildren": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": ["Material"]
                         }
                     },
                     "children": [
@@ -1703,6 +1703,23 @@
                             "name": "Material",
                             "prim": true,
                             "fields": {
+                                "properties": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": [
+                                        "outputs:surface",
+                                        "userProperties:blender:data_name"
+                                    ]
+                                },
+                                "primChildren": {
+                                    "type": "TokenVector",
+                                    "inline": false,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": ["Principled_BSDF"]
+                                },
                                 "specifier": {
                                     "type": "Specifier",
                                     "inline": true,
@@ -1716,23 +1733,6 @@
                                     "array": false,
                                     "compressed": false,
                                     "value": "Material"
-                                },
-                                "primChildren": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": ["Principled_BSDF"]
-                                },
-                                "properties": {
-                                    "type": "TokenVector",
-                                    "inline": false,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": [
-                                        "outputs:surface",
-                                        "userProperties:blender:data_name"
-                                    ]
                                 }
                             },
                             "children": [
@@ -1795,6 +1795,24 @@
                                     "name": "Principled_BSDF",
                                     "prim": true,
                                     "fields": {
+                                        "properties": {
+                                            "type": "TokenVector",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": [
+                                                "info:id",
+                                                "inputs:clearcoat",
+                                                "inputs:clearcoatRoughness",
+                                                "inputs:diffuseColor",
+                                                "inputs:ior",
+                                                "inputs:metallic",
+                                                "inputs:opacity",
+                                                "inputs:roughness",
+                                                "inputs:specular",
+                                                "outputs:surface"
+                                            ]
+                                        },
                                         "specifier": {
                                             "type": "Specifier",
                                             "inline": true,
@@ -1808,24 +1826,6 @@
                                             "array": false,
                                             "compressed": false,
                                             "value": "Shader"
-                                        },
-                                        "properties": {
-                                            "type": "TokenVector",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": [
-                                                "info:id",
-                                                "outputs:surface",
-                                                "inputs:diffuseColor",
-                                                "inputs:metallic",
-                                                "inputs:roughness",
-                                                "inputs:ior",
-                                                "inputs:opacity",
-                                                "inputs:specular",
-                                                "inputs:clearcoat",
-                                                "inputs:clearcoatRoughness"
-                                            ]
                                         }
                                     },
                                     "children": [
@@ -2050,6 +2050,13 @@
                     "name": "env_light",
                     "prim": true,
                     "fields": {
+                        "properties": {
+                            "type": "TokenVector",
+                            "inline": false,
+                            "array": false,
+                            "compressed": false,
+                            "value": ["inputs:intensity", "inputs:texture:file"]
+                        },
                         "specifier": {
                             "type": "Specifier",
                             "inline": true,
@@ -2063,13 +2070,6 @@
                             "array": false,
                             "compressed": false,
                             "value": "DomeLight"
-                        },
-                        "properties": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": ["inputs:intensity", "inputs:texture:file"]
                         }
                     },
                     "children": [

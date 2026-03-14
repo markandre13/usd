@@ -169,14 +169,19 @@ export class Writer {
         this.view.setInt32(this.offset, value, true)
         this.offset += 4
     }
+    writeUint64(value: number) {
+        this.reserve(8)
+        this.view.setBigUint64(this.offset, BigInt(value), true)
+        this.offset += 8
+    }
     writeFloat32(value: number) {
         this.reserve(4)
         this.view.setFloat32(this.offset, value, true)
         this.offset += 4
     }
-    writeUint64(value: number) {
+    writeFloat64(value: number) {
         this.reserve(8)
-        this.view.setBigUint64(this.offset, BigInt(value), true)
+        this.view.setFloat64(this.offset, value, true)
         this.offset += 8
     }
     writeBuffer(value: ArrayLike<number>, start: number, length: number) {

@@ -138,6 +138,9 @@ export class Skeleton extends Boundable {
     override encodeFields(): void {
         super.encodeFields()
         this.setCustomData("customData", this.customData)
+        this.setTokenListOp("apiSchemas", {
+            prepend: ["SkelBindingAPI"]
+        })
     }
 }
 
@@ -260,8 +263,8 @@ export class Mesh extends PointBased {
 }
 
 export class DomeLight extends UsdNode {
-    constructor(crate: Crate, parent: UsdNode, name: string) {
-        super(crate, parent, -1, name, true)
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, true)
         this.spec_type = SpecType.Prim
         new FloatAttr(this, "inputs:intensity", 1)
         new AssetPathAttr(this, "inputs:texture:file", "./textures/color_0C0C0C.exr")

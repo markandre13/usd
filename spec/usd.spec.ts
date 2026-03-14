@@ -72,7 +72,7 @@ describe("USD", () => {
         const origPseudoRoot = stage.getPrimAtPath("/")!
         const orig = origPseudoRoot.toJSON()
         // console.log(JSON.stringify(orig, undefined, 4))
-        console.log(stringify(orig, {indent: 4}))
+        console.log(stringify(orig, { indent: 4 }))
     })
     describe("nodes", () => {
         describe("PseudoRoot", () => {
@@ -727,7 +727,7 @@ describe("USD", () => {
             mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
             mesh.subdivisionScheme = "none"
 
-            new DomeLight(crate, root, "env_light")
+            new DomeLight(root, "env_light")
 
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
@@ -971,7 +971,7 @@ describe("USD", () => {
             })
             new AttributeX(skelRoot, "xformOp:translate", (node) => {
                 node.setToken("typeName", "double3")
-                node.setVec3d("default", [1, 1, 1])
+                node.setVec3d("default", [0, 0, -1])
             })
             new AttributeX(skelRoot, "xformOpOrder", (node) => {
                 node.setToken("typeName", "token[]")
@@ -983,26 +983,47 @@ describe("USD", () => {
             new AttributeX(skeleton, "bindTransforms", (node) => {
                 node.setToken("typeName", "matrix4d[]")
                 node.setVariability("variability", Variability.Uniform)
-                // node.setMatrix4dArray("default", [])
+                node.setMatrix4dArray("default", [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 1, 1])
             })
             new AttributeX(skeleton, "joints", (node) => {
                 node.setToken("typeName", "token[]")
                 node.setVariability("variability", Variability.Uniform)
                 node.setTokenArray("default", ["Bone", "Bone/Bone_001"])
-                
+
             })
             new AttributeX(skeleton, "primvars:blender:bone_lengths", (node) => {
                 node.setToken("typeName", "float[]")
-                node.setVariability("variability", Variability.Uniform)
-                // node.setFloatArray("default", [1, 1])
+                node.setToken("interpolation", "uniform")
+                node.setFloatArray("default", [1, 1])
             })
             new AttributeX(skeleton, "restTransforms", (node) => {
                 node.setToken("typeName", "matrix4d[]")
                 node.setVariability("variability", Variability.Uniform)
-                // node.setMatrix4dArray("default", [])
+                node.setMatrix4dArray("default", [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1])
             })
 
+
+            const cameraParent = new Xform(root, "Camera")
+            // userProperties:blender:object_name
+            // xformOp:rotateXYZ
+            // xformOp:scale
+            // xformOp:translate
+            // xformOpOrder
+            
+            // new Camera(cameraParent, "Camera")
+            // clippingRange
+            // focalLength
+            // horizontalAperture
+            // projection
+            // userProperties:blender:data_name
+            // verticalAperture
+
+            const lightParent = new Xform(root, "Light")
+            // new SphereLight(lightParent, "Light")
+
             const materials = new Scope(root, "_materials")
+
+            new DomeLight(root, "env_light")
 
             function makePrincipled_BSDF(name: string, diffuseColor: number[]) {
                 const material = new Material(materials, name)
@@ -1067,41 +1088,76 @@ describe("USD", () => {
             const gray = makePrincipled_BSDF("Material", [0.8, 0.8, 0.8])
 
             //         def Mesh "Mesh" ( active = true ) { ... }
-            const mesh = new Mesh(skelRoot, "Cube")
+            const meshParent = new Xform(skelRoot, "Cube")
+            // line 436
+            // userProperties:blender:object_name
+            // xformOp:rotateXYZ
+            // xformOp:scale
+            // xformOp:translate
+            // xformOpOrder
 
-            // mesh.doubleSided = true
-            // mesh.extent = [-1, -1, -1, 1, 1, 1]
-            // mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
-            // mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
-            // mesh.materialBinding = {
-            //     isExplicit: true,
-            //     explicit: [gray]
-            // }
-            // mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
-            // mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
-            // mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
-            // mesh.subdivisionScheme = "none"
+            const attr1 = new Attribute(meshParent, "userProperties:blender:object_name", "Cube")
+            attr1.custom = true
+            new AttributeX(meshParent, "xformOp:rotateXYZ", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [0, 0, 0])
+            })
+            new AttributeX(meshParent, "xformOp:scale", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [1, 1, 1])
+            })
+            new AttributeX(meshParent, "xformOp:translate", (node) => {
+                node.setToken("typeName", "double3")
+                node.setVec3d("default", [0, 0, 1])
+            })
+            new AttributeX(meshParent, "xformOpOrder", (node) => {
+                node.setToken("typeName", "token[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setTokenArray("default", ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"])
+            })
+
+            const mesh = new Mesh(meshParent, "Cube")
+
+            mesh.doubleSided = true
+            mesh.extent = [-1, -1, -1, 1, 1, 1]
+            mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+            mesh.faceVertexIndices = [0, 4, 6, 2, 10, 2, 6, 9, 9, 6, 4, 11, 5, 1, 3, 7, 8, 0, 2, 10, 11, 4, 0, 8, 5, 11, 8, 1, 1, 8, 10, 3, 7, 9, 11, 5, 3, 10, 9, 7]
+            mesh.materialBinding = {
+                isExplicit: true,
+                explicit: [gray]
+            }
+            mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0]
+            mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1, 1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0]
+            new AttributeX(mesh, "primvars:skel:geomBindTransform", node => {
+                node.setToken("typeName", "matrix4d")
+                node.setMatrix4d("default", [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1])
+            })
+            new AttributeX(mesh, "primvars:skel:jointIndices", node => {
+                node.setToken("typeName", "int[]")
+                node.setToken("interpolation", "vertex")
+                node.setInt("elementSize", 2)
+                node.setIntArray("default", [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1])
+            })
+            new AttributeX(mesh, "primvars:skel:jointWeights", node => {
+                node.setToken("typeName", "float[]")
+                node.setToken("interpolation", "vertex")
+                node.setInt("elementSize", 2)
+                node.setFloatArray("default", [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0.4996339976787567, 0.5003660321235657, 0.5081230401992798, 0.4918769598007202, 0.5216529965400696, 0.4783470034599304, 0.4856490194797516, 0.514350950717926])
+            })
+            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.5, 0.75, 0.625, 0.75, 0.625, 1, 0.5, 1, 0.5, 0, 0.625, 0, 0.625, 0.25, 0.5, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.5, 0.5, 0.625, 0.5, 0.625, 0.75, 0.5, 0.75, 0.5, 0.25, 0.625, 0.25, 0.625, 0.5, 0.5, 0.5, 0.375, 0.25, 0.5, 0.25, 0.5, 0.5, 0.375, 0.5, 0.375, 0.5, 0.5, 0.5, 0.5, 0.75, 0.375, 0.75, 0.375, 0, 0.5, 0, 0.5, 0.25, 0.375, 0.25, 0.375, 0.75, 0.5, 0.75, 0.5, 1, 0.375, 1]
+            new Relationship(mesh, "skel:skeleton", {
+                isExplicit: true,
+                explicit: [skeleton] // /root/Armature/Armature
+            })
+            mesh.subdivisionScheme = "none"
             // mesh.familyType = "nonOverlapping"
-            // mesh.blenderDataName = "Armature"
-
-            // this mesh addionally needs
-            //   fields:
-            //     apiSchemas: MaterialBindingAPI           DONE
-            //     primChildren: [...]                      DONE
-            //   properties:
-            //     doubleSided,                             DONE
-            //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
-            //     subsetFamily:materialBind:familyType     DONE
+            mesh.blenderDataName = "Armature"
 
             // const grayFace = new GeomSubset(mesh, "gray")
             // new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
             // new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
             // new IntArrayAttr(grayFace, "indices", [1, 2, 3])
             // new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] })
-
-            // _materials
-
-            new DomeLight(crate, root, "env_light")
 
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
@@ -1117,8 +1173,8 @@ describe("USD", () => {
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
             writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
-            writeFileSync("original.json", stringify(orig, {indent: 4}))
-            writeFileSync("constructed.json", stringify(pseudoRootIn, {indent: 4}))
+            writeFileSync("original.json", stringify(orig, { indent: 4 }))
+            writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })

@@ -236,6 +236,20 @@ export class UsdNode {
             )
         }
     }
+    setInt(name: string, value?: number) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setInt(name, value)
+            )
+        }
+    } 
+    setIntArray(name: string, value?: number[]) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setIntArray(name, value)
+            )
+        }
+    }
     setFloat(name: string, value?: number) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
@@ -254,6 +268,27 @@ export class UsdNode {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setVec3d(name, value)
+            )
+        }
+    }
+    setMatrix4d(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setMatrix4d(name, value)
+            )
+        }
+    }
+    setMatrix4dArray(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setMatrix4dArray(name, value)
+            )
+        }
+    }
+    setFloatArray(name: string, value?: number[]) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setFloatArray(name, value)
             )
         }
     }

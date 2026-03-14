@@ -73,6 +73,15 @@ export class Fields {
             this.data = data!
         }
     }
+    setInt(name: string, value: number) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeInt32(value)
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Int)
+        this.valueReps.writeUint8(IsInlinedBit)
+        return idx
+    }
     setFloat(name: string, value: number) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
@@ -373,7 +382,32 @@ export class Fields {
         }
         return idx
     }
+    setMatrix4d(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Matrix4d)
+        this.valueReps.writeUint8(0)
+        for (let i = 0; i < 16; ++i) {
+            this.data.writeFloat64(value[i])
+        }
+        return idx
+    }
+    setMatrix4dArray(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Matrix4d)
+        this.valueReps.writeUint8(IsArrayBit_)
 
+        this.data.writeUint64(value.length / 16)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat64(value[i])
+        }
+        return idx
+    }
     setVec3fArray(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
@@ -397,6 +431,20 @@ export class Fields {
         this.valueReps.writeUint8(IsArrayBit_)
 
         this.data.writeUint64(value.length / 2)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat32(value[i])
+        }
+        return idx
+    }
+    setFloatArray(name: string, value: ArrayLike<number>): number {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Float)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length)
         for (let i = 0; i < value.length; ++i) {
             this.data.writeFloat32(value[i])
         }
