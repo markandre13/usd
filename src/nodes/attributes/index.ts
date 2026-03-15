@@ -25,6 +25,56 @@ export class FloatAttr extends UsdNode {
     }
 }
 
+export class Color3fAttr extends UsdNode {
+    value: number[]
+    constructor(parent: UsdNode, name: string, value: number[]) {
+        super(parent.crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.value = value
+    }
+
+    override encodeFields() {
+        super.encodeFields()
+        const crate = this.crate
+
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "color3f")
+        )
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setVec3f("default", this.value)
+        )
+    }
+}
+
+export class TokenAttr extends UsdNode {
+    variability?: Variability
+    token?: string
+    constructor(parent: UsdNode, name: string, variability?: Variability, token?: string) {
+        super(parent.crate, parent, -1, name, false)
+        this.spec_type = SpecType.Attribute
+        this.variability = variability
+        this.token = token
+    }
+
+    override encodeFields() {
+        super.encodeFields()
+        const crate = this.crate
+        crate.fieldsets.fieldset_indices.push(
+            crate.fields.setToken("typeName", "token")
+        )
+        if (this.variability !== undefined) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setVariability("variability", this.variability)
+            )
+        }
+        if (this.token !== undefined) {
+            crate.fieldsets.fieldset_indices.push(
+                crate.fields.setToken("default", this.token)
+            )
+        }
+    }
+}
+
 export class AssetPathAttr extends UsdNode {
     value: string
     constructor(parent: UsdNode, name: string, value: string) {

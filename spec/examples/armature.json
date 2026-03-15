@@ -1737,60 +1737,6 @@
                             },
                             "children": [
                                 {
-                                    "type": "Attribute",
-                                    "name": "outputs:surface",
-                                    "prim": false,
-                                    "fields": {
-                                        "typeName": {
-                                            "type": "Token",
-                                            "inline": true,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": "token"
-                                        },
-                                        "connectionPaths": {
-                                            "type": "PathListOp",
-                                            "inline": false,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": {
-                                                "isExplicit": true,
-                                                "explicit": [
-                                                    "/root/_materials/Material/Principled_BSDF/outputs:surface"
-                                                ]
-                                            }
-                                        }
-                                    }
-                                },
-                                {
-                                    "type": "Attribute",
-                                    "name": "userProperties:blender:data_name",
-                                    "prim": false,
-                                    "fields": {
-                                        "custom": {
-                                            "type": "Bool",
-                                            "inline": true,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": true
-                                        },
-                                        "typeName": {
-                                            "type": "Token",
-                                            "inline": true,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": "string"
-                                        },
-                                        "default": {
-                                            "type": "String",
-                                            "inline": true,
-                                            "array": false,
-                                            "compressed": false,
-                                            "value": "Material"
-                                        }
-                                    }
-                                },
-                                {
                                     "type": "Prim",
                                     "name": "Principled_BSDF",
                                     "prim": true,
@@ -2040,6 +1986,60 @@
                                             }
                                         }
                                     ]
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "outputs:surface",
+                                    "prim": false,
+                                    "fields": {
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "token"
+                                        },
+                                        "connectionPaths": {
+                                            "type": "PathListOp",
+                                            "inline": false,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": {
+                                                "isExplicit": true,
+                                                "explicit": [
+                                                    "/root/_materials/Material/Principled_BSDF/outputs:surface"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "type": "Attribute",
+                                    "name": "userProperties:blender:data_name",
+                                    "prim": false,
+                                    "fields": {
+                                        "custom": {
+                                            "type": "Bool",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": true
+                                        },
+                                        "typeName": {
+                                            "type": "Token",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "string"
+                                        },
+                                        "default": {
+                                            "type": "String",
+                                            "inline": true,
+                                            "array": false,
+                                            "compressed": false,
+                                            "value": "Material"
+                                        }
+                                    }
                                 }
                             ]
                         }

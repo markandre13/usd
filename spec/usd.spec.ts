@@ -36,7 +36,7 @@ import { ValueRep } from "../src/crate/ValueRep.ts"
 import { Variability } from "../src/crate/Variability.ts"
 import { stringify } from "./stringify.ts"
 import { AttributeX } from "../src/nodes/attributes/AttributeX.ts"
-import { IntArrayAttr, Relationship, VariabilityAttr } from "../src/nodes/attributes/index.ts"
+import { Color3fAttr, FloatAttr, IntArrayAttr, Relationship, TokenAttr, VariabilityAttr } from "../src/nodes/attributes/index.ts"
 // UsdObject < UsdProperty < UsdAttribute
 //           < UsdPrim
 
@@ -730,8 +730,10 @@ describe("USD", () => {
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // writeFileSync("original.json", stringify(orig, { indent: 4 }))
-            // writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
+            const filename = prefix.split('/').pop()
+            writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+            writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+            writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })
@@ -830,9 +832,10 @@ describe("USD", () => {
 
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
-            // writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
-            // writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
+            const filename = prefix.split('/').pop()
+            writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+            writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+            writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })
@@ -913,7 +916,6 @@ describe("USD", () => {
             domeLight.intensity = 1.0
             domeLight.textureFile = "./textures/color_0C0C0C.exr"
 
-
             const meshParent = new Xform(skelRoot, "Cube")
             meshParent.blenderObjectName = "Cube"
             meshParent.rotateXYZ = [0, 0, 0]
@@ -954,9 +956,10 @@ describe("USD", () => {
 
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
-            // writeFileSync("original.json", stringify(orig, { indent: 4 }))
-            // writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
+            const filename = prefix.split('/').pop()
+            writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+            writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+            writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })
@@ -1477,61 +1480,27 @@ function compare(lhs: any, rhs: any, path: string = "") {
 function makePrincipled_BSDF(scope: Scope, name: string, diffuseColor: number[]) {
     const material = new Material(scope, name)
 
-    const data: {
-        surface?: ListOp<UsdNode>
-    } = {}
+    const shader = new Shader(material, "Principled_BSDF")
+    new TokenAttr(shader, "info:id", Variability.Uniform, "UsdPreviewSurface")
+    new FloatAttr(shader, "inputs:clearcoat", 0)
+    new FloatAttr(shader, "inputs:clearcoatRoughness",  0.029999999329447746)
+    new Color3fAttr(shader, "inputs:diffuseColor", diffuseColor)
+    new FloatAttr(shader, "inputs:ior", 1.5)
+    new FloatAttr(shader, "inputs:metallic", 0)
+    new FloatAttr(shader, "inputs:opacity", 1)
+    new FloatAttr(shader, "inputs:roughness", 0.5)
+    new FloatAttr(shader, "inputs:specular", 0.5)
+
+    const surface = new TokenAttr(shader, "outputs:surface")
 
     new AttributeX(material, "outputs:surface", (node) => {
         node.setToken("typeName", "token")
-        node.setPathListOp("connectionPaths", data.surface)
+        node.setPathListOp("connectionPaths", {
+            isExplicit: true,
+            explicit: [surface]
+        })
     })
     material.blenderDataName = name
 
-    const shader = new Shader(material, "Principled_BSDF")
-    new AttributeX(shader, "info:id", (node) => {
-        node.setToken("typeName", "token")
-        node.setVariability("variability", Variability.Uniform)
-        node.setToken("default", "UsdPreviewSurface")
-    })
-    new AttributeX(shader, "inputs:clearcoat", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 0)
-    })
-    new AttributeX(shader, "inputs:clearcoatRoughness", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 0.029999999329447746)
-    })
-    new AttributeX(shader, "inputs:diffuseColor", (node) => {
-        node.setToken("typeName", "color3f")
-        node.setVec3f("default", diffuseColor)
-    })
-    new AttributeX(shader, "inputs:ior", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 1.5)
-    })
-    new AttributeX(shader, "inputs:metallic", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 0)
-    })
-    new AttributeX(shader, "inputs:opacity", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 1)
-    })
-    new AttributeX(shader, "inputs:roughness", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 0.5)
-    })
-    new AttributeX(shader, "inputs:specular", (node) => {
-        node.setToken("typeName", "float")
-        node.setFloat("default", 0.5)
-    })
-    // token outputs:surface
-    const surface = new AttributeX(shader, "outputs:surface", (node) => {
-        node.setToken("typeName", "token")
-    })
-    data.surface = {
-        isExplicit: true,
-        explicit: [surface]
-    }
     return material
 }
