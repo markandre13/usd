@@ -1,8 +1,8 @@
-import type { Crate } from "../crate/Crate.ts"
-import type { ListOp } from "../crate/Fields.ts"
-import { SpecType } from "../crate/SpecType.ts"
-import { UsdNode } from "../crate/UsdNode.ts"
-import { Variability } from "../crate/Variability.js"
+import type { Crate } from "../../crate/Crate.ts"
+import type { ListOp } from "../../crate/Fields.ts"
+import { SpecType } from "../../crate/SpecType.ts"
+import { UsdNode } from "../../crate/UsdNode.ts"
+import { Variability } from "../../crate/Variability.ts"
 
 export class FloatAttr extends UsdNode {
     value: number
