@@ -764,70 +764,10 @@ describe("USD", () => {
 
             const cube = new Xform(root, "Cube")
             const materials = new Scope(root, "_materials")
-            function makePrincipled_BSDF(name: string, diffuseColor: number[]) {
-                const material = new Material(materials, name)
-                const data: {
-                    surface?: ListOp<UsdNode>
-                } = {}
-
-                new AttributeX(material, "outputs:surface", (node) => {
-                    node.setToken("typeName", "token")
-                    node.setPathListOp("connectionPaths", data.surface)
-                })
-
-                material.blenderDataName = name
-                const shader = new Shader(material, "Principled_BSDF")
-                new AttributeX(shader, "info:id", (node) => {
-                    node.setToken("typeName", "token")
-                    node.setVariability("variability", Variability.Uniform)
-                    node.setToken("default", "UsdPreviewSurface")
-                })
-                new AttributeX(shader, "inputs:clearcoat", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0)
-                })
-                new AttributeX(shader, "inputs:clearcoatRoughness", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.029999999329447746)
-                })
-                new AttributeX(shader, "inputs:diffuseColor", (node) => {
-                    node.setToken("typeName", "color3f")
-                    node.setVec3f("default", diffuseColor)
-                })
-                new AttributeX(shader, "inputs:ior", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 1.5)
-                })
-                new AttributeX(shader, "inputs:metallic", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0)
-                })
-                new AttributeX(shader, "inputs:opacity", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 1)
-                })
-                new AttributeX(shader, "inputs:roughness", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.5)
-                })
-                new AttributeX(shader, "inputs:specular", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.5)
-                })
-                // token outputs:surface
-                const surface = new AttributeX(shader, "outputs:surface", (node) => {
-                    node.setToken("typeName", "token")
-                })
-                data.surface = {
-                    isExplicit: true,
-                    explicit: [surface]
-                }
-                return material
-            }
-            const blue = makePrincipled_BSDF("blue", [0, 0, 1])
-            const gray = makePrincipled_BSDF("gray", [0.8, 0.8, 0.8])
-            const green = makePrincipled_BSDF("green", [0, 1, 0])
-            const red = makePrincipled_BSDF("red", [1, 0, 0])
+            const blue = makePrincipled_BSDF(materials, "blue", [0, 0, 1])
+            const gray = makePrincipled_BSDF(materials, "gray", [0.8, 0.8, 0.8])
+            const green = makePrincipled_BSDF(materials, "green", [0, 1, 0])
+            const red = makePrincipled_BSDF(materials, "red", [1, 0, 0])
 
             cube.blenderObjectName = "Cube"
 
@@ -967,72 +907,12 @@ describe("USD", () => {
             light.blenderDataName = "Light"
 
             const materials = new Scope(root, "_materials")
+            const gray = makePrincipled_BSDF(materials, "Material", [0.8, 0.8, 0.8])
 
             const domeLight = new DomeLight(root, "env_light")
             domeLight.intensity = 1.0
             domeLight.textureFile = "./textures/color_0C0C0C.exr"
 
-            function makePrincipled_BSDF(name: string, diffuseColor: number[]) {
-                const material = new Material(materials, name)
-                // outputs:surface                 : ConnectionPaths(...)
-                // userProperties:blender:data_name
-                const data: {
-                    surface?: ListOp<UsdNode>
-                } = {}
-                new AttributeX(material, "outputs:surface", (node) => {
-                    node.setToken("typeName", "token")
-                    node.setPathListOp("connectionPaths", data.surface)
-                })
-                material.blenderDataName = name
-                const shader = new Shader(material, "Principled_BSDF")
-                new AttributeX(shader, "info:id", (node) => {
-                    node.setToken("typeName", "token")
-                    node.setVariability("variability", Variability.Uniform)
-                    node.setToken("default", "UsdPreviewSurface")
-                })
-                new AttributeX(shader, "inputs:clearcoat", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0)
-                })
-                new AttributeX(shader, "inputs:clearcoatRoughness", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.029999999329447746)
-                })
-                new AttributeX(shader, "inputs:diffuseColor", (node) => {
-                    node.setToken("typeName", "color3f")
-                    node.setVec3f("default", diffuseColor)
-                })
-                new AttributeX(shader, "inputs:ior", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 1.5)
-                })
-                new AttributeX(shader, "inputs:metallic", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0)
-                })
-                new AttributeX(shader, "inputs:opacity", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 1)
-                })
-                new AttributeX(shader, "inputs:roughness", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.5)
-                })
-                new AttributeX(shader, "inputs:specular", (node) => {
-                    node.setToken("typeName", "float")
-                    node.setFloat("default", 0.5)
-                })
-                // token outputs:surface
-                const surface = new AttributeX(shader, "outputs:surface", (node) => {
-                    node.setToken("typeName", "token")
-                })
-                data.surface = {
-                    isExplicit: true,
-                    explicit: [surface]
-                }
-                return material
-            }
-            const gray = makePrincipled_BSDF("Material", [0.8, 0.8, 0.8])
 
             const meshParent = new Xform(skelRoot, "Cube")
             meshParent.blenderObjectName = "Cube"
@@ -1592,4 +1472,66 @@ function compare(lhs: any, rhs: any, path: string = "") {
         const fb = rhs[name]
         compare(fa, fb, `${path}.${name}`)
     }
+}
+
+function makePrincipled_BSDF(scope: Scope, name: string, diffuseColor: number[]) {
+    const material = new Material(scope, name)
+
+    const data: {
+        surface?: ListOp<UsdNode>
+    } = {}
+
+    new AttributeX(material, "outputs:surface", (node) => {
+        node.setToken("typeName", "token")
+        node.setPathListOp("connectionPaths", data.surface)
+    })
+    material.blenderDataName = name
+
+    const shader = new Shader(material, "Principled_BSDF")
+    new AttributeX(shader, "info:id", (node) => {
+        node.setToken("typeName", "token")
+        node.setVariability("variability", Variability.Uniform)
+        node.setToken("default", "UsdPreviewSurface")
+    })
+    new AttributeX(shader, "inputs:clearcoat", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 0)
+    })
+    new AttributeX(shader, "inputs:clearcoatRoughness", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 0.029999999329447746)
+    })
+    new AttributeX(shader, "inputs:diffuseColor", (node) => {
+        node.setToken("typeName", "color3f")
+        node.setVec3f("default", diffuseColor)
+    })
+    new AttributeX(shader, "inputs:ior", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 1.5)
+    })
+    new AttributeX(shader, "inputs:metallic", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 0)
+    })
+    new AttributeX(shader, "inputs:opacity", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 1)
+    })
+    new AttributeX(shader, "inputs:roughness", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 0.5)
+    })
+    new AttributeX(shader, "inputs:specular", (node) => {
+        node.setToken("typeName", "float")
+        node.setFloat("default", 0.5)
+    })
+    // token outputs:surface
+    const surface = new AttributeX(shader, "outputs:surface", (node) => {
+        node.setToken("typeName", "token")
+    })
+    data.surface = {
+        isExplicit: true,
+        explicit: [surface]
+    }
+    return material
 }
