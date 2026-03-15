@@ -1,10 +1,10 @@
-import { AssetPathAttr, FloatAttr, IntArrayAttr, Relationship, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../attributes/index.ts"
-import type { Crate } from "../crate/Crate.ts"
-import type { ListOp } from "../crate/Fields.ts"
-import { Specifier } from "../crate/Specifier.ts"
-import { isPrim, SpecType } from "../crate/SpecType.ts"
-import { UsdNode } from "../crate/UsdNode.ts"
-import { Variability } from "../crate/Variability.ts"
+import { AssetPathAttr, FloatAttr, IntArrayAttr, Relationship, VariabilityAttr, Vec2fArrayAttr, Vec3fArrayAttr } from "../../attributes/index.ts"
+import type { Crate } from "../../crate/Crate.ts"
+import type { ListOp } from "../../crate/Fields.ts"
+import { Specifier } from "../../crate/Specifier.ts"
+import { isPrim, SpecType } from "../../crate/SpecType.ts"
+import { UsdNode } from "../../crate/UsdNode.ts"
+import { Variability } from "../../crate/Variability.ts"
 
 export class SchemaBase extends UsdNode { }
 
