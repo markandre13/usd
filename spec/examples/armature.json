@@ -1167,20 +1167,6 @@
                             "name": "Camera",
                             "prim": true,
                             "fields": {
-                                "specifier": {
-                                    "type": "Specifier",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "Def"
-                                },
-                                "typeName": {
-                                    "type": "Token",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "Camera"
-                                },
                                 "properties": {
                                     "type": "TokenVector",
                                     "inline": false,
@@ -1194,6 +1180,20 @@
                                         "clippingRange",
                                         "userProperties:blender:data_name"
                                     ]
+                                },
+                                "specifier": {
+                                    "type": "Specifier",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Def"
+                                },
+                                "typeName": {
+                                    "type": "Token",
+                                    "inline": true,
+                                    "array": false,
+                                    "compressed": false,
+                                    "value": "Camera"
                                 }
                             },
                             "children": [
@@ -1214,7 +1214,7 @@
                                             "inline": false,
                                             "array": false,
                                             "compressed": false,
-                                            "value": [ 0.10000000149011612, 100, 2.802596928649634e-45 ]
+                                            "value": [ 0.10000000149011612, 100 ]
                                         }
                                     }
                                 },

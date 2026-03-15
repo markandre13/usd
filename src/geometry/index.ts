@@ -125,6 +125,11 @@ export class SkelRoot extends Boundable {
     }
 }
 
+/**
+ * Describes a skeleton.
+ * 
+ * defined in pxr/usd/usdSkel/schema.usda
+ */
 export class Skeleton extends Boundable {
     customData?: any
 
@@ -141,6 +146,184 @@ export class Skeleton extends Boundable {
         this.setTokenListOp("apiSchemas", {
             prepend: ["SkelBindingAPI"]
         })
+    }
+
+    /**
+     * An array of path tokens identifying the set of joints that make
+     * up the skeleton, and their order. Each token in the array must be valid
+     * when parsed as an SdfPath. The parent-child relationships of the
+     * corresponding paths determine the parent-child relationships of each
+     * joint. It is not required that the name at the end of each path be
+     * unique, but rather only that the paths themselves be unique.
+     */
+    set joints(value: string[] | undefined) {
+        this.deleteChild("joints")
+        if (value !== undefined) {
+            new AttributeX(this, "joints", (node) => {
+                node.setToken("typeName", "token[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setTokenArray("default", value)
+            })
+        }
+    }
+    /**
+     * If authored, provides a unique name per joint. This may be
+     * optionally set to provide better names when translating to DCC apps 
+     * that require unique joint names.
+     */
+    set jointNames(value: string[] | undefined) {
+        this.deleteChild("jointNames")
+        if (value !== undefined) {
+            new AttributeX(this, "jointNames", (node) => {
+                node.setToken("typeName", "token[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setTokenArray("default", value)
+            })
+        }
+    }
+
+    /**
+     * Specifies the bind-pose transforms of each joint in
+     * **world space**, in the ordering imposed by _joints_.
+     */
+    set bindTransforms(value: number[] | undefined) {
+        this.deleteChild("bindTransforms")
+        if (value !== undefined) {
+            new AttributeX(this, "bindTransforms", (node) => {
+                node.setToken("typeName", "matrix4d[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setMatrix4dArray("default", value)
+            })
+        }
+    }
+
+    /**
+     * Specifies the rest-pose transforms of each joint in
+     * **local space**, in the ordering imposed by *joints*. This provides
+     * fallback values for joint transforms when a Skeleton either has no
+     * bound animation source, or when that animation source only contains
+     * animation for a subset of a Skeleton's joints.
+     */
+    set restTransforms(value: number[] | undefined) {
+        this.deleteChild("restTransforms")
+        if (value !== undefined) {
+            new AttributeX(this, "restTransforms", (node) => {
+                node.setToken("typeName", "matrix4d[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setMatrix4dArray("default", value)
+            })
+        }
+    }
+
+    set blenderBoneLength(value: number[] | undefined) {
+        this.deleteChild("primvars:blender:bone_lengths")
+        new AttributeX(this, "primvars:blender:bone_lengths", (node) => {
+            node.setToken("typeName", "float[]")
+            node.setToken("interpolation", "uniform")
+            node.setFloatArray("default", value)
+        })
+    }
+}
+
+/**
+ * Transformable camera.
+ * 
+ * defined in pxr/usd/usdGeom/schema.usda
+ */
+export class Camera extends Boundable {
+    customData?: any
+
+    constructor(parent: UsdNode, name: string) {
+        super(parent.crate, parent, -1, name, true)
+        this.spec_type = SpecType.Prim
+        this.specifier = Specifier.Def
+        this.typeName = "Camera"
+    }
+
+    override encodeFields(): void {
+        super.encodeFields()
+        this.setCustomData("customData", this.customData)
+     }
+
+    //
+    // Viewing Frustum
+    //
+    set projection(value: "perspective" | "orthographic" | undefined) {
+        this.deleteChild("projection")
+        new AttributeX(this, "projection", (node) => {
+            node.setToken("typeName", "token")
+            node.setToken("default", value)
+        })
+    }
+    set horizontalAperture(value: number | undefined) {
+        this.deleteChild("horizontalAperture")
+        new AttributeX(this, "horizontalAperture", (node) => {
+            node.setToken("typeName", "float")
+            node.setFloat("default", value)
+        })
+    }
+    set verticalAperture(value: number | undefined) {
+        this.deleteChild("verticalAperture")
+        new AttributeX(this, "verticalAperture", (node) => {
+            node.setToken("typeName", "float")
+            node.setFloat("default", value)
+        })
+    }
+    // horizontalApertureOffset
+    // verticalApertureOffset
+    set focalLength(value: number | undefined) {
+        this.deleteChild("focalLength")
+        new AttributeX(this, "focalLength", (node) => {
+            node.setToken("typeName", "float")
+            node.setFloat("default", value)
+        })
+    }
+    set clippingRange(value: number[] | undefined) {
+        this.deleteChild("clippingRange")
+        new AttributeX(this, "clippingRange", (node) => {
+            node.setToken("typeName", "float2")
+            node.setVec2f("default", value)
+        })
+    }
+    // clippingPlanes
+
+    //
+    // Depth of Field
+    //
+    // fStop
+    // focusDistance
+
+    //
+    // Stereoscopic 3D
+    //
+    // stereoRole
+
+    // 
+    // Parameters for Motion Blur
+    //
+
+    // shutter:open
+    // shutter:close 
+
+    //
+    // Exposure Adjustment
+    //
+    // exposure
+
+    //
+    // Exposure Controls
+    //
+    // exposure:iso
+    // exposure:time
+    // exposure:fStop
+    // exposure:responsivity
+
+    set blenderDataName(value: string | undefined) {
+        this.deleteChild("userProperties:blender:data_name")
+        if (value !== undefined) {
+            const attr = new Attribute(this, "userProperties:blender:data_name", value)
+            attr.custom = true
+        }
     }
 }
 

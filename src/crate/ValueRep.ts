@@ -154,8 +154,8 @@ export class ValueRep {
                 }
                 if (!this.isArray() && !this.isInlined() && !this.isCompressed()) {
                     reader.offset = this.getIndex()
-                    const arr = new Array<number>(3)
-                    for (let i = 0; i < 3; ++i) {
+                    const arr = new Array<number>(size)
+                    for (let i = 0; i < size; ++i) {
                         arr[i] = reader.getFloat32()
                     }
                     return arr

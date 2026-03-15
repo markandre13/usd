@@ -328,28 +328,46 @@ export class Fields {
         }
         return idx
     }
+    setVec2f(name: string, value: ArrayLike<number>): number {
+        return this.setVecXf(name, value, CrateDataType.Vec2f, 2)
+    }
     setVec3f(name: string, value: ArrayLike<number>): number {
-        if (value.length < 3) {
-            throw Error(`setVec3f('${name}', value: number[3]): value too small`)
+        return this.setVecXf(name, value, CrateDataType.Vec3f, 3)
+    }
+    setVec4f(name: string, value: ArrayLike<number>): number {
+        return this.setVecXf(name, value, CrateDataType.Vec4f, 4)
+    }
+    private setVecXf(name: string, value: ArrayLike<number>, type: CrateDataType, n: number): number {
+        if (value.length < n) {
+            throw Error(`setVec${n}f('${name}', value: number[3]): value too small`)
         }
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        if (Math.round(value[0]) == value[0]
-            && Math.round(value[1]) == value[1]
-            && Math.round(value[2]) == value[2]) {
-            this.valueReps.writeUint8(value[0])
-            this.valueReps.writeUint8(value[1])
-            this.valueReps.writeUint8(value[2])
-            this.valueReps.writeUint8(0)
+
+        let canInline = true
+        for (let i = 0; i < n; ++i) {
+            if (Math.round(value[i]) !== value[i] || value[i] < -128 || value[i] > 127) {
+                canInline = false
+                break
+            }
+        }
+
+        if (canInline) {
+            for (let i = 0; i < n; ++i) {
+                this.valueReps.writeUint8(value[i])
+            }
+            for (let i = n; i < 4; ++i) {
+                this.valueReps.writeUint8(0)
+            }
             this.valueReps.skip(2)
-            this.valueReps.writeUint8(CrateDataType.Vec3f)
+            this.valueReps.writeUint8(type)
             this.valueReps.writeUint8(IsInlinedBit)
         } else {
             this.valueReps.writeUint32(this.data.tell())
             this.valueReps.skip(2)
-            this.valueReps.writeUint8(CrateDataType.Vec3f)
+            this.valueReps.writeUint8(type)
             this.valueReps.writeUint8(0)
-            for (let i = 0; i < 3; ++i) {
+            for (let i = 0; i < n; ++i) {
                 this.data.writeFloat32(value[i])
             }
         }

@@ -20,7 +20,7 @@ import { FieldSets } from "../src/crate/FieldSets.ts"
 import { Specs } from "../src/crate/Specs.ts"
 import { compressBound } from "../src/compression/lz4.ts"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers.ts"
-import { Attribute, AttributeX, DomeLight, GeomSubset, Material, Mesh, Scope, Shader, Skeleton, SkelRoot, Xform } from "../src/geometry/index.ts"
+import { Attribute, AttributeX, Camera, DomeLight, GeomSubset, Material, Mesh, Scope, Shader, Skeleton, SkelRoot, Xform } from "../src/geometry/index.ts"
 import { PseudoRoot } from "../src/geometry/PseudoRoot.ts"
 import { ValueRep } from "../src/crate/ValueRep.ts"
 import { IntArrayAttr, Relationship, VariabilityAttr } from "../src/attributes/index.ts"
@@ -980,45 +980,51 @@ describe("USD", () => {
             })
 
             const skeleton = new Skeleton(skelRoot, "Armature")
-            new AttributeX(skeleton, "bindTransforms", (node) => {
-                node.setToken("typeName", "matrix4d[]")
-                node.setVariability("variability", Variability.Uniform)
-                node.setMatrix4dArray("default", [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 1, 1])
-            })
-            new AttributeX(skeleton, "joints", (node) => {
-                node.setToken("typeName", "token[]")
-                node.setVariability("variability", Variability.Uniform)
-                node.setTokenArray("default", ["Bone", "Bone/Bone_001"])
-
-            })
-            new AttributeX(skeleton, "primvars:blender:bone_lengths", (node) => {
-                node.setToken("typeName", "float[]")
-                node.setToken("interpolation", "uniform")
-                node.setFloatArray("default", [1, 1])
-            })
-            new AttributeX(skeleton, "restTransforms", (node) => {
-                node.setToken("typeName", "matrix4d[]")
-                node.setVariability("variability", Variability.Uniform)
-                node.setMatrix4dArray("default", [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1])
-            })
-
+            skeleton.bindTransforms = [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 1, 1]
+            skeleton.joints = ["Bone", "Bone/Bone_001"]
+            skeleton.blenderBoneLength = [1, 1]
+            skeleton.restTransforms = [1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
 
             const cameraParent = new Xform(root, "Camera")
-            // userProperties:blender:object_name
-            // xformOp:rotateXYZ
-            // xformOp:scale
-            // xformOp:translate
-            // xformOpOrder
-            
-            // new Camera(cameraParent, "Camera")
-            // clippingRange
-            // focalLength
-            // horizontalAperture
-            // projection
-            // userProperties:blender:data_name
-            // verticalAperture
+            const attr2 = new Attribute(skelRoot, "userProperties:blender:object_name", "Camera")
+            attr2.custom = true
+            new AttributeX(cameraParent, "xformOp:rotateXYZ", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [63.559295654296875, 2.2983238068263745e-7, 46.69194412231445])
+            })
+            new AttributeX(cameraParent, "xformOp:scale", (node) => {
+                node.setToken("typeName", "float3")
+                node.setVec3f("default", [1, 1, 1])
+            })
+            new AttributeX(cameraParent, "xformOp:translate", (node) => {
+                node.setToken("typeName", "double3")
+                node.setVec3d("default", [7.358891487121582, -6.925790786743164, 4.958309173583984])
+            })
+            new AttributeX(cameraParent, "xformOpOrder", (node) => {
+                node.setToken("typeName", "token[]")
+                node.setVariability("variability", Variability.Uniform)
+                node.setTokenArray("default", ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"])
+            })
+
+            const camera = new Camera(cameraParent, "Camera")
+            camera.clippingRange = [0.1, 100]
+            camera.focalLength = 0.5
+            camera.horizontalAperture = 0.36
+            camera.projection = "perspective"
+            camera.blenderDataName = "Camera"
+            camera.verticalAperture = 0.2025
 
             const lightParent = new Xform(root, "Light")
+
+            // double3 xformOp:translate = (4.076245307922363, 1.0054539442062379, 5.903861999511719)
+            // float3 xformOp:rotateXYZ = (37.26105, 3.1637092, 106.936328)
+            // float3 xformOp:scale = (1, 0.99999996, 1)
+            // uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+            // custom string userProperties:blender:object_name = "Light"
+
+            // lightParent.blenderObjectName = "Light"
+            // lightParent.rotateXYZ = 
+
             // new SphereLight(lightParent, "Light")
 
             const materials = new Scope(root, "_materials")
@@ -1087,7 +1093,6 @@ describe("USD", () => {
             }
             const gray = makePrincipled_BSDF("Material", [0.8, 0.8, 0.8])
 
-            //         def Mesh "Mesh" ( active = true ) { ... }
             const meshParent = new Xform(skelRoot, "Cube")
             // line 436
             // userProperties:blender:object_name
