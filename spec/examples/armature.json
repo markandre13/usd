@@ -1345,11 +1345,11 @@
                             "array": false,
                             "compressed": false,
                             "value": [
-                                "xformOp:translate",
+                                "userProperties:blender:object_name",
                                 "xformOp:rotateXYZ",
                                 "xformOp:scale",
-                                "xformOpOrder",
-                                "userProperties:blender:object_name"
+                                "xformOp:translate",
+                                "xformOpOrder"
                             ]
                         },
                         "primChildren": {

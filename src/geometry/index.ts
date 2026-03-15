@@ -462,6 +462,61 @@ export class Mesh extends PointBased {
             new VariabilityAttr(this, "subsetFamily:materialBind:familyType", Variability.Uniform, value)
         }
     }
+
+    /**
+     * Skeleton
+     */
+    set geomBindTransform(value: number[] | undefined) {
+        this.deleteChild("primvars:skel:geomBindTransform")
+        if (value !== undefined) {
+            this.prependApiSchema("SkelBindingAPI")
+            new AttributeX(this, "primvars:skel:geomBindTransform", node => {
+                node.setToken("typeName", "matrix4d")
+                node.setMatrix4d("default", value)
+            })
+        }
+    }
+    set jointIndices(value: {
+        elementSize: number
+        indices: number[]
+    } | undefined) {
+        this.deleteChild("primvars:skel:jointIndices")
+        if (value !== undefined) {
+            this.prependApiSchema("SkelBindingAPI")
+            new AttributeX(this, "primvars:skel:jointIndices", node => {
+                node.setToken("typeName", "int[]")
+                node.setToken("interpolation", "vertex")
+                node.setInt("elementSize", value.elementSize)
+                node.setIntArray("default", value.indices)
+            })
+        }
+    }
+    set jointWeights(value: {
+        elementSize: number
+        indices: number[]
+    } | undefined) {
+        this.deleteChild("primvars:skel:jointWeights")
+        if (value !== undefined) {
+            this.prependApiSchema("SkelBindingAPI")
+            new AttributeX(this, "primvars:skel:jointWeights", node => {
+                node.setToken("typeName", "float[]")
+                node.setToken("interpolation", "vertex")
+                node.setInt("elementSize", value.elementSize)
+                node.setFloatArray("default", value.indices)
+            })
+        }
+    }
+
+    set skeleton(value: Skeleton | undefined) {
+        this.deleteChild("skel:skeleton")
+        if (value !== undefined) {
+            this.prependApiSchema("SkelBindingAPI")
+            new Relationship(this, "skel:skeleton", {
+                isExplicit: true,
+                explicit: [value]
+            })
+        }
+    }
 }
 
 class NonboundableLightBase extends UsdNode {

@@ -684,24 +684,10 @@ describe("USD", () => {
 
             const crate = makeCreate()
 
-            // #usda 1.0
-            // (
-            //     doc = "Blender v5.0.1"
-            //     metersPerUnit = 1
-            //     upAxis = "Z"
-            //     defaultPrim = "root"
-            // )
             const pseudoRoot = new PseudoRoot(crate)
             pseudoRoot.documentation = "Blender v5.0.1"
             pseudoRoot.defaultPrim = "root"
 
-            // def Xform "root" (
-            //     customData = {
-            //         dictionary Blender = {
-            //             bool generated = 1
-            //         }
-            //     }
-            // ) {
             const root = new Xform(pseudoRoot, "root")
             root.customData = {
                 Blender: {
@@ -709,14 +695,9 @@ describe("USD", () => {
                 }
             }
 
-            //     def Xform "Cube" {
             const cube = new Xform(root, "Cube")
+            cube.blenderObjectName = "Cube"
 
-            //         custom string userProperties:blender:object_name = "Cube"
-            const attr = new Attribute(cube, "userProperties:blender:object_name", "Cube")
-            attr.custom = true
-
-            //         def Mesh "Mesh" ( active = true ) { ... }
             const mesh = new Mesh(cube, "Mesh")
             mesh.blenderDataName = "Mesh"
             mesh.extent = [-1, -1, -1, 1, 1, 1]
@@ -727,7 +708,9 @@ describe("USD", () => {
             mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.375, 0.75, 0.625, 0.75, 0.625, 1, 0.375, 1, 0.375, 0, 0.625, 0, 0.625, 0.25, 0.375, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.375, 0.5, 0.625, 0.5, 0.625, 0.75, 0.375, 0.75, 0.375, 0.25, 0.625, 0.25, 0.625, 0.5, 0.375, 0.5]
             mesh.subdivisionScheme = "none"
 
-            new DomeLight(root, "env_light")
+            const light = new DomeLight(root, "env_light")
+            light.intensity = 1.0
+            light.textureFile = "./textures/color_0C0C0C.exr"
 
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
@@ -736,9 +719,8 @@ describe("USD", () => {
             const stage = new UsdStage(Buffer.from(crate.writer.buffer))
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            // writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
-            // writeFileSync("original.json", JSON.stringify(orig, undefined, 4))
-            // writeFileSync("constructed.json", JSON.stringify(pseudoRootIn, undefined, 4))
+            // writeFileSync("original.json", stringify(orig, { indent: 4 }))
+            // writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })
@@ -758,24 +740,10 @@ describe("USD", () => {
 
             const crate = makeCreate()
 
-            // #usda 1.0
-            // (
-            //     doc = "Blender v5.0.1"
-            //     metersPerUnit = 1
-            //     upAxis = "Z"
-            //     defaultPrim = "root"
-            // )
             const pseudoRoot = new PseudoRoot(crate)
             pseudoRoot.defaultPrim = "root"
             pseudoRoot.documentation = "Blender v5.0.1"
 
-            // def Xform "root" (
-            //     customData = {
-            //         dictionary Blender = {
-            //             bool generated = 1
-            //         }
-            //     }
-            // ) {
             const root = new Xform(pseudoRoot, "root")
             root.customData = {
                 Blender: {
@@ -783,20 +751,19 @@ describe("USD", () => {
                 }
             }
 
-            //     def Xform "Cube" {
             const cube = new Xform(root, "Cube")
             const materials = new Scope(root, "_materials")
             function makePrincipled_BSDF(name: string, diffuseColor: number[]) {
                 const material = new Material(materials, name)
-                // outputs:surface                 : ConnectionPaths(...)
-                // userProperties:blender:data_name
                 const data: {
                     surface?: ListOp<UsdNode>
                 } = {}
+
                 new AttributeX(material, "outputs:surface", (node) => {
                     node.setToken("typeName", "token")
                     node.setPathListOp("connectionPaths", data.surface)
                 })
+
                 material.blenderDataName = name
                 const shader = new Shader(material, "Principled_BSDF")
                 new AttributeX(shader, "info:id", (node) => {
@@ -851,13 +818,9 @@ describe("USD", () => {
             const green = makePrincipled_BSDF("green", [0, 1, 0])
             const red = makePrincipled_BSDF("red", [1, 0, 0])
 
-            //         custom string userProperties:blender:object_name = "Cube"
-            const attr = new Attribute(cube, "userProperties:blender:object_name", "Cube")
-            attr.custom = true
+            cube.blenderObjectName = "Cube"
 
-            //         def Mesh "Mesh" ( active = true ) { ... }
             const mesh = new Mesh(cube, "Cube")
-
             mesh.doubleSided = true
             mesh.extent = [-1, -1, -1, 1, 1, 1]
             mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
@@ -873,14 +836,6 @@ describe("USD", () => {
             mesh.familyType = "nonOverlapping"
             mesh.blenderDataName = "Cube"
 
-            // this mesh addionally needs
-            //   fields:
-            //     apiSchemas: MaterialBindingAPI           DONE
-            //     primChildren: [...]                      DONE
-            //   properties:
-            //     doubleSided,                             DONE
-            //     material:binding,                        PARTIAL, NEEDS RELATION TO USDNODE
-            //     subsetFamily:materialBind:familyType     DONE
             const blueFace = new GeomSubset(mesh, "blue")
             new VariabilityAttr(blueFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(blueFace, "familyName", Variability.Uniform, "materialBind")
@@ -891,15 +846,13 @@ describe("USD", () => {
             new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(grayFace, "indices", [1, 2, 3])
-            new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] }
-            )
+            new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] })
 
             const greenFace = new GeomSubset(mesh, "green")
             new VariabilityAttr(greenFace, "elementType", Variability.Uniform, "face")
             new VariabilityAttr(greenFace, "familyName", Variability.Uniform, "materialBind")
             new IntArrayAttr(greenFace, "indices", [4])
-            new Relationship(greenFace, "material:binding", { isExplicit: true, explicit: [green] }
-            )
+            new Relationship(greenFace, "material:binding", { isExplicit: true, explicit: [green] })
 
             const redFace = new GeomSubset(mesh, "red")
             new VariabilityAttr(redFace, "elementType", Variability.Uniform, "face")
@@ -909,7 +862,9 @@ describe("USD", () => {
 
             // _materials
 
-            new DomeLight(crate, root, "env_light")
+            const light = new DomeLight(root, "env_light")
+            light.intensity = 1.0
+            light.textureFile = "./textures/color_0C0C0C.exr"
 
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
@@ -930,7 +885,7 @@ describe("USD", () => {
 
             compare(pseudoRootIn, orig)
         })
-        it.only("armature.usdc", () => {
+        it("armature.usdc", () => {
             const prefix = "spec/examples/armature"
             // read the original
             // const buffer = readFileSync(`${prefix}.usdc`)
@@ -957,7 +912,6 @@ describe("USD", () => {
                 }
             }
 
-            // const cube = new Xform(root, "Armature")
             const skelRoot = new SkelRoot(root, "Armature")
             skelRoot.blenderObjectName = "Armature"
             skelRoot.rotateXYZ = [0, 0, 0]
@@ -994,7 +948,7 @@ describe("USD", () => {
             lightParent.xformOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
             const light = new SphereLight(lightParent, "Light")
-            light.extent = [ -0.10000000149011612, -0.10000000149011612, -0.10000000149011612, 0.10000000149011612, 0.10000000149011612, 0.10000000149011612 ]
+            light.extent = [-0.10000000149011612, -0.10000000149011612, -0.10000000149011612, 0.10000000149011612, 0.10000000149011612, 0.10000000149011612]
             light.enableColorTemperature = true
             light.intensity = 318.30987548828125
             light.normalize = true
@@ -1087,36 +1041,14 @@ describe("USD", () => {
             }
             mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0]
             mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1, 1, 1, 0, -1, -1, 0, 1, -1, 0, -1, 1, 0]
-            new AttributeX(mesh, "primvars:skel:geomBindTransform", node => {
-                node.setToken("typeName", "matrix4d")
-                node.setMatrix4d("default", [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1])
-            })
-            new AttributeX(mesh, "primvars:skel:jointIndices", node => {
-                node.setToken("typeName", "int[]")
-                node.setToken("interpolation", "vertex")
-                node.setInt("elementSize", 2)
-                node.setIntArray("default", [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1])
-            })
-            new AttributeX(mesh, "primvars:skel:jointWeights", node => {
-                node.setToken("typeName", "float[]")
-                node.setToken("interpolation", "vertex")
-                node.setInt("elementSize", 2)
-                node.setFloatArray("default", [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0.4996339976787567, 0.5003660321235657, 0.5081230401992798, 0.4918769598007202, 0.5216529965400696, 0.4783470034599304, 0.4856490194797516, 0.514350950717926])
-            })
-            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.5, 0.75, 0.625, 0.75, 0.625, 1, 0.5, 1, 0.5, 0, 0.625, 0, 0.625, 0.25, 0.5, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.5, 0.5, 0.625, 0.5, 0.625, 0.75, 0.5, 0.75, 0.5, 0.25, 0.625, 0.25, 0.625, 0.5, 0.5, 0.5, 0.375, 0.25, 0.5, 0.25, 0.5, 0.5, 0.375, 0.5, 0.375, 0.5, 0.5, 0.5, 0.5, 0.75, 0.375, 0.75, 0.375, 0, 0.5, 0, 0.5, 0.25, 0.375, 0.25, 0.375, 0.75, 0.5, 0.75, 0.5, 1, 0.375, 1]
-            new Relationship(mesh, "skel:skeleton", {
-                isExplicit: true,
-                explicit: [skeleton] // /root/Armature/Armature
-            })
-            mesh.subdivisionScheme = "none"
-            // mesh.familyType = "nonOverlapping"
-            mesh.blenderDataName = "Cube"
 
-            // const grayFace = new GeomSubset(mesh, "gray")
-            // new VariabilityAttr(grayFace, "elementType", Variability.Uniform, "face")
-            // new VariabilityAttr(grayFace, "familyName", Variability.Uniform, "materialBind")
-            // new IntArrayAttr(grayFace, "indices", [1, 2, 3])
-            // new Relationship(grayFace, "material:binding", { isExplicit: true, explicit: [gray] })
+            mesh.geomBindTransform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1]
+            mesh.jointIndices = { elementSize: 2, indices: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1] }
+            mesh.jointWeights = { elementSize: 2, indices: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0.4996339976787567, 0.5003660321235657, 0.5081230401992798, 0.4918769598007202, 0.5216529965400696, 0.4783470034599304, 0.4856490194797516, 0.514350950717926] }
+            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.5, 0.75, 0.625, 0.75, 0.625, 1, 0.5, 1, 0.5, 0, 0.625, 0, 0.625, 0.25, 0.5, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.5, 0.5, 0.625, 0.5, 0.625, 0.75, 0.5, 0.75, 0.5, 0.25, 0.625, 0.25, 0.625, 0.5, 0.5, 0.5, 0.375, 0.25, 0.5, 0.25, 0.5, 0.5, 0.375, 0.5, 0.375, 0.5, 0.5, 0.5, 0.5, 0.75, 0.375, 0.75, 0.375, 0, 0.5, 0, 0.5, 0.25, 0.375, 0.25, 0.375, 0.75, 0.5, 0.75, 0.5, 1, 0.375, 1]
+            mesh.skeleton = skeleton
+            mesh.subdivisionScheme = "none"
+            mesh.blenderDataName = "Cube"
 
             // serialize everything into crate.writer
             crate.serialize(pseudoRoot)
@@ -1131,9 +1063,9 @@ describe("USD", () => {
 
             const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-            writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
-            writeFileSync("original.json", stringify(orig, { indent: 4 }))
-            writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
+            // writeFileSync("constructed.usdc", Buffer.from(crate.writer.buffer))
+            // writeFileSync("original.json", stringify(orig, { indent: 4 }))
+            // writeFileSync("constructed.json", stringify(pseudoRootIn, { indent: 4 }))
 
             compare(pseudoRootIn, orig)
         })
@@ -1208,9 +1140,9 @@ describe("USD", () => {
             expect(value.getType()).to.equal(CrateDataType.Dictionary)
             expect(value.getValue(crate)).to.deep.equal(customData)
         })
-        it.only("Int")
-        it.only("Vec3d")
-        it.only("Matrix[234]d[\[\]])")
+        it("Int")
+        it("Vec3d")
+        it("Matrix[234]d[\[\]])")
     })
     describe("Crate parts", () => {
         it("BootStrap", () => {
@@ -1617,142 +1549,6 @@ describe("USD", () => {
         })
     })
 })
-
-const generatedUSD = {
-    "type": "PseudoRoot",
-    "name": "/",
-    "prim": true,
-    "fields": {
-        "documentation": {
-            "type": "String",
-            "inline": true,
-            "array": false,
-            "compressed": false,
-            "value": "Blender v5.0.0"
-        },
-        "metersPerUnit": {
-            "type": "Float",
-            "inline": true,
-            "array": false,
-            "compressed": false,
-            "value": 3.1414999961853027
-        },
-        "upAxis": {
-            "type": "Token",
-            "inline": true,
-            "array": false,
-            "compressed": false,
-            "value": "Z"
-        }
-    },
-    "children": [
-        {
-            "type": "Prim",
-            "name": "Cube",
-            "prim": true,
-            "fields": {
-                "specifier": {
-                    "type": "Specifier",
-                    "inline": true,
-                    "array": false,
-                    "compressed": false,
-                    "value": "Def"
-                },
-                "typeName": {
-                    "type": "Token",
-                    "inline": true,
-                    "array": false,
-                    "compressed": false,
-                    "value": "Xform"
-                }
-            },
-            "children": [
-                {
-                    "type": "Prim",
-                    "name": "Cube_001",
-                    "prim": true,
-                    "fields": {
-                        "specifier": {
-                            "type": "Specifier",
-                            "inline": true,
-                            "array": false,
-                            "compressed": false,
-                            "value": "Def"
-                        },
-                        "typeName": {
-                            "type": "Token",
-                            "inline": true,
-                            "array": false,
-                            "compressed": false,
-                            "value": "Mesh"
-                        },
-                        "properties": {
-                            "type": "TokenVector",
-                            "inline": false,
-                            "array": false,
-                            "compressed": false,
-                            "value": [
-                                "faceVertexIndices",
-                                "faceVertexCounts"
-                            ]
-                        }
-                    },
-                    "children": [
-                        {
-                            "type": "Attribute",
-                            "name": "faceVertexIndices",
-                            "prim": false,
-                            "fields": {
-                                "typeName": {
-                                    "type": "Token",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "int[]"
-                                },
-                                "default": {
-                                    "type": "Int",
-                                    "inline": false,
-                                    "array": true,
-                                    "compressed": false,
-                                    "value": [
-                                        0, 1, 3, 2,
-                                        2, 3, 7, 6,
-                                        6, 7, 5, 4,
-                                        4, 5, 1, 0,
-                                        2, 6, 4, 0,
-                                        7, 3, 1, 5
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            "type": "Attribute",
-                            "name": "faceVertexCounts",
-                            "prim": false,
-                            "fields": {
-                                "typeName": {
-                                    "type": "Token",
-                                    "inline": true,
-                                    "array": false,
-                                    "compressed": false,
-                                    "value": "int[]"
-                                },
-                                "default": {
-                                    "type": "Int",
-                                    "inline": false,
-                                    "array": true,
-                                    "compressed": false,
-                                    "value": [4, 4, 4, 4, 4, 4]
-                                }
-                            }
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
 
 // this is the thing i still need to write
 function compare(lhs: any, rhs: any, path: string = "") {
