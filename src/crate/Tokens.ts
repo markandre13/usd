@@ -1,7 +1,7 @@
-import { hexdump } from "../detail/hexdump.ts"
-import { compressToBuffer, decompressFromBuffer } from "../compression/compress.ts"
-import type { Reader } from "./Reader.ts"
-import type { Writer } from "./Writer.ts"
+import { hexdump } from "../detail/hexdump"
+import { compressToBuffer, decompressFromBuffer } from "../compression/compress"
+import type { Reader } from "./Reader"
+import type { Writer } from "./Writer"
 
 // https://docs.nvidia.com/learn-openusd/latest/stage-setting/index.html
 // stage, layer

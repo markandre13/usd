@@ -1,8 +1,8 @@
-import { Variability } from "../../crate/Variability.ts"
-import { Vec2fArrayAttr } from "../attributes/Vec2fArrayAttr.ts"
-import { Vec3fArrayAttr } from "../attributes/Vec3fArrayAttr.ts"
-import { VariabilityAttr } from "../attributes/VariabilityAttr.ts"
-import { Gprim } from "./Gprim.ts"
+import { Variability } from "../../crate/Variability"
+import { Vec2fArrayAttr } from "../attributes/Vec2fArrayAttr"
+import { Vec3fArrayAttr } from "../attributes/Vec3fArrayAttr"
+import { VariabilityAttr } from "../attributes/VariabilityAttr"
+import { Gprim } from "./Gprim"
 
 // Cube size
 // Sphere radius

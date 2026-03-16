@@ -1,8 +1,8 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { Attribute } from "../attributes/Attribute.ts"
-import { BoundableLightBase } from "./BoundableLightBase.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { Attribute } from "../attributes/Attribute"
+import { BoundableLightBase } from "./BoundableLightBase"
 
 /**
  * Light emitted outward from a sphere.

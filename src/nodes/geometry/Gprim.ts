@@ -1,6 +1,6 @@
-import { Variability } from "../../crate/Variability.ts"
-import { BooleanAttr } from "../attributes/BooleanAttr.ts"
-import { Boundable } from "./Boundable.ts"
+import { Variability } from "../../crate/Variability"
+import { BooleanAttr } from "../attributes/BooleanAttr"
+import { Boundable } from "./Boundable"
 
 /**
  * Base class for all geometric primitives.

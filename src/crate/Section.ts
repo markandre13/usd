@@ -1,5 +1,5 @@
 import { Reader } from "./Reader.js"
-import type { Writer } from "./Writer.ts"
+import type { Writer } from "./Writer"
 
 interface SectionData {
     name: string

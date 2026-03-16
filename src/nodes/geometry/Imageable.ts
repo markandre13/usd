@@ -1,4 +1,4 @@
-import { Typed } from "../usd/Typed.ts"
+import { Typed } from "../usd/Typed"
 
 /**
  * Base class for all prims that may require rendering or

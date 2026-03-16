@@ -1,6 +1,6 @@
-import { Attribute } from "../attributes/Attribute.ts"
-import { StringAttr } from "../attributes/StringAttr.ts"
-import { Boundable } from "../geometry/Boundable.ts"
+import { Attribute } from "../attributes/Attribute"
+import { StringAttr } from "../attributes/StringAttr"
+import { Boundable } from "../geometry/Boundable"
 
 /**
  * Base class for intrinsic lights that are boundable.

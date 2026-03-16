@@ -1,8 +1,8 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { AssetPathAttr } from "../attributes/AssetPathAttr.ts"
-import { NonboundableLightBase } from "./NonboundableLightBase.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { AssetPathAttr } from "../attributes/AssetPathAttr"
+import { NonboundableLightBase } from "./NonboundableLightBase"
 
 /**
  * Light emitted inward from a distant external environment,

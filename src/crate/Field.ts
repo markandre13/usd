@@ -1,5 +1,5 @@
-import type { TokenIndex } from "../compression/compress.ts"
-import type { ValueRep } from "./ValueRep.ts"
+import type { TokenIndex } from "../compression/compress"
+import type { ValueRep } from "./ValueRep"
 
 export class Field {
     tokenIndex: TokenIndex

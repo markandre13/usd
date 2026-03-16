@@ -1,7 +1,7 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { Imageable } from "./Imageable.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { Imageable } from "./Imageable"
 
 /**
  * Scope is the simplest grouping primitive, and does not carry the

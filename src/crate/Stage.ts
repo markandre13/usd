@@ -1,6 +1,6 @@
 import { Crate } from "./Crate.js"
-import { Reader } from "./Reader.ts"
-import type { UsdNode } from "./UsdNode.ts"
+import { Reader } from "./Reader"
+import type { UsdNode } from "./UsdNode"
 
 export class Stage {
     _crate!: Crate

@@ -1,7 +1,7 @@
-import type { ListOp } from "../../crate/Fields.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import { UsdNode } from "../../crate/UsdNode.ts"
-import { Variability } from "../../crate/Variability.ts"
+import type { ListOp } from "../../crate/Fields"
+import { SpecType } from "../../crate/SpecType"
+import { UsdNode } from "../../crate/UsdNode"
+import { Variability } from "../../crate/Variability"
 
 export class Relationship extends UsdNode {
     value: ListOp<UsdNode>

@@ -1,5 +1,5 @@
-import { Vec3fArrayAttr } from "../attributes/Vec3fArrayAttr.ts"
-import { Xformable } from "./Xformable.ts"
+import { Vec3fArrayAttr } from "../attributes/Vec3fArrayAttr"
+import { Xformable } from "./Xformable"
 
 /**
  * Boundable introduces the ability for a prim to persistently

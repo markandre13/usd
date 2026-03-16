@@ -1,22 +1,23 @@
 {
     "compilerOptions": {
-        "allowArbitraryExtensions": true,
-        "declaration": true,
-        "declarationMap": true,
+        "target": "es2020",
+        "module": "es6",
         "lib": [
-            "esnext"
+            "es2024"
         ],
-        "module": "NodeNext",
-        "outDir": "./dist",
+        "moduleResolution": "node",
+        "traceResolution": false,
+        "esModuleInterop": true,
+        "incremental": true,
+        "declaration": true,
+        "outDir": "dist",
+        "baseUrl": ".",
         "plugins": [
             {
                 "transform": "./m13-es-transformer.cjs",
                 "after": true,
             }
         ],
-        "rewriteRelativeImportExtensions": true,
-        "target": "esnext",
-        "verbatimModuleSyntax": true,
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "removeComments": true,
@@ -29,9 +30,6 @@
         "sourceMap": true
     },
     "include": [
-        "./src"
-    ],
-    "exclude": [
-        "./spec/**/*"
+        "src",
     ]
 }

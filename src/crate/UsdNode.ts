@@ -1,12 +1,12 @@
-import { CrateDataType } from "./CrateDataType.ts"
-import { Crate } from "./Crate.ts"
-import { isPrim, SpecType } from "./SpecType.ts"
-import type { Tokens } from "./Tokens.ts"
+import { CrateDataType } from "./CrateDataType"
+import { Crate } from "./Crate"
+import { isPrim, SpecType } from "./SpecType"
+import type { Tokens } from "./Tokens"
 import { ValueRep } from "./ValueRep.js"
-import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "./Paths.ts"
-import type { Specifier } from "./Specifier.ts"
-import type { ListOp } from "./Fields.ts"
-import type { Variability } from "./Variability.ts"
+import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "./Paths"
+import type { Specifier } from "./Specifier"
+import type { ListOp } from "./Fields"
+import type { Variability } from "./Variability"
 
 // Prim
 //   Attribute (is a property)

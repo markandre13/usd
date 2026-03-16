@@ -1,9 +1,9 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { Variability } from "../../crate/Variability.ts"
-import { Attribute } from "../attributes/Attribute.ts"
-import { Boundable } from "../geometry/Boundable.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { Variability } from "../../crate/Variability"
+import { Attribute } from "../attributes/Attribute"
+import { Boundable } from "../geometry/Boundable"
 
 /**
  * Describes a skeleton.

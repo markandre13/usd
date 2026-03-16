@@ -1,6 +1,6 @@
-import { SpecType } from "../../crate/SpecType.ts"
-import { UsdNode } from "../../crate/UsdNode.ts"
-import type { Variability } from "../../crate/Variability.ts"
+import { SpecType } from "../../crate/SpecType"
+import { UsdNode } from "../../crate/UsdNode"
+import type { Variability } from "../../crate/Variability"
 
 export class TokenAttr extends UsdNode {
     variability?: Variability

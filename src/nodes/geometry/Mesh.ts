@@ -1,16 +1,16 @@
-import type { ListOp } from "../../crate/Fields.ts"
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { Variability } from "../../crate/Variability.ts"
-import { Attribute } from "../attributes/Attribute.ts"
-import { IntArrayAttr } from "../attributes/IntArrayAttr.ts"
-import { VariabilityAttr } from "../attributes/VariabilityAttr.ts"
-import { Relationship } from "../attributes/Relationship.ts"
-import { StringAttr } from "../attributes/StringAttr.ts"
-import type { Skeleton } from "../skeleton/Skeleton.ts"
+import type { ListOp } from "../../crate/Fields"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { Variability } from "../../crate/Variability"
+import { Attribute } from "../attributes/Attribute"
+import { IntArrayAttr } from "../attributes/IntArrayAttr"
+import { VariabilityAttr } from "../attributes/VariabilityAttr"
+import { Relationship } from "../attributes/Relationship"
+import { StringAttr } from "../attributes/StringAttr"
+import type { Skeleton } from "../skeleton/Skeleton"
 
-import { PointBased } from "./PointBased.ts"
+import { PointBased } from "./PointBased"
 
 export class Mesh extends PointBased {
     constructor(parent: UsdNode, name: string) {

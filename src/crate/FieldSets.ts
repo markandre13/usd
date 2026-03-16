@@ -1,5 +1,5 @@
-import type { Reader } from "./Reader.ts"
-import { Writer } from "./Writer.ts"
+import type { Reader } from "./Reader"
+import { Writer } from "./Writer"
 
 export class FieldSets {
     fieldset_indices: number[]

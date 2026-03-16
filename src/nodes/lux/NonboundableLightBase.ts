@@ -1,5 +1,5 @@
-import { UsdNode } from "../../crate/UsdNode.ts"
-import { Attribute } from "../attributes/Attribute.ts"
+import { UsdNode } from "../../crate/UsdNode"
+import { Attribute } from "../attributes/Attribute"
 
 export class NonboundableLightBase extends UsdNode {
     // set enableColorTemperature(value: boolean | undefined) {

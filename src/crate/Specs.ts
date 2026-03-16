@@ -1,6 +1,6 @@
-import type { Reader } from "./Reader.ts"
-import type { SpecType } from "./SpecType.ts"
-import type { Writer } from "./Writer.ts"
+import type { Reader } from "./Reader"
+import type { SpecType } from "./SpecType"
+import type { Writer } from "./Writer"
 
 export class Specs {
     pathIndexes: number[]

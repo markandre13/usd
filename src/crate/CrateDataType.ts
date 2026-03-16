@@ -1,4 +1,4 @@
-import type { ListOp } from "./Fields.ts"
+import type { ListOp } from "./Fields"
 import { Reader } from "./Reader.js"
 import { Writer } from "./Writer.js"
 

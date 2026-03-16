@@ -1,7 +1,7 @@
-import { Variability } from "../../crate/Variability.ts"
-import { Attribute } from "../attributes/Attribute.ts"
-import { StringAttr } from "../attributes/StringAttr.ts"
-import { Imageable } from "./Imageable.ts"
+import { Variability } from "../../crate/Variability"
+import { Attribute } from "../attributes/Attribute"
+import { StringAttr } from "../attributes/StringAttr"
+import { Imageable } from "./Imageable"
 
 /**
  * Base class for all transformable prims, which allows arbitrary

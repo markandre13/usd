@@ -1,8 +1,8 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { StringAttr } from "../attributes/StringAttr.ts"
-import { Typed } from "../usd/Typed.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { StringAttr } from "../attributes/StringAttr"
+import { Typed } from "../usd/Typed"
 
 /**
  * Base class for all USD shaders. Shaders are the building blocks

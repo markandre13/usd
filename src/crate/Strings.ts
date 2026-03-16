@@ -1,6 +1,6 @@
 import { Reader } from "./Reader.js"
-import type { Tokens } from "./Tokens.ts"
-import type { Writer } from "./Writer.ts"
+import type { Tokens } from "./Tokens"
+import type { Writer } from "./Writer"
 
 export class Strings {
     private strings: number[]

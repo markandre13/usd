@@ -1,9 +1,9 @@
-import type { Crate } from "./Crate.ts"
+import type { Crate } from "./Crate"
 import { Reader } from "./Reader.js"
-import { SectionName } from "./SectionName.ts"
-import type { Tokens } from "./Tokens.ts"
-import { UsdNode, type UsdNodeSerializeArgs } from "./UsdNode.ts"
-import type { Writer } from "./Writer.ts"
+import { SectionName } from "./SectionName"
+import type { Tokens } from "./Tokens"
+import { UsdNode, type UsdNodeSerializeArgs } from "./UsdNode"
+import type { Writer } from "./Writer"
 
 export const JUMP_NO_CHILD_NO_SIBLINGS = -2
 export const JUMP_NEXT_IS_CHILD_NO_SIBLINGS = -1

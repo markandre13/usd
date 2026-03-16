@@ -6,15 +6,15 @@
 // (zero vectors, identity matrices, etc).  For values that aren't stored
 // inline, the 6 data bytes are the offset from the start of the file to the
 
-import { hexdump } from "../detail/hexdump.ts"
-import { decodeIntegers } from "../compression/integers.ts"
-import { CrateDataType, ListOpHeader } from "./CrateDataType.ts"
-import type { Crate } from "./Crate.ts"
-import { Specifier } from "./Specifier.ts"
+import { hexdump } from "../detail/hexdump"
+import { decodeIntegers } from "../compression/integers"
+import { CrateDataType, ListOpHeader } from "./CrateDataType"
+import type { Crate } from "./Crate"
+import { Specifier } from "./Specifier"
 import { UsdNode } from "./UsdNode.js"
 import { Variability } from "./Variability.js"
-import { decompressFromBuffer } from "../compression/compress.ts"
-import type { ListOp } from "./Fields.ts"
+import { decompressFromBuffer } from "../compression/compress"
+import type { ListOp } from "./Fields"
 
 export const kMinCompressedArraySize = 16
 

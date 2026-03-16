@@ -1,6 +1,6 @@
 {
     "name": "@markandre13/usd.js",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "universal scene description for typescript",
     "author": "mhopf@mark13.org",
     "license": "AGPL-3.0",
@@ -14,7 +14,13 @@
     "exports": {
         "./*": {
             "import": "./dist/*.js",
-            "types": "./dist/*/*.d.ts"
+            "types": "./dist/*.d.ts"
+        }
+    },
+    "typesVersions": {
+        "*": {
+            "*": [
+                "dist/*.d.ts"           ]
         }
     },
     "repository": {

@@ -1,5 +1,5 @@
-import { SpecType } from "../../crate/SpecType.ts"
-import { UsdNode } from "../../crate/UsdNode.ts"
+import { SpecType } from "../../crate/SpecType"
+import { UsdNode } from "../../crate/UsdNode"
 
 export class IntArrayAttr extends UsdNode {
     value: ArrayLike<number>

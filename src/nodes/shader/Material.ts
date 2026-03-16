@@ -1,8 +1,8 @@
-import { Specifier } from "../../crate/Specifier.ts"
-import { SpecType } from "../../crate/SpecType.ts"
-import type { UsdNode } from "../../crate/UsdNode.ts"
-import { StringAttr } from "../attributes/StringAttr.ts"
-import { NodeGraph } from "./NodeGraph.ts"
+import { Specifier } from "../../crate/Specifier"
+import { SpecType } from "../../crate/SpecType"
+import type { UsdNode } from "../../crate/UsdNode"
+import { StringAttr } from "../attributes/StringAttr"
+import { NodeGraph } from "./NodeGraph"
 
 /**
  * A Material provides a container into which multiple "render contexts"
