@@ -29,16 +29,16 @@
         "url": "git+https://github.com/markandre13/usd.js.git"
     },
     "scripts": {
-        "build": "tsc",
-        "dev:build": "tsc -w",
+        "build": "tsgo",
+        "dev:build": "tsgo -w",
         "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",
         "@types/mocha": "^10.0.10",
         "@types/node": "^25.5.0",
+        "@typescript/native-preview": "^7.0.0-dev.20260316.1",
         "chai": "^6.2.2",
-        "mocha": "^11.7.5",
-        "typescript": "^5.9.3"
+        "mocha": "^11.7.5"
     }
 }

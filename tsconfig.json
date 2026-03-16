@@ -3,15 +3,16 @@
         "target": "es2020",
         "module": "es6",
         "lib": [
-            "es2024"
+            "esnext"
         ],
+        "types": [ "node"],
         "moduleResolution": "node",
         "traceResolution": false,
         "esModuleInterop": true,
         "incremental": true,
         "declaration": true,
+        "rootDir": "src",
         "outDir": "dist",
-        "baseUrl": ".",
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "experimentalDecorators": true,
@@ -24,6 +25,6 @@
         "sourceMap": true
     },
     "include": [
-        "src",
+        "src/**/*",
     ]
 }
