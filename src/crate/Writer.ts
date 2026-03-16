@@ -114,7 +114,11 @@ export class Writer {
     reserve(n: number) {
         if (this.offset + n >= this.buffer.byteLength) {
             if (this.offset + n >= this.buffer.maxByteLength) {
-                const buffer = new ArrayBuffer(this.offset + n, { maxByteLength: this.buffer.maxByteLength * 2 })
+                let newMaxByteLength = this.buffer.maxByteLength * 2
+                while (this.offset + n >= newMaxByteLength) {
+                    newMaxByteLength *= 2
+                }
+                const buffer = new ArrayBuffer(this.offset + n, { maxByteLength: newMaxByteLength })
                 new Uint8Array(buffer).set(new Uint8Array(this.buffer))
                 this.buffer = buffer
                 this.view = new DataView(this.buffer)

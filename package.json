@@ -1,6 +1,6 @@
 {
     "name": "@markandre13/usd.js",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "universal scene description for typescript",
     "author": "mhopf@mark13.org",
     "license": "AGPL-3.0",
@@ -29,6 +29,7 @@
     },
     "scripts": {
         "build": "tsc",
+        "dev:build": "tsc -w",
         "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
     },
     "devDependencies": {
