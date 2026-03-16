@@ -12,21 +12,15 @@
         "declaration": true,
         "outDir": "dist",
         "baseUrl": ".",
-        "plugins": [
-            {
-                "transform": "./m13-es-transformer.cjs",
-                "after": true,
-            }
-        ],
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "removeComments": true,
         "experimentalDecorators": true,
         "noImplicitOverride": true,
         "strict": true,
         "strictNullChecks": true,
         "allowJs": false,
         "noImplicitAny": true,
+        "removeComments": false,
         "sourceMap": true
     },
     "include": [
