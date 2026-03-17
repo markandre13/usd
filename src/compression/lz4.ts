@@ -17,6 +17,7 @@ const LZ4_MIN_LENGTH = 13 // don't compress when input is less than 13 bytes
 const LZ4_SEARCH_LIMIT = 5
 const LZ4_SKIP_TRIGGER = 6
 const LZ4_HASH_TABLE_SIZE = 1 << 16 // hash table has space for uint32_t entries (64k entries)
+export const LZ4_MAX_INPUT_SIZE = 0x7E000000 // 2 113 929 216 bytes
 
 // Token constants.
 const LZ4_ML_BITS = 4
@@ -127,8 +128,20 @@ export function decompressBlock(src: Uint8Array, dst: Uint8Array, sIndex: number
     return dIndex
 };
 
-export function compressBound(n: number) {
-    return (n + (n / 255) + 16) | 0
+/**
+ * Provides the maximum size that LZ4 compression may output in a "worst case" scenario (input data not compressible)
+ * This function is primarily useful for memory allocation purposes (destination buffer size).
+ *
+ * @param inputSize max supported value is LZ4_MAX_INPUT_SIZE
+ * @returns maximum output size in a "worst case" scenario or 0, if input size is incorrect (too large or negative)
+ */
+export function compressBound(inputSize: number) {
+    if (inputSize > LZ4_MAX_INPUT_SIZE) {
+        return 0
+    }
+    // (unsigned)(inputSize) > (unsigned)LZ4_MAX_INPUT_SIZE ? 0 : (isize) + ((isize)/255) + 16)
+
+    return (inputSize + (inputSize / 255) + 16) | 0
 };
 
 /**

@@ -1,6 +1,6 @@
 // git clone https://github.com/PixarAnimationStudios/OpenUSD.git
 // pxr/usd/sdf/crateFile.h
-import { compressBlock, compressBound, decompressBlock } from "./lz4"
+import { compressBlock, compressBound, decompressBlock, LZ4_MAX_INPUT_SIZE } from "./lz4"
 
 type Index = number
 export type StringIndex = Index
@@ -24,7 +24,6 @@ export function decompressFromBuffer(src: Uint8Array, dst: Uint8Array) {
 }
 
 export function compressToBuffer(src: Uint8Array, dst: Uint8Array) {
-    const LZ4_MAX_INPUT_SIZE = 0x7E000000
     if (src.length < LZ4_MAX_INPUT_SIZE) {
         if (dst.length < compressBound(src.length) + 1) {
             throw Error(`compressToBuffer(): dst has ${dst.length} octets but at least ${compressBound(src.length) + 1} are needed`)

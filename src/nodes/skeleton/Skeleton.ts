@@ -32,6 +32,14 @@ export class Skeleton extends Boundable {
      * corresponding paths determine the parent-child relationships of each
      * joint. It is not required that the name at the end of each path be
      * unique, but rather only that the paths themselves be unique.
+     * 
+     * e.g. a skeleton of
+     * 
+     * root -> spine05 -> spinge04
+     * 
+     * will have it's joints listed as
+     * 
+     * ["root", "root/spine05", "root/spine05/spine04"]
      */
     set joints(value: string[] | undefined) {
         this.deleteChild("joints")

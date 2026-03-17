@@ -2,6 +2,7 @@ import { hexdump } from "../detail/hexdump"
 import { compressToBuffer, decompressFromBuffer } from "../compression/compress"
 import type { Reader } from "./Reader"
 import type { Writer } from "./Writer"
+import { compressBound } from "../compression/lz4"
 
 // https://docs.nvidia.com/learn-openusd/latest/stage-setting/index.html
 // stage, layer
@@ -115,7 +116,7 @@ export class Tokens {
             uncompressedSize += token.length + 1
         }
         const src = new Uint8Array(uncompressedSize)
-        const dst = new Uint8Array(uncompressedSize + 32)
+        const dst = new Uint8Array(compressBound(uncompressedSize) + 1)
         let offset = 0
         for (const token of this.tokens) {
             for (let i = 0; i < token.length; ++i) {
@@ -124,13 +125,6 @@ export class Tokens {
             src[offset++] = 0
         }
         const compressedSize = compressToBuffer(src, dst)
-
-        // throw Error("yikes")
-        // console.log(`write numTokens = ${this.tokens.length}, uncompressedSize = ${uncompressedSize}, compressedSize = ${compressedSize}`)
-        // console.log("UNCOMPRESSED")
-        // hexdump(src, 0, uncompressedSize)
-        // console.log("COMPRESSED")
-        // hexdump(dst, 0, compressedSize)
 
         writer.writeUint64(this.tokens.length)
         writer.writeUint64(uncompressedSize)

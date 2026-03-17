@@ -2,6 +2,7 @@ import { Reader } from "./Reader.js"
 import type { Tokens } from "./Tokens"
 import type { Writer } from "./Writer"
 
+// WHUT? these are stored as a _non-compressed_ list of integers???
 export class Strings {
     private strings: number[]
     private tokens: Tokens
