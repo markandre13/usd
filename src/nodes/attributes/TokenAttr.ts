@@ -1,5 +1,5 @@
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 import type { Variability } from "../../crate/Variability"
 
 export class TokenAttr extends UsdNode {

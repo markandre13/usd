@@ -1,3 +1,3 @@
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "./UsdNode"
 
 export class SchemaBase extends UsdNode { }

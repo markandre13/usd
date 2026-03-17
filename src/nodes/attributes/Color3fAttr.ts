@@ -1,5 +1,5 @@
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 
 export class Color3fAttr extends UsdNode {
     value: ArrayLike<number>

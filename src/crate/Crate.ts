@@ -1,7 +1,7 @@
 import { BootStrap } from "./BootStrap"
 import type { Reader } from "./Reader"
 import { TableOfContents } from "./TableOfContents"
-import { UsdNode } from "./UsdNode"
+import { UsdNode } from "../nodes/usd/UsdNode"
 import { Tokens } from "./Tokens"
 import { Fields } from "./Fields"
 import { JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS, Paths } from "./Paths"

@@ -1,12 +1,12 @@
-import { CrateDataType } from "./CrateDataType"
-import { Crate } from "./Crate"
-import { isPrim, SpecType } from "./SpecType"
-import type { Tokens } from "./Tokens"
-import { ValueRep } from "./ValueRep.js"
-import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "./Paths"
-import type { Specifier } from "./Specifier"
-import type { ListOp } from "./Fields"
-import type { Variability } from "./Variability"
+import { CrateDataType } from "../../crate/CrateDataType"
+import { Crate } from "../../crate/Crate"
+import { isPrim, SpecType } from "../../crate/SpecType"
+import type { Tokens } from "../../crate/Tokens"
+import { ValueRep } from "../../crate/ValueRep.js"
+import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "../../crate/Paths"
+import type { Specifier } from "../../crate/Specifier"
+import type { ListOp } from "../../crate/Fields"
+import type { Variability } from "../../crate/Variability"
 
 // Prim
 //   Attribute (is a property)
@@ -20,6 +20,12 @@ export interface UsdNodeSerializeArgs {
     depth: number
 }
 
+/**
+ * USD stores it's data in a tree of UsdNodes.
+ * 
+ * - a node has fields encoded as ValueReps
+ * - 
+ */
 export class UsdNode {
     crate: Crate
     parent?: UsdNode
@@ -34,6 +40,12 @@ export class UsdNode {
     prim: boolean
 
     constructor(crate: Crate, parent: UsdNode | undefined, index: number, name: string, prim: boolean) {
+        if (name != "/" && name.indexOf("/") >= 0) {
+            throw Error(`UsdNode '${name}' contains reserved character '/'`)
+        }
+        if (name.indexOf(".") >= 0) {
+            throw Error(`UsdNode '${name}' contains reserved character '.'`)
+        }
         this.crate = crate
         this.parent = parent
         if (parent !== undefined) {

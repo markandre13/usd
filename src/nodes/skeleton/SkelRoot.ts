@@ -1,6 +1,6 @@
 import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
-import type { UsdNode } from "../../crate/UsdNode"
+import type { UsdNode } from "../usd/UsdNode"
 import { Boundable } from "../geometry/Boundable"
 
 /**

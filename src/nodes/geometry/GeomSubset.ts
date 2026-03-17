@@ -1,6 +1,6 @@
 import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 
 export class GeomSubset extends UsdNode {
     constructor(parent: UsdNode, name: string) {

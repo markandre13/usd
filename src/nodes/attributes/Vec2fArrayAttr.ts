@@ -1,6 +1,6 @@
 import type { Crate } from "../../crate/Crate"
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 
 export class Vec2fArrayAttr extends UsdNode {
     value: ArrayLike<number>

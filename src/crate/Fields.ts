@@ -9,7 +9,7 @@ import type { Tokens } from "./Tokens"
 import { kMinCompressedArraySize, ValueRep } from "./ValueRep"
 import type { Variability } from "./Variability"
 import { Writer } from "./Writer.js"
-import { UsdNode } from "./UsdNode.js"
+import { UsdNode } from "../nodes/usd/UsdNode.js"
 
 const IsArrayBit_ = 128
 const IsInlinedBit = 64

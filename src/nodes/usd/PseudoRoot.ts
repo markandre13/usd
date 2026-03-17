@@ -1,6 +1,6 @@
 import { Crate } from "../../crate/Crate"
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "./UsdNode"
 
 // blender mesh options and how they map to usd
 //   shade: flat | smooth
@@ -24,6 +24,11 @@ export class PseudoRoot extends UsdNode {
     documentation?: string
     upAxis?: "X" | "Y" | "Z" = "Z";
     defaultPrim?: string
+
+    // timeCodesPerSecond = 24
+    // framesPerSecond = 12
+    // endTimeCode = 240
+    // startTimeCode = 1
 
     constructor(crate: Crate) {
         super(crate, undefined, -1, "/", true)

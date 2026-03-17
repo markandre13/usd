@@ -1,5 +1,5 @@
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode.js"
+import { UsdNode } from "../usd/UsdNode.js"
 
 export class AssetPathAttr extends UsdNode {
     value: string

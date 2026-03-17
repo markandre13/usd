@@ -1,6 +1,6 @@
 import type { ListOp } from "../../crate/Fields"
 import { SpecType } from "../../crate/SpecType"
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 import { Variability } from "../../crate/Variability"
 
 export class Relationship extends UsdNode {

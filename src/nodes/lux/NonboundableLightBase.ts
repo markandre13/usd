@@ -1,4 +1,4 @@
-import { UsdNode } from "../../crate/UsdNode"
+import { UsdNode } from "../usd/UsdNode"
 import { Attribute } from "../attributes/Attribute"
 
 export class NonboundableLightBase extends UsdNode {
