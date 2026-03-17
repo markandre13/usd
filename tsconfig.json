@@ -9,7 +9,7 @@
         "moduleResolution": "node",
         "traceResolution": false,
         "esModuleInterop": true,
-        "incremental": true,
+        "incremental": false,
         "declaration": true,
         "rootDir": "src",
         "outDir": "dist",
