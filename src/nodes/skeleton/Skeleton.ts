@@ -100,6 +100,9 @@ export class Skeleton extends Boundable {
         }
     }
 
+    /**
+     * Useful when exporting to Blender to indicate the length of leaf bones.
+     */
     set blenderBoneLength(value: ArrayLike<number> | undefined) {
         this.deleteChild("primvars:blender:bone_lengths")
         new Attribute(this, "primvars:blender:bone_lengths", (node) => {

@@ -15,13 +15,12 @@ import { SectionName } from "../src/crate/SectionName"
 import { Fields } from "../src/crate/Fields"
 import { Crate } from "../src/crate/Crate"
 import { Paths } from "../src/crate/Paths"
-import { UsdNode } from "../src/crate/UsdNode"
+import { UsdNode } from "../src/nodes/usd/UsdNode"
 import { Strings } from "../src/crate/Strings"
 import { FieldSets } from "../src/crate/FieldSets"
 import { Specs } from "../src/crate/Specs"
 import { compressBound } from "../src/compression/lz4"
 import { decodeIntegers, encodeIntegers } from "../src/compression/integers"
-import { Shader } from "../src/nodes/shader/Shader"
 import { GeomSubset } from "../src/nodes/geometry/GeomSubset"
 import { Mesh } from "../src/nodes/geometry/Mesh"
 import { DomeLight } from "../src/nodes/lux/DomeLight"
@@ -31,49 +30,17 @@ import { Camera } from "../src/nodes/geometry/Camera"
 import { Skeleton } from "../src/nodes/skeleton/Skeleton"
 import { SkelRoot } from "../src/nodes/skeleton/SkelRoot"
 import { Xform } from "../src/nodes/geometry/Xform"
-import { Material } from "../src/nodes/shader/Material"
 import { PseudoRoot } from "../src/nodes/usd/PseudoRoot"
 import { ValueRep } from "../src/crate/ValueRep"
 import { Variability } from "../src/crate/Variability"
 import { stringify } from "./stringify"
-import { Attribute } from "../src/nodes/attributes/Attribute"
 import { IntArrayAttr } from "../src/nodes/attributes/IntArrayAttr"
 import { VariabilityAttr } from "../src/nodes/attributes/VariabilityAttr"
 import { Relationship } from "../src/nodes/attributes/Relationship"
-import { TokenAttr } from "../src/nodes/attributes/TokenAttr"
-import { Color3fAttr } from "../src/nodes/attributes/Color3fAttr"
-import { FloatAttr } from "../src/nodes/attributes/FloatAttr"
-// UsdObject < UsdProperty < UsdAttribute
-//           < UsdPrim
-
-// file layout of cube.udsc is as follows
-//   BOOTSTRAP
-//   non-inlined values
-//   TOKENS
-//   STRINGS
-//   FIELDS
-//   FIELDSETS
-//   PATHS
-//   SPECS
-//   TOC
-//   end of file
-// assumptions:
-// * with the exception of BOOTSTRAP, sections are placed in the order they are created
-// * the non-inlined values are placed close to the the beginning of the file to
-//   have lower indices, which can be compressed better
-// * on the relation of TOKENS and STRINGS
-//   * STRINGS might be there to allow for smaller indices
-//     this would suggest to place strings at the end of TOKENS
-//   * the actual string values are within TOKENS might be there as compressing them together
-//     might be more efficient
-
-//
-// ATTRIBUTES
-//
+import { makePrincipledBSDF } from "../src/nodes/shader/blender/PrincipledBSDF"
 
 function makeCreate() {
-    const crate = new Crate()
-    return crate
+    return new Crate()
 }
 
 function wrangle(root: UsdNode, path: string = "/") {
@@ -772,10 +739,10 @@ describe("USD", () => {
 
             const cube = new Xform(root, "Cube")
             const materials = new Scope(root, "_materials")
-            const blue = makePrincipled_BSDF(materials, "blue", [0, 0, 1])
-            const gray = makePrincipled_BSDF(materials, "gray", [0.8, 0.8, 0.8])
-            const green = makePrincipled_BSDF(materials, "green", [0, 1, 0])
-            const red = makePrincipled_BSDF(materials, "red", [1, 0, 0])
+            const blue = makePrincipledBSDF(materials, "blue", [0, 0, 1])
+            const gray = makePrincipledBSDF(materials, "gray", [0.8, 0.8, 0.8])
+            const green = makePrincipledBSDF(materials, "green", [0, 1, 0])
+            const red = makePrincipledBSDF(materials, "red", [1, 0, 0])
 
             cube.blenderObjectName = "Cube"
 
@@ -916,7 +883,7 @@ describe("USD", () => {
             light.blenderDataName = "Light"
 
             const materials = new Scope(root, "_materials")
-            const gray = makePrincipled_BSDF(materials, "Material", [0.8, 0.8, 0.8])
+            const gray = makePrincipledBSDF(materials, "Material", [0.8, 0.8, 0.8])
 
             const domeLight = new DomeLight(root, "env_light")
             domeLight.intensity = 1.0
@@ -944,8 +911,9 @@ describe("USD", () => {
             mesh.geomBindTransform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1]
             mesh.jointIndices = { elementSize: 2, indices: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1] }
             mesh.jointWeights = { elementSize: 2, indices: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0.4996339976787567, 0.5003660321235657, 0.5081230401992798, 0.4918769598007202, 0.5216529965400696, 0.4783470034599304, 0.4856490194797516, 0.514350950717926] }
-            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.5, 0.75, 0.625, 0.75, 0.625, 1, 0.5, 1, 0.5, 0, 0.625, 0, 0.625, 0.25, 0.5, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.5, 0.5, 0.625, 0.5, 0.625, 0.75, 0.5, 0.75, 0.5, 0.25, 0.625, 0.25, 0.625, 0.5, 0.5, 0.5, 0.375, 0.25, 0.5, 0.25, 0.5, 0.5, 0.375, 0.5, 0.375, 0.5, 0.5, 0.5, 0.5, 0.75, 0.375, 0.75, 0.375, 0, 0.5, 0, 0.5, 0.25, 0.375, 0.25, 0.375, 0.75, 0.5, 0.75, 0.5, 1, 0.375, 1]
             mesh.skeleton = skeleton
+
+            mesh.texCoords = [0.625, 0.5, 0.875, 0.5, 0.875, 0.75, 0.625, 0.75, 0.5, 0.75, 0.625, 0.75, 0.625, 1, 0.5, 1, 0.5, 0, 0.625, 0, 0.625, 0.25, 0.5, 0.25, 0.125, 0.5, 0.375, 0.5, 0.375, 0.75, 0.125, 0.75, 0.5, 0.5, 0.625, 0.5, 0.625, 0.75, 0.5, 0.75, 0.5, 0.25, 0.625, 0.25, 0.625, 0.5, 0.5, 0.5, 0.375, 0.25, 0.5, 0.25, 0.5, 0.5, 0.375, 0.5, 0.375, 0.5, 0.5, 0.5, 0.5, 0.75, 0.375, 0.75, 0.375, 0, 0.5, 0, 0.5, 0.25, 0.375, 0.25, 0.375, 0.75, 0.5, 0.75, 0.5, 1, 0.375, 1]
             mesh.subdivisionScheme = "none"
             mesh.blenderDataName = "Cube"
 
@@ -1481,32 +1449,4 @@ function compare(lhs: any, rhs: any, path: string = "") {
         const fb = rhs[name]
         compare(fa, fb, `${path}.${name}`)
     }
-}
-
-function makePrincipled_BSDF(scope: Scope, name: string, diffuseColor: number[]) {
-    const material = new Material(scope, name)
-
-    const shader = new Shader(material, "Principled_BSDF")
-    new TokenAttr(shader, "info:id", Variability.Uniform, "UsdPreviewSurface")
-    new FloatAttr(shader, "inputs:clearcoat", 0)
-    new FloatAttr(shader, "inputs:clearcoatRoughness",  0.029999999329447746)
-    new Color3fAttr(shader, "inputs:diffuseColor", diffuseColor)
-    new FloatAttr(shader, "inputs:ior", 1.5)
-    new FloatAttr(shader, "inputs:metallic", 0)
-    new FloatAttr(shader, "inputs:opacity", 1)
-    new FloatAttr(shader, "inputs:roughness", 0.5)
-    new FloatAttr(shader, "inputs:specular", 0.5)
-
-    const surface = new TokenAttr(shader, "outputs:surface")
-
-    new Attribute(material, "outputs:surface", (node) => {
-        node.setToken("typeName", "token")
-        node.setPathListOp("connectionPaths", {
-            isExplicit: true,
-            explicit: [surface]
-        })
-    })
-    material.blenderDataName = name
-
-    return material
 }

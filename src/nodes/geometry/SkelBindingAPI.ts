@@ -36,7 +36,7 @@ export interface SkelBindingAPI {
      * apply to each point. Indices must point be valid. Null influences should
      * be defined by setting values in jointWeights to zero.
      *
-     * [ point0 -> (joint0, joint1), ...]
+     * [ point0 -> (joint_0, ..., joint_elementSize), ...]
      */
     set jointIndices(value: { elementSize: number; indices: ArrayLike<number>}  | undefined)
 
