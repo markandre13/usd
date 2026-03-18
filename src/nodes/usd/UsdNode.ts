@@ -40,6 +40,9 @@ export class UsdNode {
     prim: boolean
 
     constructor(crate: Crate, parent: UsdNode | undefined, index: number, name: string, prim: boolean) {
+        if (name.length === 0) {
+            throw Error(`UsdNode must not have an empty name`)
+        }
         if (name != "/" && name.indexOf("/") >= 0) {
             throw Error(`UsdNode '${name}' contains reserved character '/'`)
         }
