@@ -26,6 +26,7 @@ import { FloatAttr } from "../src/nodes/attributes/FloatAttr"
 import { Color3fAttr } from "../src/nodes/attributes/Color3fAttr"
 import { AssetPathAttr } from "../src/nodes/attributes/AssetPathAttr"
 import { StringAttr } from "../src/nodes/attributes/StringAttr"
+import { CrateDataType } from "../src/crate/CrateDataType"
 
 /**
  * re-create files generated with blender 5.0
@@ -324,16 +325,16 @@ describe("re-create blender 5.0 files", () => {
     it("cube-textured.usdc", () => {
         const prefix = "spec/examples/cube-textured"
         // read the original
-        // const buffer = readFileSync(`${prefix}.usdc`)
-        // const stageIn = new Stage(buffer)
-        // const origPseudoRoot = stageIn.getPrimAtPath("/")!
-        // const orig = origPseudoRoot.toJSON()
-        // // console.log(JSON.stringify(orig, undefined, 4))
+        const buffer = readFileSync(`${prefix}.usdc`)
+        const stageIn = new Stage(buffer)
+        const origPseudoRoot = stageIn.getPrimAtPath("/")!
+        const orig = origPseudoRoot.toJSON()
+        // console.log(JSON.stringify(orig, undefined, 4))
         // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
-
+       
         // read an adjusted, good enough variant of the original's JSON
-        const buffer = readFileSync(`${prefix}.json`)
-        const orig = JSON.parse(buffer.toString())
+        // const buffer = readFileSync(`${prefix}.json`)
+        // const orig = JSON.parse(buffer.toString())
 
         const crate = new Crate()
 
@@ -366,8 +367,15 @@ describe("re-create blender 5.0 files", () => {
         material.blenderDataName = "Material"
 
         const imageTexture = new Shader(material, "Image_Texture")
+        // uniform token info:id = "UsdUVTexture"
         new TokenAttr(imageTexture, "info:id", Variability.Uniform, "UsdUVTexture")
+
+        // FIXME: attributes after this one are decoded wrong when reading the original
+        // write regression test for reader!!!
+
+        // asset inputs:file = @./textures/cubetexture.png@
         new FloatAttr(imageTexture, "inputs:file", 1.5)
+        // token inputs:sourceColorSpace = "sRGB"
         new Attribute(imageTexture, "inputs:sourceColorSpace", (node) => {
             node.setToken("typeName", "float2")
             node.setPathListOp("connectionPaths", {
@@ -375,11 +383,14 @@ describe("re-create blender 5.0 files", () => {
                 explicit: [uvmapOutputsRGB]
             })
         })
+        // texCoord2f inputs:st.connect = </root/_materials/Material/uvmap.outputs:result>
         new TokenAttr(imageTexture, "inputs:st", undefined, "repeat")
+        // token inputs:wrapS = "repeat"
         new Attribute(imageTexture, "inputs:wrapS", (node) => {
             node.setToken("typeName", "float2")
             // TODO: value
         })
+        // token inputs:wrapT = "repeat"
         new Attribute(imageTexture, "inputs:wrapT", (node) => {
             node.setToken("typeName", "float3")
             // TODO: value
@@ -408,13 +419,15 @@ describe("re-create blender 5.0 files", () => {
         const surface = new TokenAttr(shader, "outputs:surface")
 
         const uvmap = new Shader(material, "uvmap")
+        // uniform token info:id = "UsdPrimvarReader_float2"
         new TokenAttr(uvmap, "info:id", Variability.Uniform, "UsdPrimvarReader_float2")
-        // inputs:varname normal3f[]
+        // string inputs:varname = "st"
         new Attribute(uvmap, "inputs:varname", node => {
             node.setToken("typeName", "normal3f[]")
             node.setVec3fArray("default", [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0])
             node.setToken("interpolation", "faceVarying")
         })
+        // float2 outputs:result
         const uvmapOutputsRGB = new TokenAttr(uvmap, "outputs:result", undefined, "repeat")
 
         // makePrincipledBSDF(material, "Principled_BSDF", [1,2,3])
@@ -471,7 +484,76 @@ describe("re-create blender 5.0 files", () => {
 
         compare(pseudoRootIn, orig)
     })
+    it.only("regression read", () => {
+        const prefix = "spec/examples/cube-textured"
+        const buffer = readFileSync(`${prefix}.usdc`)
+        const stage = new Stage(buffer)
+        const crate = stage._crate
 
+        const pseudoRoot = stage.getPrimAtPath("/")!
+        const orig = pseudoRoot.toJSON()
+        writeFileSync(`debug.json`, stringify(orig, {indent: 4}))
+
+        // fieldsets are correct...
+        expect(stage._crate.fieldsets.fieldset_indices).to.deep.equal([0,1,2,3,4,-1,5,6,7,8,-1,5,6,9,10,-1,5,11,12,13,14,-1,5,15,16,-1,5,17,18,19,-1,5,20,21,-1,5,20,22,-1,5,20,23,-1,5,24,25,-1,26,27,28,-1,29,30,-1,31,32,-1,31,33,-1,34,27,35,-1,34,27,36,-1,34,27,37,-1,38,39,-1,38,40,-1,41,42,-1,43,44,-1,38,45,-1,38,46,-1,38,47,-1,34,48,-1,49,50,-1,43,51,-1,52,53,-1,34,54,-1,27,55,-1,56,57,58,-1,49,-1,59,-1,34,60,-1,34,-1,61,62,-1,63,58,64,-1,31,65,-1,34,27,66,-1,67,52,68,-1,67,52,69,-1])
+        // all decoded integers are correct
+
+        // def Shader "Principled_BSDF"
+        // {
+        //     uniform token info:id = "UsdPreviewSurface"
+        //     FIXME: decoded as Float 1
+        //     color3f inputs:diffuseColor.connect = </root/_materials/Material/Image_Texture.outputs:rgb>
+        //     float inputs:ior = 1.5
+        //     float inputs:metallic = 0
+        //     float inputs:clearcoat = 0
+        //     float inputs:clearcoatRoughness = 0.03
+        //     float inputs:roughness = 0.5
+        //     FIXME: decoded as "sRGB"
+        //     float inputs:opacity = 1
+        //     token outputs:surface
+        //     float inputs:specular = 0.5
+        // }
+
+        // def Shader "Image_Texture"
+        // {
+        //     uniform token info:id = "UsdUVTexture"
+        //     asset inputs:file = @./textures/cubetexture.png@
+        //     token inputs:sourceColorSpace = "sRGB"
+        //     texCoord2f inputs:st.connect = </root/_materials/Material/uvmap.outputs:result>
+        //     token inputs:wrapT = "repeat"
+        //     token inputs:wrapS = "repeat"
+        //     float3 outputs:rgb
+        // }
+
+        const imageTexture = stage.getPrimAtPath("/root/_materials/Material/Image_Texture")
+
+        // uniform token info:id = "UsdUVTexture"
+        const infoId = imageTexture.getAttribute("info:id")
+        const infoIdDefault = infoId?.getField("default")
+        expect(infoIdDefault?.getValue(crate)).to.equal("UsdUVTexture")
+
+        // asset inputs:file = @./textures/cubetexture.png@
+        // const file = bug.getAttribute("inputs:file")
+        // console.log(file?.toJSON())
+
+        // token inputs:sourceColorSpace = "sRGB"
+        const sourceColorSpace = imageTexture.getAttribute("inputs:sourceColorSpace")
+        // console.log(sourceColorSpace?.toJSON())
+        const tn = sourceColorSpace?.getField("typeName")!
+        console.log(tn?.toString())
+        const fieldOffset = (tn as any)._offset
+        console.log(`_offset: ${fieldOffset} (${fieldOffset/8})`)
+        expect(tn.getType()).to.equal(CrateDataType.Token)
+        expect(tn.isInlined()).to.be.true
+        expect(tn.isArray()).to.be.false
+        expect(tn.isCompressed()).to.be.false
+        console.log(`index: ${tn.getIndex()}`)
+        console.log(stage._crate.tokens.get(78))
+        console.log(tn.getValue(stage._crate))
+        expect(tn.getValue(stage._crate), "/root/_materials/Material/Image_Textureinputs:sourceColorSpace@typeName").to.equal("token")
+
+        // console.log(JSON.stringify(orig, undefined, 4))
+    })
 })
 
 // this is the thing i still need to write

@@ -367,7 +367,7 @@ export class ValueRep {
     getPayload(): bigint {
         const d = new DataView(this._buffer.buffer, this._buffer.byteOffset)
         const value = d.getBigUint64(this._offset, true) // & 0xffffffffffffn
-        console.log(`value rep @ ${this._offset} = ${value}`)
+        // console.log(`value rep @ ${this._offset} = ${value}`)
         return value
     }
     // TODO: rename the following to inline? or merge them with the general ones

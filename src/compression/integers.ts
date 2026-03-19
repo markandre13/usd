@@ -178,5 +178,9 @@ export function decodeIntegers(src: DataView, numInts: number): number[] {
     if (intsLeft > 0) {
         decodeNHelper(intsLeft, arg)
     }
+
+    // console.log(`_DecodeIntegers(..., ${numInts})`)
+    // console.log(JSON.stringify(arg.result))
+
     return arg.result
 }

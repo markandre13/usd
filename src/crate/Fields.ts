@@ -43,9 +43,9 @@ export class Fields {
             const reader = tokensOrReader
             const numFields = reader.getUint64()
 
-            const indices = reader.getCompressedIntegers(numFields)
+            const fieldNameTokenIndices = reader.getCompressedIntegers(numFields)
 
-            // ValueReps
+            // decompress ValueReps
             const compressedSize = reader.getUint64()
             const uncompressedSize = numFields * 8
             const compressed = new Uint8Array(reader._dataview.buffer, reader.offset, compressedSize)
@@ -55,10 +55,10 @@ export class Fields {
             }
 
             // create fields
-            const dataview = new DataView(uncompressed.buffer)
+            const valueRepBuffer = new DataView(uncompressed.buffer)
             this.fields = new Array(numFields)
             for (let field = 0; field < numFields; ++field) {
-                this.fields[field] = new Field(indices[field], new ValueRep(dataview, field * 8))
+                this.fields[field] = new Field(fieldNameTokenIndices[field], new ValueRep(valueRepBuffer, field * 8))
             }
 
             // for (let i = 0; i < numFields; ++i) {

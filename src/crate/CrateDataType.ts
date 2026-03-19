@@ -2,6 +2,9 @@ import type { ListOp } from "./Fields"
 import { Reader } from "./Reader.js"
 import { Writer } from "./Writer.js"
 
+// same as
+// openusd : /pxr/usd/usd/crateDataType.h
+// tinyusdz: /src/crate-format.hh
 export enum CrateDataType {
     Bool = 1,
     UChar,
