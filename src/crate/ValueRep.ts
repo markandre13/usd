@@ -14,7 +14,7 @@ import { Specifier } from "./Specifier"
 import { UsdNode } from "../nodes/usd/UsdNode.js"
 import { Variability } from "./Variability.js"
 import { decompressFromBuffer } from "../compression/compress"
-import type { ListOp } from "./Fields"
+import type { ListOp } from "./ListOp"
 
 export const kMinCompressedArraySize = 16
 

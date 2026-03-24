@@ -1,4 +1,3 @@
-import { expect } from "chai"
 import { Stage } from "../src/crate/Stage"
 import { readFileSync, writeFileSync } from "fs"
 import { GeomSubset } from "../src/nodes/geometry/GeomSubset"
@@ -22,14 +21,9 @@ import { UVMap } from "../src/nodes/shader/blender/UVMap"
 import { Crate } from "../src/crate/Crate"
 import { Attribute } from "../src/nodes/attributes/Attribute"
 import { Material } from "../src/nodes/shader/Material"
-import { Shader } from "../src/nodes/shader/Shader"
 import { TokenAttr } from "../src/nodes/attributes/TokenAttr"
-import { AssetPathAttr } from "../src/nodes/attributes/AssetPathAttr"
-import { UsdNode } from "../src/nodes/usd/UsdNode"
-import { Typed } from "../src/nodes/usd/Typed"
-import { SpecType } from "../src/crate/SpecType"
-import { Specifier } from "../src/crate/Specifier"
-import { Vec3fArrayAttr } from "../src/nodes/attributes/Vec3fArrayAttr"
+import { BlendShape } from "../src/nodes/skeleton/BlendShape"
+import { SkelAnimation } from "../src/nodes/skeleton/SkelAnimation"
 
 /**
  * re-create files generated with blender 5.0
@@ -500,6 +494,7 @@ describe("re-create blender 5.0 files", () => {
         }
         mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
         mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+        // not sure where this comes from
         new Attribute(mesh, "primvars:Group", node => {
             node.setToken("typeName", "float[]")
             node.setToken("interpolation", "vertex")
@@ -520,51 +515,31 @@ describe("re-create blender 5.0 files", () => {
         // mesh.skeleton = skeleton
         mesh.prependApiSchema("SkelBindingAPI")
         new Relationship(mesh, "skel:skeleton", {
-            prepend: [skeleton]
+            prepend: [skeleton] // prepend as in: prepend blendshapes before armature?
         })
         mesh.subdivisionScheme = "none"
         mesh.blenderDataName = "Cube"
 
-        class BlendShape extends Typed {
-            constructor(parent: UsdNode, name: string) {
-                super(parent.crate, parent, -1, name, true)
-                this.spec_type = SpecType.Prim
-                this.specifier = Specifier.Def
-                this.typeName = "BlendShape"
-            }
-        }
         const key1 = new BlendShape(mesh, "Key_1")
-        new Vec3fArrayAttr(key1, "offsets", [-1.1725950241088867, -0.8274050354957581, 0, 0, 0, 0, -0.8274050354957581, 1.1725950241088867, 0, 0, 0, 0, 0.8274050354957581, -1.1725950241088867, 0, 0, 0, 0, 1.1725950241088867, 0.8274050354957581, 0, 0, 0, 0],
-            "vector3f[]", Variability.Uniform)
-        new IntArrayAttr(key1, "pointIndices", [0, 1, 2, 3, 4, 5, 6, 7], Variability.Uniform)
+        key1.offsets = [-1.1725950241088867, -0.8274050354957581, 0, 0, 0, 0, -0.8274050354957581, 1.1725950241088867, 0, 0, 0, 0, 0.8274050354957581, -1.1725950241088867, 0, 0, 0, 0, 1.1725950241088867, 0.8274050354957581, 0, 0, 0, 0]
+        key1.pointIndices = [0, 1, 2, 3, 4, 5, 6, 7]
 
         const key2 = new BlendShape(mesh, "Key_2")
-        new Vec3fArrayAttr(key2, "offsets", [0, 0, 0, -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 0],
-            "vector3f[]", Variability.Uniform)
-        new IntArrayAttr(key2, "pointIndices", [0, 1, 2, 3, 4, 5, 6, 7], Variability.Uniform)
+        key2.offsets = [0, 0, 0, -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 0]
+        key2.pointIndices = [0, 1, 2, 3, 4, 5, 6, 7]
 
         new Relationship(mesh, "skel:blendShapeTargets", {
             isExplicit: true,
             explicit: [key1, key2]
         })
 
-        class SkelAnimation extends Typed {
-            constructor(parent: UsdNode, name: string) {
-                super(parent.crate, parent, -1, name, true)
-                this.spec_type = SpecType.Prim
-                this.specifier = Specifier.Def
-                this.typeName = "SkelAnimation"
-            }
-        }
-
         skeleton.bindTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
         skeleton.joints = ["joint1"]
         skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+
         const anim = new SkelAnimation(skeleton, "Anim")
-        new Attribute(anim, "blendShapeWeights", node => {
-            node.setToken("typeName", "float[]")
-        })
-        new TokenAttr(anim, "blendShapes", Variability.Uniform, ["Key_1", "Key_2"])
+        anim.blendShapeWeights = []
+        anim.blendShapes = ["Key_1", "Key_2"]
 
         new Relationship(skeleton, "skel:animationSource", {
             prepend: [anim]

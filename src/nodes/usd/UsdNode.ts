@@ -5,7 +5,7 @@ import type { Tokens } from "../../crate/Tokens"
 import { ValueRep } from "../../crate/ValueRep.js"
 import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "../../crate/Paths"
 import type { Specifier } from "../../crate/Specifier"
-import type { ListOp } from "../../crate/Fields"
+import type { ListOp } from "../../crate/ListOp"
 import type { Variability } from "../../crate/Variability"
 import { UserInfo } from "node:os"
 

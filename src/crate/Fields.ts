@@ -10,20 +10,11 @@ import { kMinCompressedArraySize, ValueRep } from "./ValueRep"
 import type { Variability } from "./Variability"
 import { Writer } from "./Writer.js"
 import { UsdNode } from "../nodes/usd/UsdNode.js"
+import { ListOp } from "./ListOp"
 
 const IsArrayBit_ = 128
 const IsInlinedBit = 64
 const IsCompressedBit = 32
-
-export interface ListOp<T> {
-    isExplicit?: boolean
-    explicit?: T[]
-    add?: T[]
-    prepend?: T[]
-    append?: T[]
-    delete?: T[]
-    order?: T[]
-}
 
 export class Fields {
     tokenIndices: number[] = []
