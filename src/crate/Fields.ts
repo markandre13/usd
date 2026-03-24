@@ -427,6 +427,10 @@ export class Fields {
         return idx
     }
     setVec3fArray(name: string, value: ArrayLike<number>): number {
+        if (value.length / 3 != Math.round(value.length / 3)) {
+            throw Error("Vec3fArray must be a multiple of 3")
+        }
+
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
         this.valueReps.writeUint32(this.data.tell())
@@ -441,6 +445,10 @@ export class Fields {
         return idx
     }
     setVec2fArray(name: string, value: ArrayLike<number>): number {
+        if (value.length / 2 != Math.round(value.length / 2)) {
+            throw Error("Vec2fArray must be a multiple of 2")
+        }
+
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
         this.valueReps.writeUint32(this.data.tell())

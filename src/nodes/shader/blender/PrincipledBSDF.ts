@@ -82,31 +82,3 @@ export class PrincipledBSDF extends Shader {
     }
 }
 
-
-export function makePrincipledBSDF(scope: Scope, name: string, diffuseColor: number[]) {
-    const material = new Material(scope, name)
-
-    const shader = new PrincipledBSDF(material, "Principled_BSDF")
-    shader.infoId = "UsdPreviewSurface"
-    shader.clearcoat = 0
-    shader.clearcoatRoughness = 0.029999999329447746
-    // new Color3fAttr(shader, "inputs:diffuseColor", diffuseColor)
-    shader.diffuseColor = diffuseColor
-    shader.ior = 1.5
-    shader.metallic = 0
-    shader.opacity = 1
-    shader.roughness = 0.5
-    shader.specular = 0.5
-    const surface = shader.outputsSurface
-
-    new Attribute(material, "outputs:surface", (node) => {
-        node.setToken("typeName", "token")
-        node.setPathListOp("connectionPaths", {
-            isExplicit: true,
-            explicit: [surface]
-        })
-    })
-    material.blenderDataName = name
-
-    return material
-}

@@ -57,7 +57,7 @@ export class Mesh extends PointBased implements SkelBindingAPI {
 
     private apiSchemas?: ListOp<string>
 
-    protected prependApiSchema(name: string) {
+    prependApiSchema(name: string) {
         if (this.apiSchemas === undefined) {
             this.apiSchemas = {}
         }

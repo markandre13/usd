@@ -5,26 +5,28 @@ import { TokenAttr } from "../../attributes/TokenAttr"
 import { UsdNode } from "../../usd/UsdNode"
 import { Shader } from "../Shader"
 
+export type WrapMode = "black" | "clamp" | "repeat" | "mirror" | "useMetadata"
+
 export class ImageTexture extends Shader {
-    set infoId(value: string) {
+    set infoId(value: string | undefined) {
         this.deleteChild("info:id")
         if (value !== undefined) {
             new TokenAttr(this, "info:id", Variability.Uniform, value)
         }
     }
-    set file(value: string) {
+    set file(value: string | undefined) {
         this.deleteChild("inputs:file")
         if (value !== undefined) {
             new AssetPathAttr(this, "inputs:file", value)
         }
     }
-    set sourceColorSpace(value: string) {
+    set sourceColorSpace(value: "raw" | "sRGB" | "auto" | undefined) {
         this.deleteChild("inputs:sourceColorSpace")
         if (value !== undefined) {
             new TokenAttr(this, "inputs:sourceColorSpace", undefined, value)
         }
     }
-    set uvCoords(value: UsdNode) {
+    set uvCoords(value: UsdNode | undefined) {
         this.deleteChild("inputs:st")
         if (value !== undefined) {
             new Attribute(this, "inputs:st", (node) => {
@@ -36,13 +38,13 @@ export class ImageTexture extends Shader {
             })
         }
     }
-    set wrapS(value: string) {
+    set wrapS(value: WrapMode | undefined) {
         this.deleteChild("inputs:wrapS")
         if (value !== undefined) {
             new TokenAttr(this, "inputs:wrapS", undefined, value)
         }
     }
-    set wrapT(value: string) {
+    set wrapT(value: WrapMode | undefined) {
         this.deleteChild("inputs:wrapT")
         if (value !== undefined) {
             new TokenAttr(this, "inputs:wrapT", undefined, value)

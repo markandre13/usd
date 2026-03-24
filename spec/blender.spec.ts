@@ -17,7 +17,7 @@ import { IntArrayAttr } from "../src/nodes/attributes/IntArrayAttr"
 import { VariabilityAttr } from "../src/nodes/attributes/VariabilityAttr"
 import { Relationship } from "../src/nodes/attributes/Relationship"
 import { ImageTexture } from "../src/nodes/shader/blender/ImageTexture"
-import { makePrincipledBSDF, PrincipledBSDF } from "../src/nodes/shader/blender/PrincipledBSDF"
+import { PrincipledBSDF } from "../src/nodes/shader/blender/PrincipledBSDF"
 import { UVMap } from "../src/nodes/shader/blender/UVMap"
 import { Crate } from "../src/crate/Crate"
 import { Attribute } from "../src/nodes/attributes/Attribute"
@@ -26,6 +26,10 @@ import { Shader } from "../src/nodes/shader/Shader"
 import { TokenAttr } from "../src/nodes/attributes/TokenAttr"
 import { AssetPathAttr } from "../src/nodes/attributes/AssetPathAttr"
 import { UsdNode } from "../src/nodes/usd/UsdNode"
+import { Typed } from "../src/nodes/usd/Typed"
+import { SpecType } from "../src/crate/SpecType"
+import { Specifier } from "../src/crate/Specifier"
+import { Vec3fArrayAttr } from "../src/nodes/attributes/Vec3fArrayAttr"
 
 /**
  * re-create files generated with blender 5.0
@@ -39,11 +43,12 @@ describe("re-create blender 5.0 files", () => {
     it("cube-flat-faces.usdc", () => {
         const prefix = "spec/examples/cube-flat-faces"
         // read the original
-        // const buffer = readFileSync("`${prefix}.usdc`")
-        // const stageIn = new UsdStage(buffer)
+        // const buffer = readFileSync(`${prefix}.usdc`)
+        // const stageIn = new Stage(buffer)
         // const origPseudoRoot = stageIn.getPrimAtPath("/")!
         // const orig = origPseudoRoot.toJSON()
         // console.log(JSON.stringify(orig, undefined, 4))
+        // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
 
         // read an adjusted, good enough variant of the original's JSON
         const buffer = readFileSync(`${prefix}.json`)
@@ -97,11 +102,11 @@ describe("re-create blender 5.0 files", () => {
         const prefix = "spec/examples/cube-colored-faces"
         // read the original
         // const buffer = readFileSync(`${prefix}.usdc`)
-        // const stageIn = new UsdStage(buffer)
+        // const stageIn = new Stage(buffer)
         // const origPseudoRoot = stageIn.getPrimAtPath("/")!
         // const orig = origPseudoRoot.toJSON()
         // console.log(JSON.stringify(orig, undefined, 4))
-        // // writeFileSync(`${prefix}.json`, JSON.stringify(orig, undefined, 4))
+        // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
 
         // read an adjusted, good enough variant of the original's JSON
         const buffer = readFileSync(`${prefix}.json`)
@@ -199,10 +204,10 @@ describe("re-create blender 5.0 files", () => {
         const prefix = "spec/examples/armature"
         // read the original
         // const buffer = readFileSync(`${prefix}.usdc`)
-        // const stageIn = new UsdStage(buffer)
+        // const stageIn = new Stage(buffer)
         // const origPseudoRoot = stageIn.getPrimAtPath("/")!
         // const orig = origPseudoRoot.toJSON()
-        // // console.log(JSON.stringify(orig, undefined, 4))
+        // console.log(JSON.stringify(orig, undefined, 4))
         // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
 
         // read an adjusted, good enough variant of the original's JSON
@@ -433,6 +438,156 @@ describe("re-create blender 5.0 files", () => {
 
         compare(pseudoRootIn, orig)
     })
+    it("cube-blendshape.usdc", () => {
+        const prefix = "spec/examples/cube-blendshape"
+        // read the original
+        // const buffer = readFileSync(`${prefix}.usdc`)
+        // const stageIn = new Stage(buffer)
+        // const origPseudoRoot = stageIn.getPrimAtPath("/")!
+        // const orig = origPseudoRoot.toJSON()
+        // console.log(JSON.stringify(orig, undefined, 4))
+        // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
+
+        // read an adjusted, good enough variant of the original's JSON
+        const buffer = readFileSync(`${prefix}.json`)
+        const orig = JSON.parse(buffer.toString())
+
+        const crate = new Crate()
+
+        const pseudoRoot = new PseudoRoot(crate)
+        pseudoRoot.documentation = "Blender v5.1.0"
+        pseudoRoot.defaultPrim = "root"
+
+        const root = new Xform(pseudoRoot, "root")
+        root.customData = {
+            Blender: {
+                generated: true
+            }
+        }
+
+        const cube = new SkelRoot(root, "Cube")
+        cube.blenderObjectName = "Cube"
+
+        const materials = new Scope(root, "_materials")
+        // const material = new Material(materials, "Material")
+        const material = new Material(materials, "Material")
+
+        const shader = new PrincipledBSDF(material, "Principled_BSDF")
+        shader.infoId = "UsdPreviewSurface"
+        shader.clearcoat = 0
+        shader.clearcoatRoughness = 0.03
+        shader.diffuseColor = [0.8, 0.8, 0.8]
+        shader.ior = 1.5
+        shader.metallic = 0
+        shader.opacity = 1
+        shader.roughness = 0.5
+        shader.specular = 0.5
+
+        material.surface = shader.outputsSurface
+        material.blenderDataName = "Material"
+
+
+        const mesh = new Mesh(cube, "Cube")
+        const skeleton = new Skeleton(cube, "Skel")
+
+        mesh.doubleSided = true
+        mesh.extent = [-1, -1, -1, 1, 1, 1]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
+        mesh.materialBinding = {
+            isExplicit: true,
+            explicit: [material]
+        }
+        mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+        mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+        new Attribute(mesh, "primvars:Group", node => {
+            node.setToken("typeName", "float[]")
+            node.setToken("interpolation", "vertex")
+            node.setFloatArray("default", [0, 0, 0, 0, 0, 0, 0, 0])
+        })
+        mesh.jointIndices = {
+            elementSize: 1,
+            indices: [0, 0, 0, 0, 0, 0, 0, 0]
+        }
+        mesh.jointWeights = {
+            elementSize: 1,
+            indices: [1, 1, 1, 1, 1, 1, 1, 1]
+        }
+        mesh.texCoords = [0.625, 0.5, 0.375, 0.5, 0.625, 0.75, 0.375, 0.75, 0.875, 0.5, 0.625, 0.25, 0.125, 0.5, 0.375, 0.25, 0.875, 0.75, 0.625, 1, 0.625, 0, 0.375, 1, 0.375, 0, 0.125, 0.75]
+        mesh.texIndices = [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1]
+
+        new TokenAttr(mesh, "skel:blendShapes", Variability.Uniform, ["Key_1", "Key_2"])
+        // mesh.skeleton = skeleton
+        mesh.prependApiSchema("SkelBindingAPI")
+        new Relationship(mesh, "skel:skeleton", {
+            prepend: [skeleton]
+        })
+        mesh.subdivisionScheme = "none"
+        mesh.blenderDataName = "Cube"
+
+        class BlendShape extends Typed {
+            constructor(parent: UsdNode, name: string) {
+                super(parent.crate, parent, -1, name, true)
+                this.spec_type = SpecType.Prim
+                this.specifier = Specifier.Def
+                this.typeName = "BlendShape"
+            }
+        }
+        const key1 = new BlendShape(mesh, "Key_1")
+        new Vec3fArrayAttr(key1, "offsets", [-1.1725950241088867, -0.8274050354957581, 0, 0, 0, 0, -0.8274050354957581, 1.1725950241088867, 0, 0, 0, 0, 0.8274050354957581, -1.1725950241088867, 0, 0, 0, 0, 1.1725950241088867, 0.8274050354957581, 0, 0, 0, 0],
+            "vector3f[]", Variability.Uniform)
+        new IntArrayAttr(key1, "pointIndices", [0, 1, 2, 3, 4, 5, 6, 7], Variability.Uniform)
+
+        const key2 = new BlendShape(mesh, "Key_2")
+        new Vec3fArrayAttr(key2, "offsets", [0, 0, 0, -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 0],
+            "vector3f[]", Variability.Uniform)
+        new IntArrayAttr(key2, "pointIndices", [0, 1, 2, 3, 4, 5, 6, 7], Variability.Uniform)
+
+        new Relationship(mesh, "skel:blendShapeTargets", {
+            isExplicit: true,
+            explicit: [key1, key2]
+        })
+
+        class SkelAnimation extends Typed {
+            constructor(parent: UsdNode, name: string) {
+                super(parent.crate, parent, -1, name, true)
+                this.spec_type = SpecType.Prim
+                this.specifier = Specifier.Def
+                this.typeName = "SkelAnimation"
+            }
+        }
+
+        skeleton.bindTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+        skeleton.joints = ["joint1"]
+        skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+        const anim = new SkelAnimation(skeleton, "Anim")
+        new Attribute(anim, "blendShapeWeights", node => {
+            node.setToken("typeName", "float[]")
+        })
+        new TokenAttr(anim, "blendShapes", Variability.Uniform, ["Key_1", "Key_2"])
+
+        new Relationship(skeleton, "skel:animationSource", {
+            prepend: [anim]
+        })
+
+        const light = new DomeLight(root, "env_light")
+        light.intensity = 1.0
+        light.textureFile = "./textures/color_0C0C0C.exr"
+
+        // serialize everything into crate.writer
+        crate.serialize(pseudoRoot)
+
+        // deserialize
+        const stage = new Stage(Buffer.from(crate.writer.buffer))
+        const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+
+        const filename = prefix.split('/').pop()
+        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+
+        compare(pseudoRootIn, orig)
+    })
 })
 
 // this is the thing i still need to write
@@ -466,4 +621,24 @@ function compare(lhs: any, rhs: any, path: string = "") {
         const fb = rhs[name]
         compare(fa, fb, `${path}.${name}`)
     }
+}
+
+function makePrincipledBSDF(scope: Scope, name: string, diffuseColor: number[]) {
+    const material = new Material(scope, name)
+
+    const shader = new PrincipledBSDF(material, "Principled_BSDF")
+    shader.infoId = "UsdPreviewSurface"
+    shader.clearcoat = 0
+    shader.clearcoatRoughness = 0.03
+    shader.diffuseColor = diffuseColor
+    shader.ior = 1.5
+    shader.metallic = 0
+    shader.opacity = 1
+    shader.roughness = 0.5
+    shader.specular = 0.5
+
+    material.surface = shader.outputsSurface
+    material.blenderDataName = name
+
+    return material
 }
