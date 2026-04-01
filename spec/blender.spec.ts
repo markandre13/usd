@@ -20,7 +20,7 @@ import { Material } from "../src/nodes/shader/Material"
 import { BlendShape } from "../src/nodes/skeleton/BlendShape"
 import { SkelAnimation } from "../src/nodes/skeleton/SkelAnimation"
 import { CrateDataType } from "../src/crate/CrateDataType"
-import { Relationship } from "../src/nodes/attributes/Relationship"
+import { Variability } from "../src/crate/Variability"
 
 /**
  * re-create USDC files generated with blender 5.x
@@ -560,16 +560,16 @@ describe("re-create blender 5.0 files", () => {
     it.only("cube-animation.usdc", () => {
         const prefix = "spec/examples/cube-animation"
         // read the original
-        const buffer = readFileSync(`${prefix}.usdc`)
-        const stageIn = new Stage(buffer)
-        const origPseudoRoot = stageIn.getPrimAtPath("/")!
-        const orig = origPseudoRoot.toJSON()
+        // const buffer = readFileSync(`${prefix}.usdc`)
+        // const stageIn = new Stage(buffer)
+        // const origPseudoRoot = stageIn.getPrimAtPath("/")!
+        // const orig = origPseudoRoot.toJSON()
         // console.log(JSON.stringify(orig, undefined, 4))
-        writeFileSync(`x.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`x.json`, stringify(orig, { indent: 4 }))
 
         // read an adjusted, good enough variant of the original's JSON
-        // const buffer = readFileSync(`${prefix}.json`)
-        // const orig = JSON.parse(buffer.toString())
+        const buffer = readFileSync(`${prefix}.json`)
+        const orig = JSON.parse(buffer.toString())
 
         const crate = new Crate()
 
@@ -636,47 +636,91 @@ describe("re-create blender 5.0 files", () => {
         skeleton.joints = ["joint1", "joint1/joint2"]
         skeleton.blenderBoneLength = [1, 1]
         skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
-        new Relationship(skeleton, "skel:animationSource", {
-            isExplicit: true,
-            explicit: [] // /root/Empty/Skel/Skel/SkelAction
+
+        const anim = new SkelAnimation(skeleton, "SkelAction")
+        new Attribute(anim, "blendShapeWeights", node => {
+            node.setToken("typeName", "float[]")
+            node.setTimeSamples("timeSamples", {
+                timeIndex: [1, 2, 3],
+                sampleType: CrateDataType.Float,
+                samples: [
+                    [0, 0],
+                    [0.0010348177747800946, 0.0000016999719036903116],
+                    [0.0040821777656674385, 0.000013599775229522493]
+                ]
+            })
         })
-        
-        // SkelAction
-        // joints
-        // translation
-        // rotations
-        // scales
-        // blendShapes
-        // blendShapeWeights
+        anim.blendShapes = ["Key_1", "Key_2"]
+        // as in Skeleton
+        new Attribute(anim, "joints", (node) => {
+            node.setToken("typeName", "token[]")
+            node.setVariability("variability", Variability.Uniform)
+            node.setTokenArray("default", ["joint1", "joint1/joint2"])
+        })
+        new Attribute(anim, "rotations", node => {
+            node.setToken("typeName", "quatf[]")
+            node.setQuatfArray("default", [0, 0, 0, 1, 0, 0, 0, 1])
+            node.setTimeSamples("timeSamples", {
+                timeIndex: [1, 2, 3],
+                sampleType: CrateDataType.Quatf,
+                samples: [
+                    [0, 0, 0, 1, 0, 0, 0, 1],
+                    [0.00025706528685986996, 0, 0, 0.9999999403953552, 0, 0, -0.0008718090248294175, 0.9999996423721313],
+                    [0.001020141295157373, 0, 0, 0.999999463558197, 7.827971978476456e-16, 2.273723337430436e-13, -0.0034427784848958254, 0.9999940991401672]
+                ]
+            })
+        })
+
+        new Attribute(anim, "scales", node => {
+            node.setToken("typeName", "half3[]")
+            node.setVec3hArray("default", [1, 1, 1, 1, 1, 1])
+        })
+
+        new Attribute(anim, "translations", node => {
+            node.setToken("typeName", "float3[]")
+            node.setVec3fArray("default", [0, 0, 0, 0, 1, 0])
+            node.setTimeSamples("timeSamples", {
+                timeIndex: [1, 2, 3],
+                sampleType: CrateDataType.Vec3f,
+                samples: [
+                    [0, 0, 0, 0, 1, 0],
+                    [-0.0012324796989560127, 0.0012324796989560127, 0, 1.1641532182693481e-10, 1, 6.87805368215777e-12],
+                    [-0.004861919675022364, 0.004861919675022364, 0, 0, 0.9999999403953552, 1.673470251262188e-10]
+                ]
+            })
+        })
+
+        skeleton.animationSource = {
+            isExplicit: true,
+            explicit: [anim]
+        }
 
         const materials = new Scope(root, "_materials")
+        new Attribute(materials, "userProperties:blender:object_name", node => {
+            node.setBoolean("custom", true)
+            node.setToken("typeName", "string")
+            node.setString("default", "_materials")
+        })
 
-        // material definition with three nodes, connected as follows:
-        //
-        // Material        principledBSDF          imageTexture    uvmap
-        // outputs:surface outputs:surface
-        //                 inputs:diffuseColor     outputs:rgb
-        //                                         inputs:st       outputs:result
         const material = new Material(materials, "Material")
-        material.blenderDataName = "Material"
 
-        const uvmap = new UVMap(material, "uvmap")
-        uvmap.infoId = "UsdPrimvarReader_float2"
-        uvmap.inputsVarname = "st"
+        // const uvmap = new UVMap(material, "uvmap")
+        // uvmap.infoId = "UsdPrimvarReader_float2"
+        // uvmap.inputsVarname = "st"
 
-        const imageTexture = new ImageTexture(material, "Image_Texture")
-        imageTexture.infoId = "UsdUVTexture"
-        imageTexture.file = "./textures/cubetexture.png"
-        imageTexture.sourceColorSpace = "sRGB"
-        imageTexture.uvCoords = uvmap.outputsResult
-        imageTexture.wrapS = "repeat"
-        imageTexture.wrapT = "repeat"
+        // const imageTexture = new ImageTexture(material, "Image_Texture")
+        // imageTexture.infoId = "UsdUVTexture"
+        // imageTexture.file = "./textures/cubetexture.png"
+        // imageTexture.sourceColorSpace = "sRGB"
+        // imageTexture.uvCoords = uvmap.outputsResult
+        // imageTexture.wrapS = "repeat"
+        // imageTexture.wrapT = "repeat"
 
         const principledBSDF = new PrincipledBSDF(material, "Principled_BSDF")
         principledBSDF.infoId = "UsdPreviewSurface"
         principledBSDF.clearcoat = 0
         principledBSDF.clearcoatRoughness = 0.03
-        principledBSDF.diffuseColor = imageTexture.outputsRGB
+        principledBSDF.diffuseColor = [0.8, 0.8, 0.8] // imageTexture.outputsRGB
         principledBSDF.ior = 1.5
         principledBSDF.metallic = 0
         principledBSDF.opacity = 1
@@ -684,6 +728,7 @@ describe("re-create blender 5.0 files", () => {
         principledBSDF.specular = 0.5
 
         material.surface = principledBSDF.outputsSurface
+        material.blenderDataName = "Material"
 
         //
         // MESH
@@ -754,8 +799,10 @@ describe("re-create blender 5.0 files", () => {
         meshData.blendShapeTargets = [key1, key2]
 
         const domeLight = new DomeLight(root, "env_light")
-        domeLight.intensity = 1
         domeLight.textureFile = "./textures/color_0C0C0C.exr"
+        domeLight.rotateXYZ = [0, 0, 0]
+        domeLight.xformOrder = ["xformOp:rotateXYZ"]
+        // domeLight.intensity = 1
 
         // serialize everything into crate.writer
         crate.serialize(pseudoRoot)
@@ -787,7 +834,7 @@ function compare(lhs: any, rhs: any, path: string = "") {
     }
     if (typeof lhs !== "object") {
         if (lhs !== rhs) {
-            throw Error(`${path}: ${lhs} !== ${rhs} `)
+            throw Error(`${path}: ${lhs} !== ${rhs}`)
         }
         return
     }
@@ -808,7 +855,7 @@ function compare(lhs: any, rhs: any, path: string = "") {
     for (const name of Object.getOwnPropertyNames(lhs)) {
         const fa = lhs[name]
         const fb = rhs[name]
-        compare(fa, fb, `${path}.${name} `)
+        compare(fa, fb, `${path}.${name}`)
     }
 }
 

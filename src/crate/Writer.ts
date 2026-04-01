@@ -178,6 +178,11 @@ export class Writer {
         this.view.setBigUint64(this.offset, BigInt(value), true)
         this.offset += 8
     }
+    writeFloat16(value: number) {
+        this.reserve(2)
+        this.view.setFloat16(this.offset, value, true)
+        this.offset += 2
+    }
     writeFloat32(value: number) {
         this.reserve(4)
         this.view.setFloat32(this.offset, value, true)

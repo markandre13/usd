@@ -335,6 +335,71 @@ export class Fields {
             this.data.writeCompressedIntegers(value)
         }
     }
+
+    setVec2h(name: string, value: ArrayLike<number>): number {
+        return this.setVecXh(name, value, CrateDataType.Vec2h, 2)
+    }
+    setVec3h(name: string, value: ArrayLike<number>): number {
+        return this.setVecXh(name, value, CrateDataType.Vec3h, 3)
+    }
+    setVec4h(name: string, value: ArrayLike<number>): number {
+        return this.setVecXh(name, value, CrateDataType.Vec4h, 4)
+    }
+    private setVecXh(name: string, value: ArrayLike<number>, type: CrateDataType, n: number): number {
+        if (value.length < n) {
+            throw Error(`setVec${n}h('${name}', value: number[${n}]): value too small`)
+        }
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+
+        let canInline = true
+        for (let i = 0; i < n; ++i) {
+            if (Math.round(value[i]) !== value[i] || value[i] < -128 || value[i] > 127) {
+                canInline = false
+                break
+            }
+        }
+
+        if (canInline) {
+            for (let i = 0; i < n; ++i) {
+                this.valueReps.writeUint8(value[i])
+            }
+            for (let i = n; i < 4; ++i) {
+                this.valueReps.writeUint8(0)
+            }
+            this.valueReps.skip(2)
+            this.valueReps.writeUint8(type)
+            this.valueReps.writeUint8(IsInlinedBit)
+        } else {
+            this.valueReps.writeUint32(this.data.tell())
+            this.valueReps.skip(2)
+            this.valueReps.writeUint8(type)
+            this.valueReps.writeUint8(0)
+            for (let i = 0; i < n; ++i) {
+                this.data.writeFloat16(value[i])
+            }
+        }
+        return idx
+    }
+    setVec3hArray(name: string, value: ArrayLike<number>): number {
+        if (value.length / 3 != Math.round(value.length / 3)) {
+            throw Error("Vec3hArray must be a multiple of 3")
+        }
+
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Vec3h)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length / 3)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat16(value[i])
+        }
+        return idx
+    }
+
     setVec2f(name: string, value: ArrayLike<number>): number {
         return this.setVecXf(name, value, CrateDataType.Vec2f, 2)
     }
@@ -346,7 +411,7 @@ export class Fields {
     }
     private setVecXf(name: string, value: ArrayLike<number>, type: CrateDataType, n: number): number {
         if (value.length < n) {
-            throw Error(`setVec${n}f('${name}', value: number[3]): value too small`)
+            throw Error(`setVec${n}f('${name}', value: number[${n}]): value too small`)
         }
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
@@ -380,28 +445,47 @@ export class Fields {
         }
         return idx
     }
+
+    setVec2d(name: string, value: ArrayLike<number>): number {
+        return this.setVecXd(name, value, CrateDataType.Vec2d, 2)
+    }
     setVec3d(name: string, value: ArrayLike<number>): number {
-        if (value.length < 3) {
-            throw Error(`setVec3d('${name}', value: number[3]): value too small`)
+        return this.setVecXd(name, value, CrateDataType.Vec3d, 3)
+    }
+    setVec4d(name: string, value: ArrayLike<number>): number {
+        return this.setVecXd(name, value, CrateDataType.Vec4d, 4)
+    }
+    private setVecXd(name: string, value: ArrayLike<number>, type: CrateDataType, n: number): number {
+        if (value.length < n) {
+            throw Error(`setVec${n}d('${name}', value: number[${n}]): value too small`)
         }
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        if (Math.round(value[0]) == value[0]
-            && Math.round(value[1]) == value[1]
-            && Math.round(value[2]) == value[2]) {
-            this.valueReps.writeUint8(value[0])
-            this.valueReps.writeUint8(value[1])
-            this.valueReps.writeUint8(value[2])
-            this.valueReps.writeUint8(0)
+
+        let canInline = true
+        for (let i = 0; i < n; ++i) {
+            if (Math.round(value[i]) !== value[i] || value[i] < -128 || value[i] > 127) {
+                canInline = false
+                break
+            }
+        }
+
+        if (canInline) {
+            for (let i = 0; i < n; ++i) {
+                this.valueReps.writeUint8(value[i])
+            }
+            for (let i = n; i < 4; ++i) {
+                this.valueReps.writeUint8(0)
+            }
             this.valueReps.skip(2)
-            this.valueReps.writeUint8(CrateDataType.Vec3d)
+            this.valueReps.writeUint8(type)
             this.valueReps.writeUint8(IsInlinedBit)
         } else {
             this.valueReps.writeUint32(this.data.tell())
             this.valueReps.skip(2)
-            this.valueReps.writeUint8(CrateDataType.Vec3d)
+            this.valueReps.writeUint8(type)
             this.valueReps.writeUint8(0)
-            for (let i = 0; i < 3; ++i) {
+            for (let i = 0; i < n; ++i) {
                 this.data.writeFloat64(value[i])
             }
         }
@@ -422,6 +506,7 @@ export class Fields {
     setMatrix4dArray(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
+
         this.valueReps.writeUint32(this.data.tell())
         this.valueReps.skip(2)
         this.valueReps.writeUint8(CrateDataType.Matrix4d)
@@ -431,6 +516,22 @@ export class Fields {
         for (let i = 0; i < value.length; ++i) {
             this.data.writeFloat64(value[i])
         }
+        return idx
+    }
+    setQuatfArray(name: string, value: ArrayLike<number>) {
+        const idx = this.valueReps.tell() / 8
+        this.tokenIndices.push(this.tokens.add(name))
+
+        this.valueReps.writeUint32(this.data.tell())
+        this.valueReps.skip(2)
+        this.valueReps.writeUint8(CrateDataType.Quatf)
+        this.valueReps.writeUint8(IsArrayBit_)
+
+        this.data.writeUint64(value.length / 4)
+        for (let i = 0; i < value.length; ++i) {
+            this.data.writeFloat32(value[i])
+        }
+
         return idx
     }
     setVec3fArray(name: string, value: ArrayLike<number>): number {

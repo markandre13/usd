@@ -281,6 +281,36 @@ export class UsdNode {
             )
         }
     }
+
+    setVec2h(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec2h(name, value)
+            )
+        }
+    }
+    setVec3h(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec3h(name, value)
+            )
+        }
+    }
+    setVec4h(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec4h(name, value)
+            )
+        }
+    }
+    setVec3hArray(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec3hArray(name, value)
+            )
+        }
+    }
+
     setVec2f(name: string, value?: ArrayLike<number>) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
@@ -295,10 +325,26 @@ export class UsdNode {
             )
         }
     }
+    setVec4f(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec4f(name, value)
+            )
+        }
+    }
+
     setVec3fArray(name: string, value?: ArrayLike<number>) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setVec3fArray(name, value)
+            )
+        }
+    }
+
+    setVec2d(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec2d(name, value)
             )
         }
     }
@@ -309,6 +355,15 @@ export class UsdNode {
             )
         }
     }
+    setVec4d(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setVec4d(name, value)
+            )
+        }
+    }
+
+
     setMatrix4d(name: string, value?: ArrayLike<number>) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
@@ -320,6 +375,13 @@ export class UsdNode {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setMatrix4dArray(name, value)
+            )
+        }
+    }
+    setQuatfArray(name: string, value?: ArrayLike<number>) {
+        if (value !== undefined) {
+            this.crate.fieldsets.fieldset_indices.push(
+                this.crate.fields.setQuatfArray(name, value)
             )
         }
     }
