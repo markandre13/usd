@@ -1,6 +1,9 @@
+import { CrateDataType } from "../../crate/CrateDataType"
 import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
 import { Variability } from "../../crate/Variability"
+import { TimeSamples } from "../../types/TimeSamples"
+import { Attribute } from "../attributes/Attribute"
 import { FloatArrayAttr } from "../attributes/FloatArrayAttr"
 import { TokenAttr } from "../attributes/TokenAttr"
 import { Typed } from "../usd/Typed"
@@ -44,10 +47,18 @@ export class SkelAnimation extends Typed {
      * *blendShapes* token array, and therefore must have the same length as
      * *blendShapes.
      */
-    set blendShapeWeights(values: ArrayLike<number> | undefined) {
+    set blendShapeWeights(value: ArrayLike<number> | TimeSamples | undefined) {
         this.deleteChild("blendShapeWeights")
-        if (values !== undefined) {
-            new FloatArrayAttr(this, "blendShapeWeights", values)
+        if (value !== undefined) {
+            if (Array.isArray(value)) {
+                new FloatArrayAttr(this, "blendShapeWeights", value)
+            } else {
+                const ts = value as TimeSamples
+                new Attribute(this, "blendShapeWeights", node => {
+                    node.setToken("typeName", "float[]")
+                    node.setTimeSamples("timeSamples", { ...ts, sampleType: CrateDataType.Float })
+                })
+            }
         }
     }
 }

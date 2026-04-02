@@ -1,4 +1,4 @@
-import type { ListOp } from "./ListOp"
+import type { ListOp } from "../types/ListOp"
 import { Reader } from "./Reader.js"
 import { Writer } from "./Writer.js"
 

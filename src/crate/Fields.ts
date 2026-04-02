@@ -6,11 +6,12 @@ import { Reader } from "./Reader.js"
 import type { Specifier } from "./Specifier"
 import type { Strings } from "./Strings"
 import type { Tokens } from "./Tokens"
-import { kMinCompressedArraySize, TimeSamples, ValueRep } from "./ValueRep"
+import { kMinCompressedArraySize, ValueRep } from "./ValueRep"
+import { TypedTimeSamples } from "./TypedTimeSamples"
 import type { Variability } from "./Variability"
 import { Writer } from "./Writer.js"
 import { UsdNode } from "../nodes/usd/UsdNode.js"
-import { ListOp } from "./ListOp"
+import { ListOp } from "../types/ListOp"
 
 const IsCompressedBit = 32
 const IsInlinedBit = 64
@@ -505,7 +506,7 @@ export class Fields {
         }
         return idx
     }
-    setTimeSamples(name: string, value: TimeSamples) {
+    setTimeSamples(name: string, value: TypedTimeSamples) {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
 

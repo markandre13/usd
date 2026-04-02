@@ -82,10 +82,10 @@ describe("re-create blender 5.0 files", () => {
         const stage = new Stage(Buffer.from(crate.writer.buffer))
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })
@@ -182,10 +182,10 @@ describe("re-create blender 5.0 files", () => {
 
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })
@@ -308,10 +308,10 @@ describe("re-create blender 5.0 files", () => {
 
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })
@@ -420,10 +420,10 @@ describe("re-create blender 5.0 files", () => {
 
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })
@@ -545,10 +545,10 @@ describe("re-create blender 5.0 files", () => {
         const stage = new Stage(Buffer.from(crate.writer.buffer))
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })
@@ -574,13 +574,11 @@ describe("re-create blender 5.0 files", () => {
         const crate = new Crate()
 
         const pseudoRoot = new PseudoRoot(crate)
-        // pseudoRoot.metersPerUnit = 1
         pseudoRoot.defaultPrim = "root"
         pseudoRoot.documentation = "Blender v5.1.0"
         pseudoRoot.timeCodesPerSecond = 24
         pseudoRoot.startTimeCode = 1
         pseudoRoot.endTimeCode = 100
-        // pseudoRoot.upAxis = "Z"
 
         const root = new Xform(pseudoRoot, "root")
         root.customData = {
@@ -593,42 +591,29 @@ describe("re-create blender 5.0 files", () => {
         skelRoot.blenderObjectName = "Empty"
 
         const mesh = new Xform(skelRoot, "Mesh")
-        // mesh.active = undefined
         mesh.blenderObjectName = "Mesh"
         const meshData = new Mesh(mesh, "MeshData")
 
         const skelForm = new Xform(skelRoot, "Skel")
         skelForm.blenderObjectName = "Skel"
-        new Attribute(skelForm, "xformOp:rotateXYZ", (node) => {
-            node.setToken("typeName", "float3")
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1],
-                sampleType: CrateDataType.Vec3f,
-                samples: [
-                    [0, 0, 0]
-                ]
-            })
-        })
-        new Attribute(skelForm, "xformOp:scale", (node) => {
-            node.setToken("typeName", "float3")
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1],
-                sampleType: CrateDataType.Vec3f,
-                samples: [
-                    [1, 1, 1]
-                ]
-            })
-        })
-        new Attribute(skelForm, "xformOp:translate", (node) => {
-            node.setToken("typeName", "double3")
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1],
-                sampleType: CrateDataType.Vec3d,
-                samples: [
-                    [0, 0, 0]
-                ]
-            })
-        })
+        skelForm.rotateXYZ = {
+            timeIndex: [1],
+            samples: [
+                [0, 0, 0]
+            ]
+        }
+        skelForm.scale = {
+            timeIndex: [1],
+            samples: [
+                [1, 1, 1]
+            ]
+        }
+        skelForm.translate = {
+            timeIndex: [1],
+            samples: [
+                [0, 0, 0]
+            ]
+        }
         skelForm.xformOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
         const skeleton = new Skeleton(skelForm, "Skel")
@@ -638,18 +623,15 @@ describe("re-create blender 5.0 files", () => {
         skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
 
         const anim = new SkelAnimation(skeleton, "SkelAction")
-        new Attribute(anim, "blendShapeWeights", node => {
-            node.setToken("typeName", "float[]")
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1, 2, 3],
-                sampleType: CrateDataType.Float,
-                samples: [
-                    [0, 0],
-                    [0.0010348177747800946, 0.0000016999719036903116],
-                    [0.0040821777656674385, 0.000013599775229522493]
-                ]
-            })
-        })
+        anim.blendShapeWeights = {
+            timeIndex: [1, 2, 3],
+            samples: [
+                [0, 0],
+                [0.0010348177747800946, 0.0000016999719036903116],
+                [0.0040821777656674385, 0.000013599775229522493]
+            ]
+        }
+
         anim.blendShapes = ["Key_1", "Key_2"]
         // as in Skeleton
         new Attribute(anim, "joints", (node) => {
@@ -670,12 +652,10 @@ describe("re-create blender 5.0 files", () => {
                 ]
             })
         })
-
         new Attribute(anim, "scales", node => {
             node.setToken("typeName", "half3[]")
             node.setVec3hArray("default", [1, 1, 1, 1, 1, 1])
         })
-
         new Attribute(anim, "translations", node => {
             node.setToken("typeName", "float3[]")
             node.setVec3fArray("default", [0, 0, 0, 0, 1, 0])
@@ -703,18 +683,6 @@ describe("re-create blender 5.0 files", () => {
         })
 
         const material = new Material(materials, "Material")
-
-        // const uvmap = new UVMap(material, "uvmap")
-        // uvmap.infoId = "UsdPrimvarReader_float2"
-        // uvmap.inputsVarname = "st"
-
-        // const imageTexture = new ImageTexture(material, "Image_Texture")
-        // imageTexture.infoId = "UsdUVTexture"
-        // imageTexture.file = "./textures/cubetexture.png"
-        // imageTexture.sourceColorSpace = "sRGB"
-        // imageTexture.uvCoords = uvmap.outputsResult
-        // imageTexture.wrapS = "repeat"
-        // imageTexture.wrapT = "repeat"
 
         const principledBSDF = new PrincipledBSDF(material, "Principled_BSDF")
         principledBSDF.infoId = "UsdPreviewSurface"
@@ -802,7 +770,6 @@ describe("re-create blender 5.0 files", () => {
         domeLight.textureFile = "./textures/color_0C0C0C.exr"
         domeLight.rotateXYZ = [0, 0, 0]
         domeLight.xformOrder = ["xformOp:rotateXYZ"]
-        // domeLight.intensity = 1
 
         // serialize everything into crate.writer
         crate.serialize(pseudoRoot)
@@ -817,10 +784,10 @@ describe("re-create blender 5.0 files", () => {
 
         const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
 
-        const filename = prefix.split('/').pop()
-        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
-        writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
-        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+        // const filename = prefix.split('/').pop()
+        // writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
 
         compare(pseudoRootIn, orig)
     })

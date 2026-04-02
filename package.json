@@ -31,7 +31,7 @@
     "scripts": {
         "build": "tsgo",
         "dev:build": "tsgo -w",
-        "test": "bun --watch node_modules/mocha/bin/mocha.js spec/usd.spec.ts"
+        "test": "bun --watch node_modules/mocha/bin/mocha.js 'spec/**/*.spec.ts'"
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",

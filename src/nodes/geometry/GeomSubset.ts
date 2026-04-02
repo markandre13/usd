@@ -1,4 +1,4 @@
-import { ListOp } from "../../crate/ListOp"
+import { ListOp } from "../../types/ListOp"
 import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
 import { Variability } from "../../crate/Variability"

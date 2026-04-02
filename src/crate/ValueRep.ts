@@ -14,17 +14,12 @@ import { Specifier } from "./Specifier"
 import { UsdNode } from "../nodes/usd/UsdNode.js"
 import { Variability } from "./Variability.js"
 import { decompressFromBuffer } from "../compression/compress"
-import type { ListOp } from "./ListOp"
+import type { ListOp } from "../types/ListOp"
+import { TypedTimeSamples } from "./TypedTimeSamples"
 
 // see tinyusdz CrateReader::UnpackValueRep() for implementation examples
 
 export const kMinCompressedArraySize = 16
-
-export interface TimeSamples {
-    timeIndex: ArrayLike<number>
-    sampleType: CrateDataType.Int | CrateDataType.Float | CrateDataType.Vec3f | CrateDataType.Vec3d | CrateDataType.Quatf | undefined
-    samples: ArrayLike<ArrayLike<number>>
-}
 
 // value's location.
 // FIXME: last two bytes are type info
@@ -376,7 +371,7 @@ export class ValueRep {
                     }
                     reader.offset = values_offset
                     reader.offset += 8 * num_values
-                    const result: TimeSamples = {
+                    const result: TypedTimeSamples = {
                         timeIndex,
                         sampleType,
                         samples

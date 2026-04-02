@@ -1,4 +1,4 @@
-import type { ListOp } from "../../crate/ListOp"
+import type { ListOp } from "../../types/ListOp"
 import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
 import type { UsdNode } from "../usd/UsdNode"

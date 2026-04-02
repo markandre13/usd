@@ -1,4 +1,4 @@
-import { ListOp } from "../../crate/ListOp"
+import { ListOp } from "../../types/ListOp"
 import { BlendShape } from "../skeleton/BlendShape"
 import type { Skeleton } from "../skeleton/Skeleton"
 

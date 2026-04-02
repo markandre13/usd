@@ -4,7 +4,7 @@ import type { UsdNode } from "../usd/UsdNode"
 import { Variability } from "../../crate/Variability"
 import { Attribute } from "../attributes/Attribute"
 import { Boundable } from "../geometry/Boundable"
-import { ListOp } from "../../crate/ListOp"
+import { ListOp } from "../../types/ListOp"
 import { SkelAnimation } from "./SkelAnimation"
 import { Relationship } from "../attributes/Relationship"
 

@@ -2,10 +2,11 @@ import { CrateDataType } from "../../crate/CrateDataType"
 import { Crate } from "../../crate/Crate"
 import { isPrim, SpecType } from "../../crate/SpecType"
 import type { Tokens } from "../../crate/Tokens"
-import { TimeSamples, ValueRep } from "../../crate/ValueRep.js"
+import { ValueRep } from "../../crate/ValueRep.js"
+import { TypedTimeSamples } from "../../crate/TypedTimeSamples"
 import { JUMP_NEXT_IS_CHILD_JUMP_TO_SIBLING, JUMP_NEXT_IS_CHILD_NO_SIBLINGS, JUMP_NO_CHILD_NEXT_IS_SIBLING, JUMP_NO_CHILD_NO_SIBLINGS } from "../../crate/Paths"
 import type { Specifier } from "../../crate/Specifier"
-import type { ListOp } from "../../crate/ListOp"
+import type { ListOp } from "../../types/ListOp"
 import type { Variability } from "../../crate/Variability"
 import { UserInfo } from "node:os"
 
@@ -392,7 +393,7 @@ export class UsdNode {
             )
         }
     }
-    setTimeSamples(name: string, value?: TimeSamples) {
+    setTimeSamples(name: string, value?: TypedTimeSamples) {
         if (value !== undefined) {
             this.crate.fieldsets.fieldset_indices.push(
                 this.crate.fields.setTimeSamples(name, value)
