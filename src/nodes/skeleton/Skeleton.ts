@@ -45,15 +45,19 @@ export class Skeleton extends Boundable {
      * ["root", "root/spine05", "root/spine05/spine04"]
      */
     set joints(value: string[] | undefined) {
-        this.deleteChild("joints")
+        Skeleton._joints(this, value)
+    }
+    static _joints(node: UsdNode, value: string[] | undefined) {
+        node.deleteChild("joints")
         if (value !== undefined) {
-            new Attribute(this, "joints", (node) => {
+            new Attribute(node, "joints", (node) => {
                 node.setToken("typeName", "token[]")
                 node.setVariability("variability", Variability.Uniform)
                 node.setTokenArray("default", value)
             })
         }
     }
+
     /**
      * If authored, provides a unique name per joint. This may be
      * optionally set to provide better names when translating to DCC apps

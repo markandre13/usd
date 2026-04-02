@@ -598,21 +598,15 @@ describe("re-create blender 5.0 files", () => {
         skelForm.blenderObjectName = "Skel"
         skelForm.rotateXYZ = {
             timeIndex: [1],
-            samples: [
-                [0, 0, 0]
-            ]
+            samples: [[0, 0, 0]]
         }
         skelForm.scale = {
             timeIndex: [1],
-            samples: [
-                [1, 1, 1]
-            ]
+            samples: [[1, 1, 1]]
         }
         skelForm.translate = {
             timeIndex: [1],
-            samples: [
-                [0, 0, 0]
-            ]
+            samples: [[0, 0, 0]]
         }
         skelForm.xformOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
 
@@ -623,64 +617,51 @@ describe("re-create blender 5.0 files", () => {
         skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
 
         const anim = new SkelAnimation(skeleton, "SkelAction")
+        // time indices for which we animate
+        const timeIndex = [1, 2, 3]
+        // animate blendshapes
         anim.blendShapeWeights = {
-            timeIndex: [1, 2, 3],
+            timeIndex,
             samples: [
                 [0, 0],
                 [0.0010348177747800946, 0.0000016999719036903116],
                 [0.0040821777656674385, 0.000013599775229522493]
             ]
         }
-
         anim.blendShapes = ["Key_1", "Key_2"]
-        // as in Skeleton
-        new Attribute(anim, "joints", (node) => {
-            node.setToken("typeName", "token[]")
-            node.setVariability("variability", Variability.Uniform)
-            node.setTokenArray("default", ["joint1", "joint1/joint2"])
-        })
-        new Attribute(anim, "rotations", node => {
-            node.setToken("typeName", "quatf[]")
-            node.setQuatfArray("default", [0, 0, 0, 1, 0, 0, 0, 1])
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1, 2, 3],
-                sampleType: CrateDataType.Quatf,
-                samples: [
-                    [0, 0, 0, 1, 0, 0, 0, 1],
-                    [0.00025706528685986996, 0, 0, 0.9999999403953552, 0, 0, -0.0008718090248294175, 0.9999996423721313],
-                    [0.001020141295157373, 0, 0, 0.999999463558197, 7.827971978476456e-16, 2.273723337430436e-13, -0.0034427784848958254, 0.9999940991401672]
-                ]
-            })
-        })
-        new Attribute(anim, "scales", node => {
-            node.setToken("typeName", "half3[]")
-            node.setVec3hArray("default", [1, 1, 1, 1, 1, 1])
-        })
-        new Attribute(anim, "translations", node => {
-            node.setToken("typeName", "float3[]")
-            node.setVec3fArray("default", [0, 0, 0, 0, 1, 0])
-            node.setTimeSamples("timeSamples", {
-                timeIndex: [1, 2, 3],
-                sampleType: CrateDataType.Vec3f,
-                samples: [
-                    [0, 0, 0, 0, 1, 0],
-                    [-0.0012324796989560127, 0.0012324796989560127, 0, 1.1641532182693481e-10, 1, 6.87805368215777e-12],
-                    [-0.004861919675022364, 0.004861919675022364, 0, 0, 0.9999999403953552, 1.673470251262188e-10]
-                ]
-            })
-        })
 
+        // animate skeleton
+        anim.joints = ["joint1", "joint1/joint2"]
+        anim.rotations = {
+            timeIndex,
+            samples: [
+                [0, 0, 0, 1,
+                    0, 0, 0, 1],
+                [0.00025706528685986996, 0, 0, 0.9999999403953552,
+                    0, 0, -0.0008718090248294175, 0.9999996423721313],
+                [0.001020141295157373, 0, 0, 0.999999463558197,
+                    7.827971978476456e-16, 2.273723337430436e-13, -0.0034427784848958254, 0.9999940991401672]
+            ]
+        }
+        anim.scales = [1, 1, 1, 1, 1, 1]
+        anim.translations = {
+            timeIndex,
+            samples: [
+                [0, 0, 0,
+                    0, 1, 0],
+                [-0.0012324796989560127, 0.0012324796989560127, 0,
+                    1.1641532182693481e-10, 1, 6.87805368215777e-12],
+                [-0.004861919675022364, 0.004861919675022364, 0,
+                    0, 0.9999999403953552, 1.673470251262188e-10]
+            ]
+        }
         skeleton.animationSource = {
             isExplicit: true,
             explicit: [anim]
         }
 
         const materials = new Scope(root, "_materials")
-        new Attribute(materials, "userProperties:blender:object_name", node => {
-            node.setBoolean("custom", true)
-            node.setToken("typeName", "string")
-            node.setString("default", "_materials")
-        })
+        materials.blenderObjectName = "_materials"
 
         const material = new Material(materials, "Material")
 
@@ -688,7 +669,7 @@ describe("re-create blender 5.0 files", () => {
         principledBSDF.infoId = "UsdPreviewSurface"
         principledBSDF.clearcoat = 0
         principledBSDF.clearcoatRoughness = 0.03
-        principledBSDF.diffuseColor = [0.8, 0.8, 0.8] // imageTexture.outputsRGB
+        principledBSDF.diffuseColor = [0.8, 0.8, 0.8]
         principledBSDF.ior = 1.5
         principledBSDF.metallic = 0
         principledBSDF.opacity = 1
@@ -720,9 +701,7 @@ describe("re-create blender 5.0 files", () => {
             node.setFloatArray("default", [0, 0, 0, 0, 0, 0, 0, 0])
         })
 
-        // primvars:skel:geomBindTransform
         meshData.geomBindTransform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-
         meshData.jointIndices = {
             elementSize: 1,
             indices: [0, 0, 0, 0, 0, 0, 0, 0]
@@ -732,12 +711,13 @@ describe("re-create blender 5.0 files", () => {
             indices: [1, 1, 1, 1, 1, 1, 1, 1]
         }
         meshData.texCoords = [0.625, 0.5, 0.375, 0.5, 0.625, 0.75, 0.375, 0.75, 0.875, 0.5, 0.625, 0.25, 0.125, 0.5, 0.375, 0.25, 0.875, 0.75, 0.625, 1, 0.625, 0, 0.375, 1, 0.375, 0, 0.125, 0.75]
+        
+        // it does not make sense to animate texIndices like this
+        //     int[] primvars:st:indices.timeSamples = {
+        //         1: [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1],
+        //     }
+        // hence i assume Blender got this wron and i'm not creating an attribute for it yet...
         // meshData.texIndices = [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1]
-
-        // int[] primvars:st:indices.timeSamples = {
-        //     1: [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1],
-        // }
-
         new Attribute(meshData, "primvars:st:indices", (node) => {
             node.setToken("typeName", "int[]")
             node.setTimeSamples("timeSamples", {
@@ -748,11 +728,9 @@ describe("re-create blender 5.0 files", () => {
                 ]
             })
         })
-        // skel:blendShapeTargets
 
         meshData.blendShapes = ["Key_1", "Key_2"]
-        meshData.skeleton = skeleton // FIX: needs to be /root/Empty/Skel/Skel ????
-
+        meshData.skeleton = skeleton
         meshData.subdivisionScheme = "none"
         meshData.blenderDataName = "MeshData"
 

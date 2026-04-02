@@ -2,6 +2,7 @@ import { Specifier } from "../../crate/Specifier"
 import { SpecType } from "../../crate/SpecType"
 import type { UsdNode } from "../usd/UsdNode"
 import { Imageable } from "./Imageable"
+import { Xformable } from "./Xformable"
 
 /**
  * Scope is the simplest grouping primitive, and does not carry the
@@ -17,5 +18,8 @@ export class Scope extends Imageable {
         this.spec_type = SpecType.Prim
         this.specifier = Specifier.Def
         this.typeName = "Scope"
+    }
+    set blenderObjectName(value: string | undefined) {
+        Xformable._blenderObjectName(this, value)
     }
 }

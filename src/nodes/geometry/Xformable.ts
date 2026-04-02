@@ -3,6 +3,7 @@ import { Variability } from "../../crate/Variability"
 import { TimeSamples } from "../../types/TimeSamples"
 import { Attribute } from "../attributes/Attribute"
 import { StringAttr } from "../attributes/StringAttr"
+import { UsdNode } from "../usd/UsdNode"
 import { Imageable } from "./Imageable"
 
 /**
@@ -20,9 +21,12 @@ export abstract class Xformable extends Imageable {
     }
 
     set blenderObjectName(value: string | undefined) {
-        this.deleteChild("userProperties:blender:object_name")
+        Xformable._blenderObjectName(this, value)
+    }
+    static _blenderObjectName(node: UsdNode, value: string | undefined) {
+        node.deleteChild("userProperties:blender:object_name")
         if (value !== undefined) {
-            new StringAttr(this, "userProperties:blender:object_name", value, { custom: true })
+            new StringAttr(node, "userProperties:blender:object_name", value, { custom: true })
         }
     }
     set rotateXYZ(value: ArrayLike<number> | TimeSamples | undefined) {

@@ -438,7 +438,7 @@ export class Fields {
         }
         return idx
     }
-    
+
     setMatrix4d(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
@@ -547,6 +547,10 @@ export class Fields {
                 tupleSize = 1
                 typeSize = 4
                 break
+            case CrateDataType.Vec3h:
+                tupleSize = 3
+                typeSize = 2
+                break
             case CrateDataType.Vec3f:
                 tupleSize = 3
                 typeSize = 4
@@ -583,6 +587,17 @@ export class Fields {
                     this.data.writeUint64(value.samples[i].length / tupleSize)
                     for (let j = 0; j < value.samples[i].length; ++j) {
                         this.data.writeInt32(value.samples[i][j])
+                    }
+                }
+                break
+            // case CrateDataType.Half:
+            // case CrateDataType.Quath:
+            case CrateDataType.Vec3h:
+                for (let i = 0; i < value.samples.length; ++i) {
+                    // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
+                    this.data.writeUint64(value.samples[i].length / tupleSize)
+                    for (let j = 0; j < value.samples[i].length; ++j) {
+                        this.data.writeFloat16(value.samples[i][j])
                     }
                 }
                 break
