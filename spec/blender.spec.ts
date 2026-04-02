@@ -557,7 +557,7 @@ describe("re-create blender 5.0 files", () => {
     // Blender can convert the sample to curces:
     // go to Graph Editor > Key > Density > Decimate (Ratio)
     // and move the mouse to adjust the precision
-    it.only("cube-animation.usdc", () => {
+    it("cube-animation.usdc", () => {
         const prefix = "spec/examples/cube-animation"
         // read the original
         // const buffer = readFileSync(`${prefix}.usdc`)

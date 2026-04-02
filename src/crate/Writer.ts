@@ -154,6 +154,10 @@ export class Writer {
             this.offset = end
         }
     }
+    writeInt8(value: number) {
+        this.reserve(1)
+        this.view.setInt8(this.offset++, value)
+    }
     writeUint8(value: number) {
         this.reserve(1)
         this.view.setUint8(this.offset++, value)
@@ -161,6 +165,11 @@ export class Writer {
     writeUint16(value: number) {
         this.reserve(2)
         this.view.setUint16(this.offset, value, true)
+        this.offset += 2
+    }
+    writeInt16(value: number) {
+        this.reserve(2)
+        this.view.setInt16(this.offset, value, true)
         this.offset += 2
     }
     writeUint32(value: number) {

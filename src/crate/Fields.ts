@@ -12,9 +12,9 @@ import { Writer } from "./Writer.js"
 import { UsdNode } from "../nodes/usd/UsdNode.js"
 import { ListOp } from "./ListOp"
 
-const IsArrayBit_ = 128
-const IsInlinedBit = 64
 const IsCompressedBit = 32
+const IsInlinedBit = 64
+const IsArrayBit_ = 128
 
 export class Fields {
     tokenIndices: number[] = []
@@ -494,12 +494,22 @@ export class Fields {
     setMatrix4d(name: string, value: ArrayLike<number>): number {
         const idx = this.valueReps.tell() / 8
         this.tokenIndices.push(this.tokens.add(name))
-        this.valueReps.writeUint32(this.data.tell())
-        this.valueReps.skip(2)
-        this.valueReps.writeUint8(CrateDataType.Matrix4d)
-        this.valueReps.writeUint8(0)
-        for (let i = 0; i < 16; ++i) {
-            this.data.writeFloat64(value[i])
+        if (canInlineMatrix(value, 4)) {
+            this.valueReps.writeInt8(value[0])
+            this.valueReps.writeInt8(value[5])
+            this.valueReps.writeInt8(value[10])
+            this.valueReps.writeInt8(value[15])
+            this.valueReps.skip(2)
+            this.valueReps.writeUint8(CrateDataType.Matrix4d)
+            this.valueReps.writeUint8(IsInlinedBit)
+        } else {
+            this.valueReps.writeUint32(this.data.tell())
+            this.valueReps.skip(2)
+            this.valueReps.writeUint8(CrateDataType.Matrix4d)
+            this.valueReps.writeUint8(0)
+            for (let i = 0; i < 16; ++i) {
+                this.data.writeFloat64(value[i])
+            }
         }
         return idx
     }
@@ -701,4 +711,39 @@ export class Fields {
         writer.writeUint64(compresedSize)
         writer.writeBuffer(compressed, 0, compresedSize)
     }
+}
+
+/**
+ * can Matrix{n} be inlined?
+ * 
+ * @param m array of size n*n
+ * @param n 
+ * @returns true when the matrix can be inlined
+ */
+function canInlineMatrix(m: ArrayLike<number>, n: number) {
+    let j = 0
+    let n2 = n * n
+    let s = m[0]
+    for (let i = 0; i < n2; ++i) {
+        if (i == j) {
+            j += n + 1
+            if (!isInt8(m[i])) {
+                return false
+            }
+        } else {
+            if (m[i] !== 0) {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+/**
+ * 
+ * @param v 
+ * @returns true when v fit's into an int8 type
+ */
+function isInt8(v: number) {
+    return Math.round(v) === v && -128 <= v && v <= 127
 }
