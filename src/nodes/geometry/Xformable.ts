@@ -33,10 +33,11 @@ export abstract class Xformable extends Imageable {
         this.deleteChild("xformOp:rotateXYZ")
         if (value !== undefined) {
             new Attribute(this, "xformOp:rotateXYZ", (node) => {
-                node.setToken("typeName", "float3")
                 if (Array.isArray(value)) {
+                    node.setToken("typeName", "float3")
                     node.setVec3f("default", value)
                 } else {
+                    node.setToken("typeName", "float3")
                     const ts = value as TimeSamples
                     node.setTimeSamples("timeSamples", {
                         ...ts,
@@ -49,10 +50,11 @@ export abstract class Xformable extends Imageable {
     set scale(value: ArrayLike<number> | TimeSamples | undefined) {
         this.deleteChild("xformOp:scale")
         new Attribute(this, "xformOp:scale", (node) => {
-            node.setToken("typeName", "float3")
             if (Array.isArray(value)) {
+                node.setToken("typeName", "float3")
                 node.setVec3f("default", value)
             } else {
+                node.setToken("typeName", "float3")
                 const ts = value as TimeSamples
                 node.setTimeSamples("timeSamples", {
                     ...ts,
@@ -64,10 +66,11 @@ export abstract class Xformable extends Imageable {
     set translate(value: ArrayLike<number> | TimeSamples | undefined) {
         this.deleteChild("xformOp:translate")
         new Attribute(this, "xformOp:translate", (node) => {
-            node.setToken("typeName", "double3")
             if (Array.isArray(value)) {
+                node.setToken("typeName", "double3")
                 node.setVec3d("default", value)
             } else {
+                node.setToken("typeName", "double3")
                 const ts = value as TimeSamples
                 node.setTimeSamples("timeSamples", {
                     ...ts,

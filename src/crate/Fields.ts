@@ -567,10 +567,9 @@ export class Fields {
                 throw Error(`TimeSamples.sampleType ${value.sampleType} is not allowed`)
         }
 
-        // a list of valuereps
+        // write a valuerep for each time index
         let offset = this.data.tell() + value.samples.length * 8 + 8 // data after ValueRep list
         this.data.writeUint64(value.samples.length)
-
         for (let i = 0; i < value.samples.length; ++i) {
             // console.log(`put sample[${i}].rep @ ${this.data.tell()}`)
             this.data.writeUint32(offset) // data is after this ValueRep and offset
@@ -579,6 +578,7 @@ export class Fields {
             this.data.writeUint8(IsArrayBit_)
             offset += 8 + value.samples[i].length * typeSize
         }
+
         switch (value.sampleType) {
             case CrateDataType.Int:
                 // TODO: use _setIntArray() to write a compressed int array

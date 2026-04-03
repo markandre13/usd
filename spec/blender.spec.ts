@@ -21,6 +21,7 @@ import { BlendShape } from "../src/nodes/skeleton/BlendShape.js"
 import { SkelAnimation } from "../src/nodes/skeleton/SkelAnimation.js"
 import { CrateDataType } from "../src/crate/CrateDataType.js"
 import { Variability } from "../src/crate/Variability.js"
+import { TimeSamples } from "../src/types/TimeSamples.js"
 
 /**
  * re-create USDC files generated with blender 5.x
@@ -565,7 +566,7 @@ describe("re-create blender 5.0 files", () => {
         // const origPseudoRoot = stageIn.getPrimAtPath("/")!
         // const orig = origPseudoRoot.toJSON()
         // console.log(JSON.stringify(orig, undefined, 4))
-        // writeFileSync(`x.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
 
         // read an adjusted, good enough variant of the original's JSON
         const buffer = readFileSync(`${prefix}.json`)
@@ -711,7 +712,7 @@ describe("re-create blender 5.0 files", () => {
             indices: [1, 1, 1, 1, 1, 1, 1, 1]
         }
         meshData.texCoords = [0.625, 0.5, 0.375, 0.5, 0.625, 0.75, 0.375, 0.75, 0.875, 0.5, 0.625, 0.25, 0.125, 0.5, 0.375, 0.25, 0.875, 0.75, 0.625, 1, 0.625, 0, 0.375, 1, 0.375, 0, 0.125, 0.75]
-        
+
         // it does not make sense to animate texIndices like this
         //     int[] primvars:st:indices.timeSamples = {
         //         1: [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1],
@@ -769,6 +770,334 @@ describe("re-create blender 5.0 files", () => {
 
         compare(pseudoRootIn, orig)
     })
+
+    // blender created the following prim tree for cube-animation.usdc:
+    //
+    // /
+    //   Xform ("root", root)
+    //     SkelRoot ("Empty", skelRoot) -> Boundable -> Xformable -> ...
+    //       Xform ("Mesh", mesh)
+    //         Mesh ("MeshData", meshData)
+    //           BlendShape ("Key_1")
+    //           BlendShape ("Key_1")
+    //       Xform ("Skel", skelForm)               // rotateXYZ, scale, translate
+    //         Skeleton ("Skel", skeleton)          // animationSource -> SkelAnimation
+    //           SkelAnimation ("SkelAction", anim) // blendShapeWeights, rotations, scales, translations, 
+    //     Scope ("_materials", _materials)
+    //       Material ("Material", material)
+    //         PrincipledBSDF (...)
+    //     DomeLight ("env_light")
+    //
+    // the following tries to remove the Xforms under SkelRoot
+    // and move the translations elsewhere because there is no need to store
+    // them for all joints
+
+    it("cube-translate.usdc (animation without skeleton)", () => {
+        const prefix = "spec/examples/cube-translate"
+        // read the original
+        const buffer0 = readFileSync(`${prefix}.usdc`)
+        const stageIn = new Stage(buffer0)
+        const translate = stageIn
+            .getPrimAtPath("/root/Cube")!
+            .getAttribute("xformOp:translate")!
+            .getField("timeSamples")!
+            .getValue(stageIn._crate) as TimeSamples
+
+        // const orig = origPseudoRoot.toJSON()
+        // console.log(JSON.stringify(orig, undefined, 4))
+        // writeFileSync(`${prefix}.json`, stringify(orig, {indent: 4}))
+
+        // read an adjusted, good enough variant of the original's JSON
+        const buffer = readFileSync(`${prefix}.json`)
+        const orig = JSON.parse(buffer.toString())
+
+        const crate = new Crate()
+
+        const pseudoRoot = new PseudoRoot(crate)
+        pseudoRoot.defaultPrim = "root"
+        pseudoRoot.documentation = "Blender v5.1.0"
+        pseudoRoot.timeCodesPerSecond = 24
+        pseudoRoot.startTimeCode = 1
+        pseudoRoot.endTimeCode = 100
+
+        const root = new Xform(pseudoRoot, "root")
+        root.customData = {
+            Blender: {
+                generated: true
+            }
+        }
+
+        const xform = new Xform(root, "Cube")
+        xform.blenderObjectName = "Cube"
+        xform.rotateXYZ = {
+            timeIndex: [1],
+            samples: [[0, 0, 0]]
+        }
+        // xform.scale = {
+        //     timeIndex: [1],
+        //     samples: [[1, 1, 1]]
+        // }
+
+        new Attribute(xform, "xformOp:scale", (node) => {
+            node.setToken("typeName", "float3")
+            node.setTimeSamples("timeSamples", {
+                timeIndex: [1],
+                sampleType: CrateDataType.Vec3f,
+                samples: [[1, 1, 1]]
+            })
+        })
+
+        xform.translate = translate
+        xform.xformOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+        const mesh = new Mesh(xform, "Cube")
+
+        const materials = new Scope(root, "_materials")
+
+        const material = new Material(materials, "Material")
+
+        const principledBSDF = new PrincipledBSDF(material, "Principled_BSDF")
+        principledBSDF.infoId = "UsdPreviewSurface"
+        principledBSDF.clearcoat = 0
+        principledBSDF.clearcoatRoughness = 0.03
+        principledBSDF.diffuseColor = [0.8, 0.8, 0.8]
+        principledBSDF.ior = 1.5
+        principledBSDF.metallic = 0
+        principledBSDF.opacity = 1
+        principledBSDF.roughness = 0.5
+        principledBSDF.specular = 0.5
+
+        material.surface = principledBSDF.outputsSurface
+        material.blenderDataName = "Material"
+
+        //
+        // MESH
+        //
+        mesh.doubleSided = true
+        mesh.extent = [-1, -1, -1, 1, 1, 1]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
+        mesh.materialBinding = {
+            isExplicit: true,
+            explicit: [material]
+        }
+        mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+        mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+        mesh.texCoords = [0.625, 0.5, 0.375, 0.5, 0.625, 0.75, 0.375, 0.75, 0.875, 0.5, 0.625, 0.25, 0.125, 0.5, 0.375, 0.25, 0.875, 0.75, 0.625, 1, 0.625, 0, 0.375, 1, 0.375, 0, 0.125, 0.75]
+        mesh.texIndices = [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1]
+        mesh.subdivisionScheme = "none"
+        mesh.blenderDataName = "Cube"
+
+        const domeLight = new DomeLight(root, "env_light")
+        domeLight.intensity = 1
+        domeLight.textureFile = "./textures/color_0C0C0C.exr"
+
+        // serialize everything into crate.writer
+        crate.serialize(pseudoRoot)
+        // crate.print()
+
+        // console.log("----------------")
+
+        // deserialize 
+        const stage = new Stage(Buffer.from(crate.writer.buffer))
+
+        // stage._crate.print()
+
+        const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+
+        const filename = prefix.split('/').pop()
+        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+
+        compare(pseudoRootIn, orig)
+    })
+
+    xit("simplified cube-animation.usdc", () => {
+        const prefix = "spec/examples/cube-animation"
+        // read the original
+        const buffer = readFileSync(`${prefix}.usdc`)
+        const stageIn = new Stage(buffer)
+        const origAnim = stageIn.getPrimAtPath("/root/Empty/Skel/Skel/SkelAction")!
+
+        const blendShapeWeights = origAnim.getAttribute("blendShapeWeights")!.getField("timeSamples")!.getValue(stageIn._crate) as TimeSamples
+        const rotations = origAnim.getAttribute("rotations")!.getField("timeSamples")!.getValue(stageIn._crate) as TimeSamples
+        const translations = origAnim.getAttribute("translations")!.getField("timeSamples")!.getValue(stageIn._crate) as TimeSamples
+
+        // console.log(s?.getValue(stageIn._crate))
+        // console.log(translations)
+
+        // const orig = origPseudoRoot.toJSON()
+        // console.log(JSON.stringify(orig, undefined, 4))
+        // writeFileSync(`x.json`, stringify(orig, { indent: 4 }))
+
+        // read an adjusted, good enough variant of the original's JSON
+        // const buffer = readFileSync(`${prefix}.json`)
+        // const orig = JSON.parse(buffer.toString())
+
+        const crate = new Crate()
+
+        const pseudoRoot = new PseudoRoot(crate)
+        pseudoRoot.defaultPrim = "root"
+        pseudoRoot.documentation = "Blender v5.1.0"
+        pseudoRoot.timeCodesPerSecond = 24
+        pseudoRoot.startTimeCode = 1
+        pseudoRoot.endTimeCode = 100
+
+        const root = new Xform(pseudoRoot, "root")
+        root.customData = {
+            Blender: {
+                generated: true
+            }
+        }
+
+        const human = new Xform(root, "Human")
+
+        const skelRoot = new SkelRoot(human, "Cube")
+
+        // skelRoot.translate = translations
+
+        // const samples = Array.of(translations.samples).map(it => [it[0], it[1], it[2]])
+
+        // console.log(translations.samples[5])
+        const samples: number[][] = []
+        for (let i = 0; i < translations.samples.length; ++i) {
+            const j = translations.samples[i]
+            samples.push([j[0], j[1], j[2]])
+        }
+        const translations2: TimeSamples = {
+            timeIndex: translations.timeIndex,
+            samples: samples
+        }
+        // console.log(translations2)
+
+        human.rotateXYZ = {
+            timeIndex: [1],
+            samples: [[0, 0, 0]]
+        }
+        human.scale = {
+            timeIndex: [1],
+            samples: [[1, 1, 1]]
+        }
+        // skelRoot.translate = {
+        //     timeIndex: [1],
+        //     samples: [[0, 0, 0]]
+        // }
+        human.translate = translations2
+        human.xformOrder = ["xformOp:translate", "xformOp:rotateXYZ", "xformOp:scale"]
+
+        // skelRoot.xformOrder = ["xformOp:translate"]
+
+        const mesh = new Mesh(skelRoot, "Mesh")
+
+        const skeleton = new Skeleton(skelRoot, "Armature")
+        skeleton.bindTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
+        skeleton.joints = ["joint1", "joint1/joint2"]
+        skeleton.blenderBoneLength = [1, 1]
+        skeleton.restTransforms = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
+
+        const anim = new SkelAnimation(skeleton, "SkelAnimation")
+        // blendshape animation
+        anim.blendShapeWeights = blendShapeWeights
+        anim.blendShapes = ["Key_1", "Key_2"]
+
+        // skeleton animation
+        anim.joints = ["joint1", "joint1/joint2"]
+        anim.rotations = rotations
+        anim.scales = [1, 1, 1, 1, 1, 1]
+        // anim.translations = translations
+        anim.translations = [0, 0, 0, 0, 0, 0]
+        skeleton.animationSource = {
+            isExplicit: true,
+            explicit: [anim]
+        }
+
+        const materials = new Scope(root, "_materials")
+        materials.blenderObjectName = "_materials"
+
+        const material = new Material(materials, "Material")
+
+        const principledBSDF = new PrincipledBSDF(material, "Principled_BSDF")
+        principledBSDF.infoId = "UsdPreviewSurface"
+        principledBSDF.clearcoat = 0
+        principledBSDF.clearcoatRoughness = 0.03
+        principledBSDF.diffuseColor = [0.8, 0.8, 0.8]
+        principledBSDF.ior = 1.5
+        principledBSDF.metallic = 0
+        principledBSDF.opacity = 1
+        principledBSDF.roughness = 0.5
+        principledBSDF.specular = 0.5
+
+        material.surface = principledBSDF.outputsSurface
+        material.blenderDataName = "Material"
+
+        //
+        // MESH
+        //
+        mesh.doubleSided = true
+        mesh.extent = [-1, -1, -1, 1, 1, 1]
+        mesh.faceVertexCounts = [4, 4, 4, 4, 4, 4]
+        mesh.faceVertexIndices = [0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1]
+        mesh.materialBinding = {
+            isExplicit: true,
+            explicit: [material]
+        }
+        mesh.normals = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]
+        mesh.points = [1, 1, 1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, 1, -1, -1, -1]
+
+        mesh.geomBindTransform = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+        mesh.jointIndices = {
+            elementSize: 1,
+            indices: [0, 0, 0, 0, 0, 0, 0, 0]
+        }
+        mesh.jointWeights = {
+            elementSize: 1,
+            indices: [1, 1, 1, 1, 1, 1, 1, 1]
+        }
+        mesh.texCoords = [0.625, 0.5, 0.375, 0.5, 0.625, 0.75, 0.375, 0.75, 0.875, 0.5, 0.625, 0.25, 0.125, 0.5, 0.375, 0.25, 0.875, 0.75, 0.625, 1, 0.625, 0, 0.375, 1, 0.375, 0, 0.125, 0.75]
+        mesh.texIndices = [0, 4, 8, 2, 3, 2, 9, 11, 12, 10, 5, 7, 6, 1, 3, 13, 1, 0, 2, 3, 7, 5, 0, 1]
+
+        mesh.blendShapes = ["Key_1", "Key_2"]
+        mesh.skeleton = skeleton
+        mesh.subdivisionScheme = "none"
+        mesh.blenderDataName = "MeshData"
+
+        const key1 = new BlendShape(mesh, "Key_1")
+        key1.offsets = [-1.1725950241088867, -0.8274050354957581, 0, 0, 0, 0, -0.8274050354957581, 1.1725950241088867, 0, 0, 0, 0, 0.8274050354957581, -1.1725950241088867, 0, 0, 0, 0, 1.1725950241088867, 0.8274050354957581, 0, 0, 0, 0]
+        key1.pointIndices = [0, 1, 2, 3, 4, 5, 6, 7]
+
+        const key2 = new BlendShape(mesh, "Key_2")
+        key2.offsets = [0, 0, 0, -1, -1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 0]
+        key2.pointIndices = [0, 1, 2, 3, 4, 5, 6, 7]
+
+        mesh.blendShapeTargets = [key1, key2]
+
+        const domeLight = new DomeLight(root, "env_light")
+        domeLight.textureFile = "./textures/color_0C0C0C.exr"
+        domeLight.rotateXYZ = [0, 0, 0]
+        domeLight.xformOrder = ["xformOp:rotateXYZ"]
+
+        // serialize everything into crate.writer
+        crate.serialize(pseudoRoot)
+        // crate.print()
+
+        // console.log("----------------")
+
+        // deserialize 
+        // const stage = new Stage(Buffer.from(crate.writer.buffer))
+
+        // stage._crate.print()
+
+        // const pseudoRootIn = stage.getPrimAtPath("/")!.toJSON()
+
+        const filename = prefix.split('/').pop()
+        writeFileSync(`${filename}-generated.usdc`, Buffer.from(crate.writer.buffer))
+        // writeFileSync(`${filename}-original.json`, stringify(orig, { indent: 4 }))
+        // writeFileSync(`${filename}-generated.json`, stringify(pseudoRootIn, { indent: 4 }))
+
+        // compare(pseudoRootIn, orig)
+    })
+
 })
 
 // this is the thing i still need to write
