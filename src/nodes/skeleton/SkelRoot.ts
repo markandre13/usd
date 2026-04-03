@@ -4,7 +4,11 @@ import type { UsdNode } from "../usd/UsdNode.js"
 import { Boundable } from "../geometry/Boundable.js"
 
 /**
- * Concrete prim schema for a transform, which implements Xformable
+ * Boundable prim type used to identify a scope beneath which
+ * skeletally-posed primitives are defined.
+ *
+ * A SkelRoot must be defined at or above a skinned primitive for any skinning
+ * behaviors in UsdSkel.
  *
  * defined in pxr/usd/usdSkel/schema.usda
  */
