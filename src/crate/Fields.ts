@@ -579,18 +579,34 @@ export class Fields {
         this.data.writeUint64(value.samples.length)
         for (let i = 0; i < value.samples.length; ++i) {
             // console.log(`put sample[${i}].rep @ ${this.data.tell()}`)
-            this.data.writeUint32(offset) // data is after this ValueRep and offset
-            this.data.skip(2)
-            this.data.writeUint8(value.sampleType)
-            this.data.writeUint8(IsArrayBit_)
-            offset += 8 + value.samples[i].length * typeSize
+            if (value.samples[i].length === tupleSize) {
+                // just one entry: MUST not write array
+                // TODO: this behaviour is not yet covered by a test
+                this.data.writeUint32(offset)
+                this.data.skip(2)
+                this.data.writeUint8(value.sampleType)
+                this.data.writeUint8(0)
+                offset += value.samples[i].length * typeSize
+            } else {
+                this.data.writeUint32(offset)
+                this.data.skip(2)
+                this.data.writeUint8(value.sampleType)
+                this.data.writeUint8(IsArrayBit_)
+                offset += 8 + value.samples[i].length * typeSize
+            }
         }
 
         for (let i = 0; i < value.samples.length; ++i) {
             // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
-            this.data.writeUint64(value.samples[i].length / tupleSize)
-            for (let j = 0; j < value.samples[i].length; ++j) {
-                typeWrite.apply(this.data, [value.samples[i][j]])
+            if (value.samples[i].length === tupleSize) {
+                for (let j = 0; j < value.samples[i].length; ++j) {
+                    typeWrite.apply(this.data, [value.samples[i][j]])
+                }
+            } else {
+                this.data.writeUint64(value.samples[i].length / tupleSize)
+                for (let j = 0; j < value.samples[i].length; ++j) {
+                    typeWrite.apply(this.data, [value.samples[i][j]])
+                }
             }
         }
 
