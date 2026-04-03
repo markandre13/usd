@@ -537,31 +537,38 @@ export class Fields {
         // console.log(`put samples reps @ ${this.data.tell()}`)
         let tupleSize: number
         let typeSize: number
+        let typeWrite!: (value: number) => void
 
         switch (value.sampleType) {
             case CrateDataType.Int:
                 tupleSize = 1
                 typeSize = 4
+                typeWrite = this.data.writeInt32
                 break
             case CrateDataType.Float:
                 tupleSize = 1
                 typeSize = 4
+                typeWrite = this.data.writeFloat32
                 break
             case CrateDataType.Vec3h:
                 tupleSize = 3
                 typeSize = 2
+                typeWrite = this.data.writeFloat16
                 break
             case CrateDataType.Vec3f:
                 tupleSize = 3
                 typeSize = 4
+                typeWrite = this.data.writeFloat32
                 break
             case CrateDataType.Quatf:
                 tupleSize = 4
                 typeSize = 4
+                typeWrite = this.data.writeFloat32
                 break
             case CrateDataType.Vec3d:
                 tupleSize = 3
                 typeSize = 8
+                typeWrite = this.data.writeFloat64
                 break
             default:
                 throw Error(`TimeSamples.sampleType ${value.sampleType} is not allowed`)
@@ -579,50 +586,12 @@ export class Fields {
             offset += 8 + value.samples[i].length * typeSize
         }
 
-        switch (value.sampleType) {
-            case CrateDataType.Int:
-                // TODO: use _setIntArray() to write a compressed int array
-                for (let i = 0; i < value.samples.length; ++i) {
-                    // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
-                    this.data.writeUint64(value.samples[i].length / tupleSize)
-                    for (let j = 0; j < value.samples[i].length; ++j) {
-                        this.data.writeInt32(value.samples[i][j])
-                    }
-                }
-                break
-            // case CrateDataType.Half:
-            // case CrateDataType.Quath:
-            case CrateDataType.Vec3h:
-                for (let i = 0; i < value.samples.length; ++i) {
-                    // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
-                    this.data.writeUint64(value.samples[i].length / tupleSize)
-                    for (let j = 0; j < value.samples[i].length; ++j) {
-                        this.data.writeFloat16(value.samples[i][j])
-                    }
-                }
-                break
-            case CrateDataType.Float:
-            case CrateDataType.Vec3f:
-            case CrateDataType.Quatf:
-                for (let i = 0; i < value.samples.length; ++i) {
-                    // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
-                    this.data.writeUint64(value.samples[i].length / tupleSize)
-                    for (let j = 0; j < value.samples[i].length; ++j) {
-                        this.data.writeFloat32(value.samples[i][j])
-                    }
-                }
-                break
-            // case CrateDataType.Double:
-            // case CrateDataType.Quatd:
-            case CrateDataType.Vec3d:
-                for (let i = 0; i < value.samples.length; ++i) {
-                    // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
-                    this.data.writeUint64(value.samples[i].length / tupleSize)
-                    for (let j = 0; j < value.samples[i].length; ++j) {
-                        this.data.writeFloat64(value.samples[i][j])
-                    }
-                }
-                break
+        for (let i = 0; i < value.samples.length; ++i) {
+            // console.log(`put sample[${i}].data @ ${this.data.tell()}`)
+            this.data.writeUint64(value.samples[i].length / tupleSize)
+            for (let j = 0; j < value.samples[i].length; ++j) {
+                typeWrite.apply(this.data, [value.samples[i][j]])
+            }
         }
 
         return idx
