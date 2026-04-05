@@ -1,6 +1,6 @@
 {
     "name": "@markandre13/usd.js",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "universal scene description for typescript",
     "author": "mhopf@mark13.org",
     "license": "AGPL-3.0",
